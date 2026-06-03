@@ -8,10 +8,13 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [company, setCompany] = useState(null)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const loadProfile = useCallback(async (uid) => {
-    if (!uid) { setProfile(null); setCompany(null); return }
+    if (!uid) { setProfile(null); setCompany(null); setIsSuperAdmin(false); return }
+    const { data: admin } = await supabase.rpc('is_super_admin')
+    setIsSuperAdmin(!!admin)
     const { data: prof } = await supabase
       .from('profiles').select('*').eq('id', uid).maybeSingle()
     setProfile(prof || null)
@@ -59,8 +62,8 @@ export function AuthProvider({ children }) {
   const refreshCompany = () => loadProfile(session?.user?.id)
 
   const value = {
-    session, user: session?.user || null, profile, company, loading,
-    needsCompany: !!session && !loading && !profile,
+    session, user: session?.user || null, profile, company, loading, isSuperAdmin,
+    needsCompany: !!session && !loading && !profile && !isSuperAdmin,
     signIn, signUp, signOut, createCompany, refreshCompany,
   }
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>

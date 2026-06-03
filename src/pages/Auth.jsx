@@ -39,6 +39,7 @@ export function Login() {
   }
 
   return (
+    <>
     <AuthShell>
       <div className="mb-8 font-display text-2xl text-ink lg:hidden">invoice<span className="text-clay">168</span></div>
       <h2 className="font-display text-3xl text-ink">Welcome back</h2>
@@ -61,6 +62,8 @@ export function Login() {
         No account? <Link to="/register" className="font-semibold text-moss-700 hover:underline">Create one</Link>
       </p>
     </AuthShell>
+    <Link to="/admin/login" className="fixed bottom-3 right-4 z-10 text-xs text-ink/35 transition hover:text-ink/70">Admin</Link>
+    </>
   )
 }
 

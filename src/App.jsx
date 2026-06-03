@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { Spinner } from './components/ui'
 import Layout from './components/Layout'
 import { Login, Register, CreateCompany } from './pages/Auth'
+import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
 import Dashboard from './pages/Dashboard'
 import Customers from './pages/Customers'
 import Products from './pages/Products'
@@ -14,12 +16,20 @@ import Payments from './pages/Payments'
 import Settings from './pages/Settings'
 
 function Protected({ children }) {
-  const { session, loading, needsCompany } = useAuth()
+  const { session, loading, needsCompany, isSuperAdmin } = useAuth()
   const location = useLocation()
   if (loading) return <div className="grid min-h-screen place-items-center bg-sand"><Spinner /></div>
   if (!session) return <Navigate to="/login" replace state={{ from: location }} />
+  if (isSuperAdmin) return <Navigate to="/admin" replace />
   if (needsCompany) return <CreateCompany />
   return <Layout>{children}</Layout>
+}
+
+function AdminRoute({ children }) {
+  const { session, loading, isSuperAdmin } = useAuth()
+  if (loading) return <div className="grid min-h-screen place-items-center bg-ink"><Spinner /></div>
+  if (!session || !isSuperAdmin) return <Navigate to="/admin/login" replace />
+  return children
 }
 
 function Shell() {
@@ -28,6 +38,8 @@ function Shell() {
     <Routes>
       <Route path="/login" element={session && !loading ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/register" element={session && !loading ? <Navigate to="/" replace /> : <Register />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
       <Route path="/invoices" element={<Protected><Invoices /></Protected>} />
       <Route path="/invoices/new" element={<Protected><InvoiceForm /></Protected>} />
