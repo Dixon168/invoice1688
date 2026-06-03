@@ -7,7 +7,7 @@ import { Field } from '../components/ui'
 
 // Friendly username -> real Supabase account (password is verified by Supabase, never stored in code)
 const ADMIN_USERNAME = 'Dixon168'
-const ADMIN_EMAIL = 'dixon168@invoice168.app'
+const ADMIN_EMAIL = 'dixon168@icloud.com'
 
 export default function AdminLogin() {
   const { signIn, signOut } = useAuth()
