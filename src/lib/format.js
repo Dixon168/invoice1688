@@ -14,3 +14,18 @@ export const STATUS = {
   overdue:   { label: 'Overdue',   cls: 'bg-red-100 text-red-700' },
   cancelled: { label: 'Cancelled', cls: 'bg-black/8 text-ink/40 line-through' },
 }
+
+// Subscription state for a company (manual billing).
+// Active only if not suspended AND within the paid period.
+export function subState(company) {
+  if (!company) return { state: 'active', active: true, label: 'Active' }
+  if (company.subscription_status === 'suspended') return { state: 'suspended', active: false, label: 'Suspended' }
+  if (company.paid_until && company.paid_until < todayISO()) return { state: 'expired', active: false, label: 'Expired' }
+  return { state: 'active', active: true, label: 'Active' }
+}
+
+export const SUB_BADGE = {
+  active:    'bg-moss-100 text-moss-700',
+  suspended: 'bg-black/10 text-ink/50',
+  expired:   'bg-red-100 text-red-700',
+}

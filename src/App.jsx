@@ -1,10 +1,12 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { subState } from './lib/format'
 import { Spinner } from './components/ui'
 import Layout from './components/Layout'
-import { Login, Register, CreateCompany } from './pages/Auth'
+import { Login, CreateCompany } from './pages/Auth'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
+import Blocked from './pages/Blocked'
 import Dashboard from './pages/Dashboard'
 import Customers from './pages/Customers'
 import Products from './pages/Products'
@@ -16,12 +18,13 @@ import Payments from './pages/Payments'
 import Settings from './pages/Settings'
 
 function Protected({ children }) {
-  const { session, loading, needsCompany, isSuperAdmin } = useAuth()
+  const { session, loading, needsCompany, isSuperAdmin, company } = useAuth()
   const location = useLocation()
   if (loading) return <div className="grid min-h-screen place-items-center bg-sand"><Spinner /></div>
   if (!session) return <Navigate to="/login" replace state={{ from: location }} />
   if (isSuperAdmin) return <Navigate to="/admin" replace />
   if (needsCompany) return <CreateCompany />
+  if (!subState(company).active) return <Blocked />
   return <Layout>{children}</Layout>
 }
 
@@ -37,7 +40,7 @@ function Shell() {
   return (
     <Routes>
       <Route path="/login" element={session && !loading ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/register" element={session && !loading ? <Navigate to="/" replace /> : <Register />} />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
