@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, Building2, Plus, Trash2, LogOut, Users, FileText } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase, makeTempClient } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate } from '../lib/format'
 import { Spinner, Modal, Field } from '../components/ui'
@@ -11,8 +11,10 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const [companies, setCompanies] = useState(null)
   const [newOpen, setNewOpen] = useState(false)
-  const [newName, setNewName] = useState('')
+  const [form, setForm] = useState({ name: '', email: '', password: '', ownerName: '' })
   const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const [created, setCreated] = useState(null)
 
   const load = async () => {
     const [{ data: comps }, { data: custs }, { data: invs }, { data: profs }] = await Promise.all([
@@ -36,11 +38,34 @@ export default function AdminDashboard() {
   }
   useEffect(() => { load() }, [])
 
-  const createCompany = async () => {
-    if (!newName.trim()) return
-    setBusy(true)
-    await supabase.from('companies').insert({ name: newName.trim() })
-    setBusy(false); setNewOpen(false); setNewName(''); load()
+  const openNew = () => { setForm({ name: '', email: '', password: '', ownerName: '' }); setErr(''); setCreated(null); setNewOpen(true) }
+
+  const createAccount = async () => {
+    const name = form.name.trim(), email = form.email.trim(), password = form.password
+    if (!name) return setErr('Enter a company name.')
+    if (!email) return setErr('Enter the client\'s login email.')
+    if (!password || password.length < 6) return setErr('Password must be at least 6 characters.')
+    setErr(''); setBusy(true)
+
+    // 1) create the client's auth account on an isolated client (keeps admin signed in)
+    const temp = makeTempClient()
+    const { data: su, error: e1 } = await temp.auth.signUp({ email, password })
+    if (e1) { setBusy(false); return setErr(e1.message) }
+    const newUserId = su?.user?.id
+    if (!newUserId) { setBusy(false); return setErr('Could not create the account. Try a different email.') }
+
+    // 2) create the company (admin has cross-company rights)
+    const { data: comp, error: e2 } = await supabase.from('companies').insert({ name }).select('id').single()
+    if (e2) { setBusy(false); return setErr(e2.message) }
+
+    // 3) link the new user to the company as its admin
+    const { error: e3 } = await supabase.from('profiles')
+      .insert({ id: newUserId, company_id: comp.id, full_name: form.ownerName || null, role: 'admin' })
+    if (e3) { setBusy(false); return setErr(e3.message) }
+
+    setBusy(false)
+    setCreated({ email, password, needsConfirm: !su.session })
+    load()
   }
 
   const deleteCompany = async (c) => {
@@ -69,7 +94,7 @@ export default function AdminDashboard() {
             <h1 className="font-display text-3xl text-ink">All companies</h1>
             <p className="mt-1 text-sm text-ink/55">Every business account on the platform.</p>
           </div>
-          <button className="btn-primary" onClick={() => setNewOpen(true)}><Plus size={18} /> New company</button>
+          <button className="btn-primary" onClick={openNew}><Plus size={18} /> New company</button>
         </div>
 
         {companies === null ? <Spinner /> : companies.length === 0 ? (
@@ -123,14 +148,34 @@ export default function AdminDashboard() {
         )}
       </main>
 
-      <Modal open={newOpen} onClose={() => setNewOpen(false)} title="Create company">
-        <Field label="Company name"><input className="input" value={newName} onChange={e => setNewName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && createCompany()} placeholder="Acme Inc." /></Field>
-        <p className="mt-2 text-xs text-ink/50">Creates an empty company. To let someone use it, they sign up and you can assign them later.</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setNewOpen(false)}>Cancel</button>
-          <button className="btn-primary" onClick={createCompany} disabled={busy}>{busy ? 'Creating…' : 'Create'}</button>
-        </div>
+      <Modal open={newOpen} onClose={() => setNewOpen(false)} title={created ? 'Account created' : 'New company + login'}>
+        {created ? (
+          <div className="space-y-4">
+            <p className="text-sm text-ink/70">Share these login details with your client. They sign in on the main login page.</p>
+            <div className="rounded-lg bg-sand p-4 text-sm">
+              <div className="flex justify-between py-1"><span className="text-ink/50">Email</span><span className="font-semibold text-ink">{created.email}</span></div>
+              <div className="flex justify-between py-1"><span className="text-ink/50">Password</span><span className="font-semibold text-ink">{created.password}</span></div>
+            </div>
+            {created.needsConfirm && (
+              <p className="text-sm text-clay">Note: email confirmation is ON in Supabase, so the client must confirm via their inbox before logging in. Turn it off in Supabase → Authentication if you'd rather hand out passwords directly.</p>
+            )}
+            <div className="flex justify-end">
+              <button className="btn-primary" onClick={() => setNewOpen(false)}>Done</button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <Field label="Company name *"><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Client's business name" /></Field>
+            <Field label="Owner name"><input className="input" value={form.ownerName} onChange={e => setForm({ ...form, ownerName: e.target.value })} placeholder="Optional" /></Field>
+            <Field label="Login email *"><input className="input" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="client@example.com" /></Field>
+            <Field label="Password *"><input className="input" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" /></Field>
+            {err && <p className="text-sm text-clay">{err}</p>}
+            <div className="flex justify-end gap-2">
+              <button className="btn-outline" onClick={() => setNewOpen(false)}>Cancel</button>
+              <button className="btn-primary" onClick={createAccount} disabled={busy}>{busy ? 'Creating…' : 'Create company + login'}</button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )
