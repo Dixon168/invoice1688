@@ -631,3 +631,8 @@ do $$ begin
     using (public.is_super_admin()) with check (public.is_super_admin());
 end $$;
 
+
+-- ==== 11. COMPANY CONTACT FIELDS (shown in Admin manage panel) ====
+alter table public.companies
+  add column if not exists contact_name text,
+  add column if not exists contact_phone text;

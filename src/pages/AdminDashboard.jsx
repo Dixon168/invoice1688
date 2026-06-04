@@ -16,7 +16,7 @@ export default function AdminDashboard() {
   const [companies, setCompanies] = useState(null)
   const [signups, setSignups] = useState([])
   const [newOpen, setNewOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', password: '', ownerName: '', paid_until: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', ownerName: '', paid_until: '', companyPhone: '', address: '', city: '', state: '', postal_code: '', country: '', contactName: '', contactPhone: '' })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [created, setCreated] = useState(null)
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
   const setSignupStatus = async (id, status) => { await supabase.from('signups').update({ status }).eq('id', id); loadSignups() }
   const deleteSignup = async (id) => { if (confirm('Delete this signup?')) { await supabase.from('signups').delete().eq('id', id); loadSignups() } }
 
-  const openNew = () => { setForm({ name: '', email: '', password: '', ownerName: '', paid_until: plusMonths(1) }); setErr(''); setCreated(null); setNewOpen(true) }
+  const openNew = () => { setForm({ name: '', email: '', password: '', ownerName: '', paid_until: plusMonths(1), companyPhone: '', address: '', city: '', state: '', postal_code: '', country: '', contactName: '', contactPhone: '' }); setErr(''); setCreated(null); setNewOpen(true) }
 
   const createAccount = async () => {
     const name = form.name.trim(), email = form.email.trim(), password = form.password
@@ -83,13 +83,18 @@ export default function AdminDashboard() {
 
     // 2) create the company (admin has cross-company rights) with its paid period
     const { data: comp, error: e2 } = await supabase.from('companies')
-      .insert({ name, subscription_status: 'active', paid_until: form.paid_until || null })
+      .insert({
+        name, subscription_status: 'active', paid_until: form.paid_until || null,
+        email: form.email || null, phone: form.companyPhone || null, address: form.address || null,
+        city: form.city || null, state: form.state || null, postal_code: form.postal_code || null, country: form.country || null,
+        contact_name: form.contactName || form.ownerName || null, contact_phone: form.contactPhone || null,
+      })
       .select('id').single()
     if (e2) { setBusy(false); return setErr(e2.message) }
 
     // 3) link the new user to the company as its admin
     const { error: e3 } = await supabase.from('profiles')
-      .insert({ id: newUserId, company_id: comp.id, full_name: form.ownerName || null, role: 'admin' })
+      .insert({ id: newUserId, company_id: comp.id, full_name: form.contactName || form.ownerName || null, role: 'admin' })
     if (e3) { setBusy(false); return setErr(e3.message) }
 
     setBusy(false)
@@ -100,6 +105,7 @@ export default function AdminDashboard() {
   const openManage = (c) => { setManage(c); setErr(''); setMForm({
     name: c.name || '', email: c.email || '', phone: c.phone || '', address: c.address || '',
     city: c.city || '', state: c.state || '', postal_code: c.postal_code || '', country: c.country || '',
+    contact_name: c.contact_name || '', contact_phone: c.contact_phone || '',
     subscription_status: c.subscription_status || 'active', paid_until: c.paid_until || '', newPassword: '' }) }
   const saveManage = async () => {
     setErr(''); setBusy(true)
@@ -107,6 +113,7 @@ export default function AdminDashboard() {
       .update({
         name: mForm.name, email: mForm.email, phone: mForm.phone, address: mForm.address,
         city: mForm.city, state: mForm.state, postal_code: mForm.postal_code, country: mForm.country,
+        contact_name: mForm.contact_name, contact_phone: mForm.contact_phone,
         subscription_status: mForm.subscription_status, paid_until: mForm.paid_until || null,
       })
       .eq('id', manage.id)
@@ -167,7 +174,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button className="btn-outline text-sm" onClick={() => setSignupStatus(s.id, 'contacted')}>Mark contacted</button>
-                      <button className="btn-primary text-sm" onClick={() => { setForm({ name: s.company_name, email: s.email || '', password: '', ownerName: s.contact_name || '', paid_until: /12 months|annual|year/i.test(s.plan || '') ? plusMonths(12) : plusMonths(1) }); setErr(''); setCreated(null); setNewOpen(true); setSignupStatus(s.id, 'activated') }}>Create account</button>
+                      <button className="btn-primary text-sm" onClick={() => { setForm({ name: s.company_name, email: s.email || '', password: '', ownerName: s.contact_name || '', paid_until: /12 months|annual|year/i.test(s.plan || '') ? plusMonths(12) : plusMonths(1), companyPhone: s.company_phone || '', address: s.billing_address || '', city: s.city || '', state: s.state || '', postal_code: s.postal_code || '', country: s.country || '', contactName: s.contact_name || '', contactPhone: s.phone || '' }); setErr(''); setCreated(null); setNewOpen(true); setSignupStatus(s.id, 'activated') }}>Create account</button>
                       <button className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay" onClick={() => deleteSignup(s.id)}><Trash2 size={16} /></button>
                     </div>
                   </div>
@@ -292,12 +299,18 @@ export default function AdminDashboard() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2"><Field label={t('f_company_name')}><input className="input" value={mForm.name} onChange={e => setMForm({ ...mForm, name: e.target.value })} /></Field></div>
             <Field label={t('email')}><input className="input" value={mForm.email} onChange={e => setMForm({ ...mForm, email: e.target.value })} /></Field>
-            <Field label={t('f_phone')}><input className="input" value={mForm.phone} onChange={e => setMForm({ ...mForm, phone: e.target.value })} /></Field>
+            <Field label={t('f_company_phone')}><input className="input" value={mForm.phone} onChange={e => setMForm({ ...mForm, phone: e.target.value })} /></Field>
             <div className="sm:col-span-2"><Field label={t('f_address')}><input className="input" value={mForm.address} onChange={e => setMForm({ ...mForm, address: e.target.value })} /></Field></div>
             <Field label={t('f_city')}><input className="input" value={mForm.city} onChange={e => setMForm({ ...mForm, city: e.target.value })} /></Field>
             <Field label={t('f_state')}><input className="input" value={mForm.state} onChange={e => setMForm({ ...mForm, state: e.target.value })} /></Field>
             <Field label={t('f_postal_code')}><input className="input" value={mForm.postal_code} onChange={e => setMForm({ ...mForm, postal_code: e.target.value })} /></Field>
             <Field label={t('f_country')}><input className="input" value={mForm.country} onChange={e => setMForm({ ...mForm, country: e.target.value })} /></Field>
+          </div>
+
+          <div className="label border-t border-black/[.07] pt-4">{t('gs_contact_sec')}</div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t('f_contact_name')}><input className="input" value={mForm.contact_name} onChange={e => setMForm({ ...mForm, contact_name: e.target.value })} /></Field>
+            <Field label={t('f_contact_phone')}><input className="input" value={mForm.contact_phone} onChange={e => setMForm({ ...mForm, contact_phone: e.target.value })} /></Field>
           </div>
 
           <div className="label border-t border-black/[.07] pt-4">Subscription</div>
