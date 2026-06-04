@@ -558,6 +558,15 @@ const EXTRA9 = {
 }
 for (const l of Object.keys(EXTRA9)) Object.assign(T[l], EXTRA9[l])
 
+const EXTRA10 = {
+  en: { cat_move_to: 'Move to…', cat_dup: 'A category with this name already exists.', cat_dup_sub: 'This category already has a sub-category with this name.' },
+  zh: { cat_move_to: '移动到…', cat_dup: '已有同名分类。', cat_dup_sub: '该分类下已有同名子分类。' },
+  es: { cat_move_to: 'Mover a…', cat_dup: 'Ya existe una categoría con este nombre.', cat_dup_sub: 'Esta categoría ya tiene una subcategoría con este nombre.' },
+  vi: { cat_move_to: 'Chuyển đến…', cat_dup: 'Đã có danh mục trùng tên.', cat_dup_sub: 'Danh mục này đã có danh mục con trùng tên.' },
+  ko: { cat_move_to: '이동…', cat_dup: '같은 이름의 분류가 이미 있습니다.', cat_dup_sub: '이 분류에 같은 이름의 하위 분류가 이미 있습니다.' },
+}
+for (const l of Object.keys(EXTRA10)) Object.assign(T[l], EXTRA10[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
