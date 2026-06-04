@@ -512,6 +512,25 @@ const EXTRA5 = {
 }
 for (const l of Object.keys(EXTRA5)) Object.assign(T[l], EXTRA5[l])
 
+const EXTRA6 = {
+  en: { pr_monthly: 'Monthly', pr_annual: 'Annual', pr_per_year: '/12 months', pr_best: 'Best value · 2 months free',
+        plan_monthly_label: '$19.99 / month', plan_annual_label: '$199.99 / 12 months', gs_choose_plan: 'Choose your plan',
+        th_expires: 'Expires', your_plan: 'Your plan', plan_active_until: 'Active until', plan_no_date: 'no date set' },
+  zh: { pr_monthly: '按月', pr_annual: '按年', pr_per_year: '/12个月', pr_best: '最划算 · 省2个月',
+        plan_monthly_label: '$19.99 / 月', plan_annual_label: '$199.99 / 12个月', gs_choose_plan: '选择套餐',
+        th_expires: '到期', your_plan: '你的套餐', plan_active_until: '有效期至', plan_no_date: '未设日期' },
+  es: { pr_monthly: 'Mensual', pr_annual: 'Anual', pr_per_year: '/12 meses', pr_best: 'Mejor valor · 2 meses gratis',
+        plan_monthly_label: '$19.99 / mes', plan_annual_label: '$199.99 / 12 meses', gs_choose_plan: 'Elige tu plan',
+        th_expires: 'Vence', your_plan: 'Tu plan', plan_active_until: 'Activo hasta', plan_no_date: 'sin fecha' },
+  vi: { pr_monthly: 'Hàng tháng', pr_annual: 'Hàng năm', pr_per_year: '/12 tháng', pr_best: 'Tiết kiệm nhất · miễn phí 2 tháng',
+        plan_monthly_label: '$19.99 / tháng', plan_annual_label: '$199.99 / 12 tháng', gs_choose_plan: 'Chọn gói',
+        th_expires: 'Hết hạn', your_plan: 'Gói của bạn', plan_active_until: 'Hiệu lực đến', plan_no_date: 'chưa đặt ngày' },
+  ko: { pr_monthly: '월간', pr_annual: '연간', pr_per_year: '/12개월', pr_best: '최고의 가치 · 2개월 무료',
+        plan_monthly_label: '월 $19.99', plan_annual_label: '12개월 $199.99', gs_choose_plan: '요금제 선택',
+        th_expires: '만료', your_plan: '내 요금제', plan_active_until: '유효기간', plan_no_date: '날짜 없음' },
+}
+for (const l of Object.keys(EXTRA6)) Object.assign(T[l], EXTRA6[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

@@ -134,7 +134,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button className="btn-outline text-sm" onClick={() => setSignupStatus(s.id, 'contacted')}>Mark contacted</button>
-                      <button className="btn-primary text-sm" onClick={() => { setForm({ name: s.company_name, email: s.email || '', password: '', ownerName: s.contact_name || '', paid_until: plusMonths(1) }); setErr(''); setCreated(null); setNewOpen(true); setSignupStatus(s.id, 'activated') }}>Create account</button>
+                      <button className="btn-primary text-sm" onClick={() => { setForm({ name: s.company_name, email: s.email || '', password: '', ownerName: s.contact_name || '', paid_until: /12 months|annual|year/i.test(s.plan || '') ? plusMonths(12) : plusMonths(1) }); setErr(''); setCreated(null); setNewOpen(true); setSignupStatus(s.id, 'activated') }}>Create account</button>
                       <button className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay" onClick={() => deleteSignup(s.id)}><Trash2 size={16} /></button>
                     </div>
                   </div>
@@ -169,6 +169,7 @@ export default function AdminDashboard() {
                     <tr>
                       <th className="px-5 py-3 font-semibold">{t('th_company')}</th>
                       <th className="px-5 py-3 font-semibold">{t('th_subscription')}</th>
+                      <th className="px-5 py-3 font-semibold">{t('th_expires')}</th>
                       <th className="px-5 py-3 text-center font-semibold">{t('th_users')}</th>
                       <th className="px-5 py-3 text-center font-semibold">{t('nav_customers')}</th>
                       <th className="px-5 py-3 text-center font-semibold">{t('nav_invoices')}</th>
@@ -193,6 +194,11 @@ export default function AdminDashboard() {
                               </span>
                             </button>
                           )})()}
+                        </td>
+                        <td className="px-5 py-3">
+                          {c.paid_until
+                            ? <span className={`tabular-nums ${c.paid_until < todayISO() ? 'font-semibold text-clay' : 'text-ink/70'}`}>{fmtDate(c.paid_until)}</span>
+                            : <span className="text-ink/35">{t('plan_no_date')}</span>}
                         </td>
                         <td className="px-5 py-3 text-center tabular-nums">{c.users}</td>
                         <td className="px-5 py-3 text-center tabular-nums">{c.customers}</td>

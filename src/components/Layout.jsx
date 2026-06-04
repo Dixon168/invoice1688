@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Users, Package, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag, ClipboardList } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { fmtDate } from '../lib/format'
 import { useT } from '../i18n'
 import LanguageSwitcher from './LanguageSwitcher'
 
@@ -30,6 +31,7 @@ export default function Layout({ children }) {
       <div className="px-5 pb-6 pt-6">
         <div className="font-display text-2xl font-700 tracking-tight text-white">invoice<span className="text-clay">168</span></div>
         <div className="mt-1 truncate text-sm text-white/55">{company?.name || '—'}</div>
+        {company?.paid_until && <div className="mt-0.5 text-xs text-white/35">{t('th_expires')}: {fmtDate(company.paid_until)}</div>}
       </div>
       <nav className="flex-1 space-y-1 px-3">
         {nav.map(({ to, key, icon: Icon, end }) => (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { subState, SUB_BADGE, fmtDate } from '../lib/format'
 import { PageHeader, Field } from '../components/ui'
 import { useT } from '../i18n'
 
@@ -57,6 +58,19 @@ export default function Settings() {
   return (
     <>
       <PageHeader title={t('settings_title')} subtitle={t('settings_sub')} />
+      {company && (() => { const s = subState(company); return (
+        <div className="card mb-4 flex max-w-2xl flex-wrap items-center justify-between gap-3 p-5">
+          <div>
+            <div className="label">{t('your_plan')}</div>
+            <div className="mt-1 flex items-center gap-2">
+              <span className={`badge ${SUB_BADGE[s.state]}`}>{t(s.key)}</span>
+              <span className="text-sm text-ink/60">
+                {company.paid_until ? `${t('plan_active_until')} ${fmtDate(company.paid_until)}` : t('plan_no_date')}
+              </span>
+            </div>
+          </div>
+        </div>
+      )})()}
       <div className="card max-w-2xl p-6">
         <div className="mb-5">
           <span className="label">{t('logo')}</span>

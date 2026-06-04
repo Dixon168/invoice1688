@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { useT } from '../i18n'
 import { supabase } from '../lib/supabase'
@@ -15,6 +15,9 @@ const encode = (data) => Object.keys(data).map(k => encodeURIComponent(k) + '=' 
 
 export default function GetStarted() {
   const { t } = useT()
+  const [params] = useSearchParams()
+  const [plan, setPlan] = useState(params.get('plan') === 'annual' ? 'annual' : 'monthly')
+  const planLabel = plan === 'annual' ? 'Invoice168 $199.99/12 months' : 'Invoice168 $19.99/month'
   const [form, setForm] = useState(blank)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
@@ -30,13 +33,13 @@ export default function GetStarted() {
         company_name: form.company_name, contact_name: form.contact_name, email: form.email, phone: form.phone,
         billing_address: form.billing_address, city: form.city, state: form.state,
         postal_code: form.postal_code, country: form.country, notes: form.notes,
-        plan: 'Invoice168 $19.99/month',
+        plan: planLabel,
       })
       // 2) also email the details via Netlify Forms
       await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: encode({ 'form-name': 'signup', 'bot-field': '', plan: 'Invoice168 $19.99/month', ...form }),
+        body: encode({ 'form-name': 'signup', 'bot-field': '', plan: planLabel, ...form }),
       })
       setDone(true)
     } catch (e) {
@@ -69,9 +72,20 @@ export default function GetStarted() {
         <h1 className="font-display text-3xl text-ink">{t('gs_title')}</h1>
         <p className="mt-2 text-sm text-ink/60">{t('gs_sub')}</p>
 
-        <div className="mt-5 flex items-center justify-between rounded-xl bg-moss-800 px-5 py-4 text-white">
-          <span className="text-sm text-white/70">{t('gs_plan')}</span>
-          <span className="font-display text-xl">{t('gs_plan_val')}</span>
+        <div className="mt-5">
+          <div className="label">{t('gs_choose_plan')}</div>
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => setPlan('monthly')}
+              className={`rounded-xl border-2 p-4 text-left transition ${plan === 'monthly' ? 'border-moss-700 bg-moss-50' : 'border-black/10 hover:border-black/20'}`}>
+              <div className="text-xs font-semibold uppercase tracking-wide text-ink/50">{t('pr_monthly')}</div>
+              <div className="mt-1 font-display text-2xl text-ink">$19.99<span className="text-sm text-ink/50">{t('pr_per_month')}</span></div>
+            </button>
+            <button type="button" onClick={() => setPlan('annual')}
+              className={`relative rounded-xl border-2 p-4 text-left transition ${plan === 'annual' ? 'border-moss-700 bg-moss-50' : 'border-black/10 hover:border-black/20'}`}>
+              <div className="text-xs font-semibold uppercase tracking-wide text-moss-700">{t('pr_annual')}</div>
+              <div className="mt-1 font-display text-2xl text-ink">$199.99<span className="text-sm text-ink/50">{t('pr_per_year')}</span></div>
+            </button>
+          </div>
         </div>
 
         <div className="card mt-4 space-y-4 p-6">
