@@ -649,6 +649,15 @@ const EXTRA13 = {
 }
 for (const l of Object.keys(EXTRA13)) Object.assign(T[l], EXTRA13[l])
 
+const EXTRA14 = {
+  en: { st_total_customers: 'Customers', st_owing: 'Owing', st_overdue: 'Overdue', st_outstanding: 'Total outstanding', st_credit: 'Store credit' },
+  zh: { st_total_customers: '客户总数', st_owing: '有欠款', st_overdue: '逾期', st_outstanding: '应收总额', st_credit: '可用余额' },
+  es: { st_total_customers: 'Clientes', st_owing: 'Con deuda', st_overdue: 'Vencidos', st_outstanding: 'Total por cobrar', st_credit: 'Crédito' },
+  vi: { st_total_customers: 'Khách hàng', st_owing: 'Còn nợ', st_overdue: 'Quá hạn', st_outstanding: 'Tổng phải thu', st_credit: 'Số dư' },
+  ko: { st_total_customers: '고객 수', st_owing: '미수금 있음', st_overdue: '연체', st_outstanding: '총 미수금', st_credit: '잔액' },
+}
+for (const l of Object.keys(EXTRA14)) Object.assign(T[l], EXTRA14[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

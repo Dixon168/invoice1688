@@ -79,6 +79,14 @@ export default function Customers() {
     .filter(c => filter === 'all' ? true : filter === 'owing' ? Number(c.balance) > 0 : overdueIds.has(c.id))
     .filter(c => [c.name, c.email, c.phone, c.billing_city].join(' ').toLowerCase().includes(q.toLowerCase()))
 
+  const stats = {
+    total: (rows || []).length,
+    owing: (rows || []).filter(c => Number(c.balance) > 0).length,
+    overdue: (rows || []).filter(c => overdueIds.has(c.id)).length,
+    outstanding: (rows || []).reduce((s, c) => s + Number(c.balance || 0), 0),
+    credit: (rows || []).reduce((s, c) => s + Number(c.credit_balance || 0), 0),
+  }
+
   return (
     <>
       <PageHeader title={t('nav_customers')} subtitle={t('customers_sub')}>
@@ -92,6 +100,31 @@ export default function Customers() {
           action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_customer')}</button>} />
       ) : (
         <>
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+          <button onClick={() => setFilter('all')}
+            className={`card p-4 text-left transition hover:shadow-md ${filter === 'all' ? 'ring-2 ring-moss-600' : ''}`}>
+            <div className="label">{t('st_total_customers')}</div>
+            <div className="mt-1 font-display text-2xl text-ink tabular-nums">{stats.total}</div>
+          </button>
+          <button onClick={() => setFilter('owing')}
+            className={`card p-4 text-left transition hover:shadow-md ${filter === 'owing' ? 'ring-2 ring-moss-600' : ''}`}>
+            <div className="label">{t('st_owing')}</div>
+            <div className="mt-1 font-display text-2xl text-clay tabular-nums">{stats.owing}</div>
+          </button>
+          <button onClick={() => setFilter('overdue')}
+            className={`card p-4 text-left transition hover:shadow-md ${filter === 'overdue' ? 'ring-2 ring-moss-600' : ''}`}>
+            <div className="label">{t('st_overdue')}</div>
+            <div className="mt-1 font-display text-2xl text-red-600 tabular-nums">{stats.overdue}</div>
+          </button>
+          <div className="card p-4">
+            <div className="label">{t('st_outstanding')}</div>
+            <div className="mt-1 font-display text-2xl text-ink tabular-nums">{money(stats.outstanding, cur)}</div>
+          </div>
+          <div className="card p-4">
+            <div className="label">{t('st_credit')}</div>
+            <div className="mt-1 font-display text-2xl text-moss-700 tabular-nums">{money(stats.credit, cur)}</div>
+          </div>
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           {['all', 'owing', 'overdue'].map(t => (
             <button key={t} onClick={() => setFilter(t)}
