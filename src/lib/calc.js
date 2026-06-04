@@ -56,3 +56,43 @@ export async function recalcCustomer(customerId) {
     balance: r(invoiced - paid),
   }).eq('id', customerId)
 }
+
+// ---- Vendor / payables side ----
+export async function recalcVendorBill(billId) {
+  const { data: bill } = await supabase.from('vendor_bills')
+    .select('total, status').eq('id', billId).maybeSingle()
+  if (!bill) return
+  const { data: pays } = await supabase.from('vendor_payments')
+    .select('amount').eq('bill_id', billId)
+  const paid = (pays || []).reduce((s, p) => s + Number(p.amount || 0), 0)
+  const due = Math.round((Number(bill.total || 0) - paid) * 100) / 100
+  let status = bill.status
+  if (bill.status !== 'cancelled') {
+    if (paid <= 0) status = 'unpaid'
+    else if (due > 0.005) status = 'partial'
+    else status = 'paid'
+  }
+  await supabase.from('vendor_bills').update({
+    amount_paid: Math.round(paid * 100) / 100,
+    amount_due: due < 0 ? 0 : due,
+    status,
+  }).eq('id', billId)
+}
+
+export async function recalcVendor(vendorId) {
+  if (!vendorId) return
+  const { data: bills } = await supabase.from('vendor_bills')
+    .select('total, amount_paid, status').eq('vendor_id', vendorId)
+  let billed = 0, paid = 0
+  for (const b of (bills || [])) {
+    if (b.status === 'cancelled') continue
+    billed += Number(b.total || 0)
+    paid += Number(b.amount_paid || 0)
+  }
+  const r = (n) => Math.round(n * 100) / 100
+  await supabase.from('vendors').update({
+    total_billed: r(billed),
+    total_paid: r(paid),
+    balance: r(billed - paid),
+  }).eq('id', vendorId)
+}

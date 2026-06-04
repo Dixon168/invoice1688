@@ -6,12 +6,13 @@ import { money } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
 import { TextCombo } from '../components/Combo'
 
-const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', track_inventory: false, stock_quantity: 0, is_active: true }
+const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: false, stock_quantity: 0, is_active: true }
 
 export default function Products() {
   const { company } = useAuth()
   const [rows, setRows] = useState(null)
   const [taxes, setTaxes] = useState([])
+  const [vendors, setVendors] = useState([])
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blank)
@@ -20,11 +21,12 @@ export default function Products() {
   const cur = company?.default_currency || 'USD'
 
   const load = async () => {
-    const [{ data: p }, { data: t }] = await Promise.all([
+    const [{ data: p }, { data: t }, { data: v }] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('tax_rates').select('id, name, rate').order('name'),
+      supabase.from('vendors').select('id, name').order('name'),
     ])
-    setRows(p || []); setTaxes(t || [])
+    setRows(p || []); setTaxes(t || []); setVendors(v || [])
   }
   useEffect(() => { load() }, [])
 
@@ -41,6 +43,7 @@ export default function Products() {
       category: form.category || null,
       subcategory: form.subcategory || null,
       tax_rate_id: form.tax_rate_id || null,
+      preferred_vendor_id: form.preferred_vendor_id || null,
       track_inventory: !!form.track_inventory,
       stock_quantity: Number(form.stock_quantity) || 0,
       is_active: form.is_active, company_id: company.id,
@@ -122,6 +125,12 @@ export default function Products() {
               </select>
             </Field>
           </div>
+          <Field label="Preferred vendor (where you buy it)">
+            <select className="input" value={form.preferred_vendor_id || ''} onChange={e => setForm({ ...form, preferred_vendor_id: e.target.value })}>
+              <option value="">None</option>
+              {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </select>
+          </Field>
           <div className="rounded-lg border border-black/10 p-3">
             <label className="flex items-center gap-2 text-sm font-medium text-ink/80">
               <input type="checkbox" checked={form.track_inventory} onChange={e => setForm({ ...form, track_inventory: e.target.checked })} /> Track inventory / stock

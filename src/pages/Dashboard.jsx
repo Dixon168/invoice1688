@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, TrendingUp, Clock, AlertTriangle, Users } from 'lucide-react'
+import { Plus, TrendingUp, Clock, AlertTriangle, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, STATUS } from '../lib/format'
@@ -23,9 +23,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: invs }, { data: custs }] = await Promise.all([
+      const [{ data: invs }, { data: custs }, { data: vends }] = await Promise.all([
         supabase.from('invoices').select('*, customer:customers(name)').order('created_at', { ascending: false }),
         supabase.from('customers').select('id'),
+        supabase.from('vendors').select('balance'),
       ])
       const list = invs || []
       const now = new Date()
@@ -33,8 +34,9 @@ export default function Dashboard() {
       const outstanding = list.filter(i => i.status !== 'cancelled').reduce((s, i) => s + Number(i.amount_due || 0), 0)
       const paidThisMonth = list.filter(i => i.paid_at && new Date(i.paid_at) >= monthStart).reduce((s, i) => s + Number(i.amount_paid || 0), 0)
       const overdue = list.filter(i => i.status !== 'paid' && i.status !== 'cancelled' && i.due_date && new Date(i.due_date) < now)
+      const payable = (vends || []).reduce((s, v) => s + Number(v.balance || 0), 0)
       setData({
-        outstanding, paidThisMonth, overdueCount: overdue.length,
+        outstanding, paidThisMonth, overdueCount: overdue.length, payable,
         overdueAmt: overdue.reduce((s, i) => s + Number(i.amount_due || 0), 0),
         customers: (custs || []).length, recent: list.slice(0, 6),
       })
@@ -53,7 +55,7 @@ export default function Dashboard() {
         <Stat icon={Clock} label="Outstanding" value={money(data.outstanding, cur)} tone="clay" />
         <Stat icon={TrendingUp} label="Paid this month" value={money(data.paidThisMonth, cur)} tone="moss" />
         <Stat icon={AlertTriangle} label="Overdue" value={`${data.overdueCount}`} tone="clay" />
-        <Stat icon={Users} label="Customers" value={`${data.customers}`} />
+        <Stat icon={Wallet} label="You owe (bills)" value={money(data.payable, cur)} tone="clay" />
       </div>
 
       <div className="card mt-6 overflow-hidden">

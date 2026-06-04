@@ -15,6 +15,8 @@ import Invoices from './pages/Invoices'
 import InvoiceForm from './pages/InvoiceForm'
 import InvoiceDetail from './pages/InvoiceDetail'
 import Payments from './pages/Payments'
+import Vendors from './pages/Vendors'
+import Bills from './pages/Bills'
 import Settings from './pages/Settings'
 
 function Protected({ children }) {
@@ -51,6 +53,8 @@ function Shell() {
       <Route path="/customers" element={<Protected><Customers /></Protected>} />
       <Route path="/products" element={<Protected><Products /></Protected>} />
       <Route path="/payments" element={<Protected><Payments /></Protected>} />
+      <Route path="/vendors" element={<Protected><Vendors /></Protected>} />
+      <Route path="/bills" element={<Protected><Bills /></Protected>} />
       <Route path="/tax-rates" element={<Protected><TaxRates /></Protected>} />
       <Route path="/settings" element={<Protected><Settings /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
