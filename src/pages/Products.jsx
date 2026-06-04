@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Package, Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { Package, Plus, Search, Pencil, Trash2, History } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money } from '../lib/format'
+import { money, fmtDate } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
 import { TextCombo } from '../components/Combo'
 import { adjustStock } from '../lib/inventory'
@@ -68,6 +68,19 @@ export default function Products() {
     await supabase.from('products').delete().eq('id', p.id); load()
   }
   const openAdjust = (p) => { setAdj(p); setAdjForm({ delta: '', note: '' }) }
+  const [hist, setHist] = useState(null)
+  const [histRows, setHistRows] = useState(null)
+  const openHistory = async (p) => {
+    setHist(p); setHistRows(null)
+    const { data } = await supabase.from('inventory_movements')
+      .select('*').eq('product_id', p.id).order('created_at', { ascending: false })
+    setHistRows(data || [])
+  }
+  const moveLabel = (m) => {
+    if (m.reason === 'receiving') return t('mv_received')
+    if (m.reason === 'invoice') return t('mv_sold')
+    return t('mv_adjusted')
+  }
   const saveAdjust = async () => {
     const delta = Number(adjForm.delta)
     if (!delta) return
@@ -202,6 +215,7 @@ export default function Products() {
                     </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
+                        <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" title={t('prod_history')} onClick={() => openHistory(p)}><History size={16} /></button>
                         {p.track_inventory && <button className="rounded-md p-2 text-ink/50 hover:bg-moss-50 hover:text-moss-700" title="Adjust stock" onClick={() => openAdjust(p)}><Package size={16} /></button>}
                         <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" onClick={() => openEdit(p)}><Pencil size={16} /></button>
                         <button className="rounded-md p-2 text-ink/50 hover:bg-clay/10 hover:text-clay" onClick={() => remove(p)}><Trash2 size={16} /></button>
@@ -312,6 +326,34 @@ export default function Products() {
           <button className="btn-outline" onClick={() => setMoveCat(null)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={saveMove}>{t('save')}</button>
         </div>
+      </Modal>
+      <Modal open={!!hist} onClose={() => setHist(null)} title={`${t('prod_history')} · ${hist?.name || ''}`} wide>
+        {histRows === null ? <Spinner /> : histRows.length === 0 ? (
+          <p className="py-8 text-center text-sm text-ink/50">{t('mv_none')}</p>
+        ) : (
+          <div className="max-h-[60vh] overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-white text-left text-xs uppercase tracking-wide text-ink/50">
+                <tr>
+                  <th className="py-2 pr-2 font-semibold">{t('th_date')}</th>
+                  <th className="py-2 px-2 font-semibold">{t('th_status')}</th>
+                  <th className="py-2 px-2 text-right font-semibold">{t('th_change')}</th>
+                  <th className="py-2 pl-2 font-semibold">{t('f_note')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/[.05]">
+                {histRows.map(m => (
+                  <tr key={m.id}>
+                    <td className="py-2 pr-2 text-ink/70">{fmtDate(m.created_at)}</td>
+                    <td className="py-2 px-2"><span className="badge bg-black/5 text-ink/70">{moveLabel(m)}</span></td>
+                    <td className={`py-2 px-2 text-right font-semibold tabular-nums ${Number(m.change) >= 0 ? 'text-moss-700' : 'text-clay'}`}>{Number(m.change) >= 0 ? '+' : ''}{Number(m.change)}</td>
+                    <td className="py-2 pl-2 text-ink/55">{m.note || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Modal>
     </>
   )

@@ -567,6 +567,15 @@ const EXTRA10 = {
 }
 for (const l of Object.keys(EXTRA10)) Object.assign(T[l], EXTRA10[l])
 
+const EXTRA11 = {
+  en: { prod_history: 'History', mv_received: 'Received', mv_sold: 'Sold', mv_adjusted: 'Adjusted', mv_none: 'No stock history yet.', th_change: 'Change' },
+  zh: { prod_history: '历史', mv_received: '收货', mv_sold: '售出', mv_adjusted: '调整', mv_none: '还没有库存记录。', th_change: '变动' },
+  es: { prod_history: 'Historial', mv_received: 'Recibido', mv_sold: 'Vendido', mv_adjusted: 'Ajustado', mv_none: 'Aún no hay historial de stock.', th_change: 'Cambio' },
+  vi: { prod_history: 'Lịch sử', mv_received: 'Nhập', mv_sold: 'Bán', mv_adjusted: 'Điều chỉnh', mv_none: 'Chưa có lịch sử kho.', th_change: 'Thay đổi' },
+  ko: { prod_history: '이력', mv_received: '입고', mv_sold: '판매', mv_adjusted: '조정', mv_none: '아직 재고 이력이 없습니다.', th_change: '변동' },
+}
+for (const l of Object.keys(EXTRA11)) Object.assign(T[l], EXTRA11[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
