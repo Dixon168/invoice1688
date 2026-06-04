@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Pencil, Trash2, Plus, Printer } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Plus, FileDown, Package } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, todayISO, STATUS } from '../lib/format'
 import { recalcInvoice, recalcCustomer } from '../lib/calc'
+import { documentPDF, packingSlipPDF } from '../lib/pdf'
 import { Spinner, Modal, Field } from '../components/ui'
 
 export default function InvoiceDetail() {
@@ -70,7 +71,8 @@ export default function InvoiceDetail() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Invoices</button>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-outline" onClick={() => window.print()}><Printer size={16} /> Print</button>
+          <button className="btn-outline" onClick={() => documentPDF({ kind: 'invoice', doc: inv, items, customer, company })}><FileDown size={16} /> PDF</button>
+          <button className="btn-outline" onClick={() => packingSlipPDF({ doc: inv, items, customer, company })}><Package size={16} /> Packing slip</button>
           <Link className="btn-outline" to={`/invoices/${id}/edit`}><Pencil size={16} /> Edit</Link>
           <button className="btn-danger" onClick={removeInvoice}><Trash2 size={16} /> Delete</button>
         </div>

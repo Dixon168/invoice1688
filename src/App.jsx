@@ -14,8 +14,10 @@ import Products from './pages/Products'
 import Categories from './pages/Categories'
 import TaxRates from './pages/TaxRates'
 import Invoices from './pages/Invoices'
-import InvoiceForm from './pages/InvoiceForm'
+import DocumentForm from './pages/DocumentForm'
 import InvoiceDetail from './pages/InvoiceDetail'
+import Estimates from './pages/Estimates'
+import EstimateDetail from './pages/EstimateDetail'
 import Payments from './pages/Payments'
 import Vendors from './pages/Vendors'
 import VendorDetail from './pages/VendorDetail'
@@ -50,9 +52,13 @@ function Shell() {
       <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
       <Route path="/invoices" element={<Protected><Invoices /></Protected>} />
-      <Route path="/invoices/new" element={<Protected><InvoiceForm /></Protected>} />
+      <Route path="/invoices/new" element={<Protected><DocumentForm kind="invoice" /></Protected>} />
       <Route path="/invoices/:id" element={<Protected><InvoiceDetail /></Protected>} />
-      <Route path="/invoices/:id/edit" element={<Protected><InvoiceForm /></Protected>} />
+      <Route path="/invoices/:id/edit" element={<Protected><DocumentForm kind="invoice" /></Protected>} />
+      <Route path="/estimates" element={<Protected><Estimates /></Protected>} />
+      <Route path="/estimates/new" element={<Protected><DocumentForm kind="estimate" /></Protected>} />
+      <Route path="/estimates/:id" element={<Protected><EstimateDetail /></Protected>} />
+      <Route path="/estimates/:id/edit" element={<Protected><DocumentForm kind="estimate" /></Protected>} />
       <Route path="/customers" element={<Protected><Customers /></Protected>} />
       <Route path="/customers/:id" element={<Protected><CustomerDetail /></Protected>} />
       <Route path="/products" element={<Protected><Products /></Protected>} />

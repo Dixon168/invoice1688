@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Package, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag } from 'lucide-react'
+import { LayoutDashboard, Users, Package, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag, ClipboardList } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/estimates', label: 'Estimates', icon: ClipboardList },
   { to: '/invoices', label: 'Invoices', icon: FileText },
   { to: '/customers', label: 'Customers', icon: Users },
   { to: '/products', label: 'Products', icon: Package },

@@ -8,9 +8,24 @@ import { computeTotals, recalcCustomer } from '../lib/calc'
 import { Spinner, Field } from '../components/ui'
 import { ItemCombo, NameCombo } from '../components/Combo'
 
+const CFG = {
+  invoice: {
+    table: 'invoices', itemTable: 'invoice_items', itemFK: 'invoice_id',
+    numField: 'invoice_number', prefixField: 'invoice_prefix', seqField: 'next_invoice_seq', prefixDefault: 'INV-',
+    dateField: 'due_date', dateLabel: 'Due date', basePath: '/invoices', title: 'invoice',
+    primaryLabel: 'Save & mark sent',
+  },
+  estimate: {
+    table: 'estimates', itemTable: 'estimate_items', itemFK: 'estimate_id',
+    numField: 'estimate_number', prefixField: 'estimate_prefix', seqField: 'next_estimate_seq', prefixDefault: 'EST-',
+    dateField: 'expiry_date', dateLabel: 'Expiry date', basePath: '/estimates', title: 'estimate',
+    primaryLabel: 'Save & send',
+  },
+}
 const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', quantity: 1, unit_price: 0, tax_rate: 0 })
 
-export default function InvoiceForm() {
+export default function DocumentForm({ kind = 'invoice' }) {
+  const cfg = CFG[kind]
   const { id } = useParams()
   const editing = !!id
   const navigate = useNavigate()
@@ -25,9 +40,9 @@ export default function InvoiceForm() {
 
   const [customerId, setCustomerId] = useState('')
   const [customerQuery, setCustomerQuery] = useState('')
-  const [invoiceNumber, setInvoiceNumber] = useState('')
+  const [number, setNumber] = useState('')
   const [issueDate, setIssueDate] = useState(todayISO())
-  const [dueDate, setDueDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [status, setStatus] = useState('draft')
   const [isExempt, setIsExempt] = useState(false)
   const [notes, setNotes] = useState('')
@@ -44,57 +59,44 @@ export default function InvoiceForm() {
       setCustomers(c || []); setProducts(p || []); setTaxes(t || [])
 
       if (editing) {
-        const { data: inv } = await supabase.from('invoices').select('*').eq('id', id).maybeSingle()
-        const { data: its } = await supabase.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
-        if (inv) {
-          setCustomerId(inv.customer_id); setInvoiceNumber(inv.invoice_number)
-          setCustomerQuery((c || []).find(x => x.id === inv.customer_id)?.name || '')
-          setIssueDate(inv.issue_date); setDueDate(inv.due_date || ''); setStatus(inv.status)
-          setIsExempt(inv.is_exempt); setNotes(inv.notes || ''); setTerms(inv.terms || '')
+        const { data: d } = await supabase.from(cfg.table).select('*').eq('id', id).maybeSingle()
+        const { data: its } = await supabase.from(cfg.itemTable).select('*').eq(cfg.itemFK, id).order('sort_order')
+        if (d) {
+          setCustomerId(d.customer_id); setNumber(d[cfg.numField])
+          setCustomerQuery((c || []).find(x => x.id === d.customer_id)?.name || '')
+          setIssueDate(d.issue_date); setEndDate(d[cfg.dateField] || ''); setStatus(d.status)
+          setIsExempt(d.is_exempt); setNotes(d.notes || ''); setTerms(d.terms || '')
           setItems((its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) })))
         }
         setLoading(false)
       } else {
-        const seq = company?.next_invoice_seq || 1
-        setInvoiceNumber(`${company?.invoice_prefix || 'INV-'}${String(seq).padStart(4, '0')}`)
+        const seq = company?.[cfg.seqField] || 1
+        setNumber(`${company?.[cfg.prefixField] || cfg.prefixDefault}${String(seq).padStart(4, '0')}`)
       }
     })()
-  }, [id])
+  }, [id, kind])
 
   const pickCustomer = (cust) => {
     setCustomerId(cust.id); setCustomerQuery(cust.name)
     if (!editing) {
       const days = Number(cust.payment_terms) || 0
       const d = new Date(issueDate); d.setDate(d.getDate() + days)
-      setDueDate(d.toISOString().slice(0, 10))
+      setEndDate(d.toISOString().slice(0, 10))
     }
   }
   const createCustomer = async (name) => {
-    const { data, error } = await supabase.from('customers')
-      .insert({ company_id: company.id, name }).select('*').single()
+    const { data, error } = await supabase.from('customers').insert({ company_id: company.id, name }).select('*').single()
     if (error) { alert(error.message); return }
-    setCustomers(prev => [...prev, data])
-    pickCustomer(data)
+    setCustomers(prev => [...prev, data]); pickCustomer(data)
   }
-
   const applyProduct = (idx, p) => {
     const tax = p?.tax_rate_id ? (taxes.find(t => t.id === p.tax_rate_id)?.rate || 0) : 0
-    setItems(items.map((it, i) => i === idx ? {
-      ...it, product_id: p.id,
-      description: p.name,
-      unit_price: Number(p.unit_price) || 0,
-      tax_rate: Number(tax),
-    } : it))
+    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, unit_price: Number(p.unit_price) || 0, tax_rate: Number(tax) } : it))
   }
-
   const createAndPick = async (idx, name) => {
-    const line = items[idx]
-    const { data, error } = await supabase.from('products')
-      .insert({ company_id: company.id, name, unit_price: Number(line?.unit_price) || 0 })
-      .select('*').single()
+    const { data, error } = await supabase.from('products').insert({ company_id: company.id, name, unit_price: Number(items[idx]?.unit_price) || 0 }).select('*').single()
     if (error) { alert(error.message); return }
-    setProducts(prev => [...prev, data])
-    applyProduct(idx, data)
+    setProducts(prev => [...prev, data]); applyProduct(idx, data)
   }
   const setItem = (idx, patch) => setItems(items.map((it, i) => i === idx ? { ...it, ...patch } : it))
   const addItem = () => setItems([...items, emptyItem()])
@@ -104,45 +106,41 @@ export default function InvoiceForm() {
 
   const save = async (newStatus) => {
     if (!customerId) return alert('Please choose a customer.')
-    if (!invoiceNumber.trim()) return alert('Invoice number is required.')
+    if (!number.trim()) return alert(`${cfg.title} number is required.`)
     setBusy(true)
     const c = customers.find(x => x.id === customerId)
-    const finalStatus = newStatus || status
     const head = {
-      company_id: company.id, invoice_number: invoiceNumber.trim(), customer_id: customerId,
-      issue_date: issueDate, due_date: dueDate || null, status: finalStatus,
+      company_id: company.id, [cfg.numField]: number.trim(), customer_id: customerId,
+      issue_date: issueDate, [cfg.dateField]: endDate || null, status: newStatus || status,
       subtotal: totals.subtotal, tax_total: totals.taxTotal, total: totals.total,
-      amount_due: totals.total, currency: cur, is_exempt: isExempt,
-      notes, terms,
+      currency: cur, is_exempt: isExempt, notes, terms,
       billing_address: c?.billing_address, billing_city: c?.billing_city, billing_state: c?.billing_state,
       billing_country: c?.billing_country, billing_postal_code: c?.billing_postal_code,
     }
+    if (kind === 'invoice') head.amount_due = totals.total
 
-    let invoiceId = id
+    let docId = id
     if (editing) {
-      await supabase.from('invoices').update(head).eq('id', id)
-      await supabase.from('invoice_items').delete().eq('invoice_id', id)
+      await supabase.from(cfg.table).update(head).eq('id', id)
+      await supabase.from(cfg.itemTable).delete().eq(cfg.itemFK, id)
     } else {
-      const { data, error } = await supabase.from('invoices').insert(head).select('id').single()
+      const { data, error } = await supabase.from(cfg.table).insert(head).select('id').single()
       if (error) { setBusy(false); return alert(error.message) }
-      invoiceId = data.id
-      const seq = (company?.next_invoice_seq || 1) + 1
-      await supabase.from('companies').update({ next_invoice_seq: seq }).eq('id', company.id)
+      docId = data.id
+      await supabase.from('companies').update({ [cfg.seqField]: (company?.[cfg.seqField] || 1) + 1 }).eq('id', company.id)
       refreshCompany()
     }
-
     const rows = items.map((it, idx) => ({
-      invoice_id: invoiceId, product_id: it.product_id || null, description: it.description || '(item)',
+      [cfg.itemFK]: docId, product_id: it.product_id || null, description: it.description || '(item)',
       quantity: Number(it.quantity) || 0, unit_price: Number(it.unit_price) || 0,
       tax_rate: isExempt ? 0 : (Number(it.tax_rate) || 0),
       line_total: Math.round((Number(it.quantity) || 0) * (Number(it.unit_price) || 0) * 100) / 100,
       sort_order: idx,
     }))
-    await supabase.from('invoice_items').insert(rows)
-    await recalcCustomer(customerId)
-
+    await supabase.from(cfg.itemTable).insert(rows)
+    if (kind === 'invoice') await recalcCustomer(customerId)
     setBusy(false)
-    navigate(`/invoices/${invoiceId}`)
+    navigate(`${cfg.basePath}/${docId}`)
   }
 
   if (loading) return <Spinner />
@@ -150,7 +148,7 @@ export default function InvoiceForm() {
   return (
     <div>
       <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Back</button>
-      <h1 className="mb-6 font-display text-3xl text-ink">{editing ? 'Edit invoice' : 'New invoice'}</h1>
+      <h1 className="mb-6 font-display text-3xl capitalize text-ink">{editing ? `Edit ${cfg.title}` : `New ${cfg.title}`}</h1>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="card p-5"><Field label="Customer *">
@@ -160,12 +158,12 @@ export default function InvoiceForm() {
             placeholder="Search or add customer…" createLabel="Create customer" />
           {!customerId && customerQuery && <p className="mt-1 text-xs text-clay">Pick a match or create the customer.</p>}
         </Field></div>
-        <div className="card p-5"><Field label="Invoice number">
-          <input className="input" value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} />
+        <div className="card p-5"><Field label={`${cfg.title} number`}>
+          <input className="input capitalize-first" value={number} onChange={e => setNumber(e.target.value)} />
         </Field></div>
         <div className="card grid grid-cols-2 gap-3 p-5">
           <Field label="Issue date"><input className="input" type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></Field>
-          <Field label="Due date"><input className="input" type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></Field>
+          <Field label={cfg.dateLabel}><input className="input" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></Field>
         </div>
       </div>
 
@@ -188,8 +186,7 @@ export default function InvoiceForm() {
                   <td className="px-3 py-2">
                     <ItemCombo value={it.description} products={products} currency={cur}
                       onText={t => setItem(idx, { description: t, product_id: '' })}
-                      onPick={p => applyProduct(idx, p)}
-                      onCreate={name => createAndPick(idx, name)} />
+                      onPick={p => applyProduct(idx, p)} onCreate={name => createAndPick(idx, name)} />
                   </td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value })} /></td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} /></td>
@@ -209,9 +206,9 @@ export default function InvoiceForm() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="card space-y-4 p-5">
           <Field label="Notes"><textarea className="input min-h-[70px]" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Visible to customer" /></Field>
-          <Field label="Terms"><textarea className="input min-h-[60px]" value={terms} onChange={e => setTerms(e.target.value)} placeholder="Payment terms, etc." /></Field>
+          <Field label="Terms"><textarea className="input min-h-[60px]" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
           <label className="flex items-center gap-2 text-sm text-ink/80">
-            <input type="checkbox" checked={isExempt} onChange={e => setIsExempt(e.target.checked)} /> Tax exempt (no tax on this invoice)
+            <input type="checkbox" checked={isExempt} onChange={e => setIsExempt(e.target.checked)} /> Tax exempt (no tax)
           </label>
         </div>
         <div className="card p-5">
@@ -222,7 +219,7 @@ export default function InvoiceForm() {
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <button className="btn-outline" onClick={() => save('draft')} disabled={busy}>Save draft</button>
-            <button className="btn-primary flex-1" onClick={() => save('sent')} disabled={busy}>{busy ? 'Saving…' : 'Save & mark sent'}</button>
+            <button className="btn-primary flex-1" onClick={() => save('sent')} disabled={busy}>{busy ? 'Saving…' : cfg.primaryLabel}</button>
           </div>
         </div>
       </div>
