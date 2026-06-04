@@ -86,6 +86,7 @@ export default function Products() {
   const topCats = cats.filter(c => !c.parent_id)
   const selectedTop = topCats.find(c => c.name === form.category)
   const subCats = selectedTop ? cats.filter(c => c.parent_id === selectedTop.id) : []
+  const filterCatNames = [...new Set([...topCats.map(c => c.name), ...(rows || []).map(r => r.category).filter(Boolean)])]
 
   const createCat = async (name, parentId) => {
     const { data, error } = await supabase.from('categories')
@@ -166,7 +167,7 @@ export default function Products() {
             </div>
             <select className="input max-w-[200px] py-1.5 text-sm" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
               <option value="">All categories</option>
-              {catSuggestions.map(c => <option key={c} value={c}>{c}</option>)}
+              {filterCatNames.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <button onClick={() => setLowOnly(v => !v)}
               className={`badge px-3 py-1.5 ${lowOnly ? 'bg-red-600 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
