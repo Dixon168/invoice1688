@@ -115,6 +115,39 @@ export default function Products() {
     setForm(f => ({ ...f, subcategory: val }))
   }
 
+  // quick "move to category" for a product straight from the list
+  const [moveCat, setMoveCat] = useState(null)
+  const [moveForm, setMoveForm] = useState({ category: '', subcategory: '' })
+  const openMove = (p) => { setMoveCat(p); setMoveForm({ category: p.category || '', subcategory: p.subcategory || '' }) }
+  const moveTop = topCats.find(c => c.name === moveForm.category)
+  const moveSubs = moveTop ? cats.filter(c => c.parent_id === moveTop.id) : []
+  const onMoveCategory = async (val) => {
+    if (val === '__new__') {
+      const name = (prompt('New category name') || '').trim()
+      if (!name) return
+      const c = await createCat(name, null)
+      if (c) setMoveForm(f => ({ ...f, category: name, subcategory: '' }))
+      return
+    }
+    setMoveForm(f => ({ ...f, category: val, subcategory: '' }))
+  }
+  const onMoveSubcategory = async (val) => {
+    if (val === '__new__') {
+      const top = topCats.find(c => c.name === moveForm.category)
+      if (!top) { alert('Pick a category first.'); return }
+      const name = (prompt('New sub-category name') || '').trim()
+      if (!name) return
+      const s = await createCat(name, top.id)
+      if (s) setMoveForm(f => ({ ...f, subcategory: name }))
+      return
+    }
+    setMoveForm(f => ({ ...f, subcategory: val }))
+  }
+  const saveMove = async () => {
+    await supabase.from('products').update({ category: moveForm.category || null, subcategory: moveForm.subcategory || null }).eq('id', moveCat.id)
+    setMoveCat(null); load()
+  }
+
   return (
     <>
       <PageHeader title={t('products_title')} subtitle={t('products_sub')}>
@@ -149,7 +182,11 @@ export default function Products() {
                 {filtered.map(p => (
                   <tr key={p.id} className="cursor-pointer hover:bg-sand/40" onClick={() => openEdit(p)}>
                     <td className="px-4 py-3"><div className="font-semibold text-ink">{p.name}</div>{p.sku && <div className="text-xs text-ink/45">{p.sku}</div>}</td>
-                    <td className="px-4 py-3 text-ink/70">{p.category || '—'}{p.subcategory ? <span className="text-ink/40"> › {p.subcategory}</span> : null}</td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => openMove(p)} className="text-left text-ink/70 hover:text-moss-700" title={t('cat_move_to')}>
+                        {p.category || '—'}{p.subcategory ? <span className="text-ink/40"> › {p.subcategory}</span> : null}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-right tabular-nums text-ink/60">{p.cost ? money(p.cost, cur) : '—'}</td>
                     <td className="px-4 py-3 text-right font-medium tabular-nums">{money(p.unit_price, cur)}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-ink/70">
@@ -247,6 +284,31 @@ export default function Products() {
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setAdj(null)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={saveAdjust} disabled={busy}>{busy ? 'Saving…' : 'Apply'}</button>
+        </div>
+      </Modal>
+
+      <Modal open={!!moveCat} onClose={() => setMoveCat(null)} title={`${t('cat_move_to')} · ${moveCat?.name || ''}`}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t('f_category')}>
+            <select className="input" value={moveForm.category || ''} onChange={e => onMoveCategory(e.target.value)}>
+              <option value="">—</option>
+              {topCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              {moveForm.category && !topCats.some(c => c.name === moveForm.category) && <option value={moveForm.category}>{moveForm.category}</option>}
+              <option value="__new__">+ {t('add')}…</option>
+            </select>
+          </Field>
+          <Field label={t('f_subcategory')}>
+            <select className="input" value={moveForm.subcategory || ''} onChange={e => onMoveSubcategory(e.target.value)} disabled={!moveForm.category}>
+              <option value="">—</option>
+              {moveSubs.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              {moveForm.subcategory && !moveSubs.some(c => c.name === moveForm.subcategory) && <option value={moveForm.subcategory}>{moveForm.subcategory}</option>}
+              <option value="__new__">+ {t('add')}…</option>
+            </select>
+          </Field>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button className="btn-outline" onClick={() => setMoveCat(null)}>{t('cancel')}</button>
+          <button className="btn-primary" onClick={saveMove}>{t('save')}</button>
         </div>
       </Modal>
     </>
