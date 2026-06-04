@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, FileText } from 'lucide-react'
+import { ArrowLeft, Plus, FileText, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, STATUS, isOverdue } from '../lib/format'
-import { recalcInvoice, recalcCustomer } from '../lib/calc'
+import { recalcInvoice, recalcCustomer, addCustomerCredit, applyStoreCredit } from '../lib/calc'
 import { Spinner } from '../components/ui'
 import AllocatePayment from '../components/AllocatePayment'
 import { useT } from '../i18n'
@@ -39,15 +39,37 @@ export default function CustomerDetail() {
   const items = open.map(i => ({ id: i.id, label: i.invoice_number, sub: `Due ${fmtDate(i.due_date)}`, due: Number(i.amount_due) }))
 
   const receivePayment = async (rows, meta) => {
+    let remCredit = Math.round(Number(meta.useCredit || 0) * 100) / 100
     for (const r of rows) {
-      await supabase.from('payments').insert({
-        company_id: company.id, invoice_id: r.id, customer_id: id,
-        amount: r.amount, method: meta.method, payment_date: meta.payment_date, reference: meta.reference,
-      })
+      const amt = Math.round(Number(r.amount) * 100) / 100
+      const creditPart = Math.round(Math.min(remCredit, amt) * 100) / 100
+      if (creditPart > 0) {
+        await supabase.from('payments').insert({
+          company_id: company.id, invoice_id: r.id, customer_id: id,
+          amount: creditPart, method: 'credit', payment_date: meta.payment_date, notes: 'Store credit applied',
+        })
+        remCredit = Math.round((remCredit - creditPart) * 100) / 100
+      }
+      const cashPart = Math.round((amt - creditPart) * 100) / 100
+      if (cashPart > 0) {
+        await supabase.from('payments').insert({
+          company_id: company.id, invoice_id: r.id, customer_id: id,
+          amount: cashPart, method: meta.method, payment_date: meta.payment_date, reference: meta.reference,
+        })
+      }
       await recalcInvoice(r.id)
     }
+    const creditUsed = Math.round(((Number(meta.useCredit || 0)) - remCredit) * 100) / 100
+    if (creditUsed > 0) await addCustomerCredit(id, -creditUsed)
     await recalcCustomer(id)
     setPayOpen(false); load()
+  }
+
+  const applyCreditAuto = async () => {
+    if (!Number(c.credit_balance)) return
+    const sorted = [...open].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
+    await applyStoreCredit(company.id, id, c.credit_balance, sorted.map(i => ({ id: i.id, amount_due: i.amount_due })))
+    load()
   }
 
   return (
@@ -62,9 +84,15 @@ export default function CustomerDetail() {
         <div className="text-right">
           <div className="label">{t('m_balance_owed')}</div>
           <div className="font-display text-3xl text-clay tabular-nums">{money(c.balance, cur)}</div>
+          {Number(c.credit_balance) > 0 && (
+            <div className="mt-1 text-sm text-moss-700">{t('cr_available')}: <b className="tabular-nums">{money(c.credit_balance, cur)}</b></div>
+          )}
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> {t('receive_payment')}</button>
+          {Number(c.credit_balance) > 0 && open.length > 0 && (
+            <button className="btn-outline" onClick={applyCreditAuto}><Wallet size={16} /> {t('cr_use_auto')}</button>
+          )}
           <Link className="btn-outline" to={`/invoices/new?customer=${id}`}><FileText size={16} /> New invoice</Link>
           <Link className="btn-outline" to={`/estimates/new?customer=${id}`}>New estimate</Link>
         </div>
@@ -115,7 +143,7 @@ export default function CustomerDetail() {
 
       <AllocatePayment open={payOpen} onClose={() => setPayOpen(false)} title={`${t('receive_payment')} · ${c.name}`}
         items={items} currency={cur} methods={['cash', 'card', 'bank_transfer', 'check', 'other']} defaultMethod="cash"
-        onSubmit={receivePayment} />
+        creditAvailable={Number(c.credit_balance) || 0} onSubmit={receivePayment} />
     </div>
   )
 }

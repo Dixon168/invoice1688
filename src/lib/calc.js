@@ -107,3 +107,26 @@ export async function addCustomerCredit(customerId, delta) {
   await supabase.from('customers').update({ credit_balance: nb }).eq('id', customerId)
   return nb
 }
+
+// Apply store credit across invoices (in the given order). Returns the amount used.
+// invoices: [{ id, amount_due }]
+export async function applyStoreCredit(companyId, customerId, available, invoices) {
+  const today = new Date().toISOString().slice(0, 10)
+  let remaining = Math.round(Number(available || 0) * 100) / 100
+  let used = 0
+  for (const inv of (invoices || [])) {
+    if (remaining <= 0) break
+    const due = Math.round(Number(inv.amount_due || 0) * 100) / 100
+    if (due <= 0) continue
+    const part = Math.min(remaining, due)
+    await supabase.from('payments').insert({
+      company_id: companyId, invoice_id: inv.id, customer_id: customerId,
+      amount: part, method: 'credit', payment_date: today, notes: 'Store credit applied',
+    })
+    await recalcInvoice(inv.id)
+    remaining = Math.round((remaining - part) * 100) / 100
+    used = Math.round((used + part) * 100) / 100
+  }
+  if (used > 0) { await addCustomerCredit(customerId, -used); await recalcCustomer(customerId) }
+  return used
+}

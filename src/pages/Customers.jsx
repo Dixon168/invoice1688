@@ -104,7 +104,10 @@ export default function Customers() {
                     </td>
                     <td className="px-4 py-3 text-ink/70">{c.email || c.phone || '—'}</td>
                     <td className="px-4 py-3 text-ink/70">{c.billing_city || '—'}</td>
-                    <td className={`px-4 py-3 text-right font-medium tabular-nums ${Number(c.balance) > 0 ? 'text-clay' : 'text-ink/40'}`}>{money(c.balance, cur)}</td>
+                    <td className={`px-4 py-3 text-right font-medium tabular-nums ${Number(c.balance) > 0 ? 'text-clay' : 'text-ink/40'}`}>
+                      {money(c.balance, cur)}
+                      {Number(c.credit_balance) > 0 && <div className="text-xs font-normal text-moss-700">+{money(c.credit_balance, cur)} {t('cr_balance')}</div>}
+                    </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
                         <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" onClick={() => openEdit(c)}><Pencil size={16} /></button>

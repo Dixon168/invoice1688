@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Pencil, Trash2, Plus, FileDown, Package } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Plus, FileDown, Package, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, todayISO, STATUS } from '../lib/format'
-import { recalcInvoice, recalcCustomer } from '../lib/calc'
+import { recalcInvoice, recalcCustomer, applyStoreCredit } from '../lib/calc'
 import { reverseInvoiceInventory } from '../lib/inventory'
 import { documentPDF, packingSlipPDF } from '../lib/pdf'
 import { Spinner, Modal, Field } from '../components/ui'
@@ -39,8 +39,10 @@ export default function InvoiceDetail() {
   useEffect(() => { load() }, [id])
 
   const recordPayment = async () => {
-    const amt = Number(pay.amount)
+    let amt = Number(pay.amount)
     if (!amt || amt <= 0) return alert('Enter a valid amount.')
+    const due = Number(inv.amount_due) || 0
+    if (amt > due) amt = due   // lock: no overpay
     setBusy(true)
     await supabase.from('payments').insert({
       company_id: company.id, invoice_id: id, customer_id: inv.customer_id,
@@ -50,6 +52,13 @@ export default function InvoiceDetail() {
     await recalcCustomer(inv.customer_id)
     setBusy(false); setPayOpen(false)
     setPay({ amount: '', method: 'cash', payment_date: todayISO(), reference: '' })
+    load()
+  }
+
+  const applyCreditOne = async () => {
+    const avail = Number(customer?.credit_balance) || 0
+    if (avail <= 0 || Number(inv.amount_due) <= 0) return
+    await applyStoreCredit(company.id, inv.customer_id, avail, [{ id, amount_due: inv.amount_due }])
     load()
   }
 
@@ -158,6 +167,8 @@ export default function InvoiceDetail() {
           <div className="flex gap-2">
             {inv.status !== 'paid' && inv.status !== 'cancelled' &&
               <button className="btn-primary" onClick={() => { setPay(p => ({ ...p, amount: String(inv.amount_due) })); setPayOpen(true) }}><Plus size={16} /> {t('record_payment')}</button>}
+            {inv.status !== 'paid' && inv.status !== 'cancelled' && Number(customer?.credit_balance) > 0 && Number(inv.amount_due) > 0 &&
+              <button className="btn-outline" onClick={applyCreditOne}><Wallet size={16} /> {t('cr_use')} ({money(Math.min(Number(customer.credit_balance), Number(inv.amount_due)), cur)})</button>}
             {inv.status === 'draft' && <button className="btn-outline" onClick={() => setStatus('sent')}>{t('mark_sent')}</button>}
             {inv.status !== 'cancelled' && inv.status !== 'paid' && <button className="btn-ghost" onClick={() => setStatus('cancelled')}>{t('cancel')}</button>}
           </div>

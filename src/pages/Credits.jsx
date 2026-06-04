@@ -120,7 +120,7 @@ export default function Credits() {
                     <span className="badge bg-black/5 text-ink/70">{reasonLabel(cr.reason)}</span>
                     {cr.reason === 'return' && cr.restock && <span className="badge ml-1 bg-moss-50 text-moss-700">{t('cr_restock')}</span>}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-moss-700">{money(cr.amount, company?.currency)}</td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-moss-700">{money(cr.amount, company?.default_currency)}</td>
                   <td className="px-4 py-3 text-right">
                     <button className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay" title={t('cr_void')} onClick={() => voidCredit(cr)}><Trash2 size={15} /></button>
                   </td>
@@ -171,7 +171,7 @@ export default function Credits() {
                 <label className="flex items-center gap-2 text-sm text-ink/80">
                   <input type="checkbox" checked={form.restock} onChange={e => setForm({ ...form, restock: e.target.checked })} /> {t('cr_restock')}
                 </label>
-                <div className="text-right"><span className="text-xs text-ink/50">{t('cr_amount')}: </span><span className="font-display text-lg text-moss-700">{money(returnTotal, company?.currency)}</span></div>
+                <div className="text-right"><span className="text-xs text-ink/50">{t('cr_amount')}: </span><span className="font-display text-lg text-moss-700">{money(returnTotal, company?.default_currency)}</span></div>
               </div>
             </div>
           ) : (
