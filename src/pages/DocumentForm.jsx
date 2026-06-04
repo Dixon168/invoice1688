@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, todayISO } from '../lib/format'
 import { computeTotals, recalcCustomer, recalcInvoice } from '../lib/calc'
+import { applyInvoiceInventory } from '../lib/inventory'
 import { Spinner, Field } from '../components/ui'
 import { ItemCombo, NameCombo } from '../components/Combo'
 
@@ -149,7 +150,10 @@ export default function DocumentForm({ kind = 'invoice' }) {
       sort_order: idx,
     }))
     await supabase.from(cfg.itemTable).insert(rows)
-    if (kind === 'invoice') { await recalcInvoice(docId); await recalcCustomer(customerId) }
+    if (kind === 'invoice') {
+      await applyInvoiceInventory(company.id, docId, items)
+      await recalcInvoice(docId); await recalcCustomer(customerId)
+    }
     setBusy(false)
     navigate(`${cfg.basePath}/${docId}`)
   }

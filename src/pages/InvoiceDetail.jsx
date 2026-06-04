@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, todayISO, STATUS } from '../lib/format'
 import { recalcInvoice, recalcCustomer } from '../lib/calc'
+import { reverseInvoiceInventory } from '../lib/inventory'
 import { documentPDF, packingSlipPDF } from '../lib/pdf'
 import { Spinner, Modal, Field } from '../components/ui'
 
@@ -51,12 +52,14 @@ export default function InvoiceDetail() {
   }
 
   const setStatus = async (status) => {
+    if (status === 'cancelled') await reverseInvoiceInventory(id)
     await supabase.from('invoices').update({ status }).eq('id', id)
     await recalcCustomer(inv.customer_id); load()
   }
   const removeInvoice = async () => {
     if (!confirm(`Delete invoice ${inv.invoice_number}? This cannot be undone.`)) return
     const cid = inv.customer_id
+    await reverseInvoiceInventory(id)
     await supabase.from('invoices').delete().eq('id', id)
     await recalcCustomer(cid)
     navigate('/invoices')

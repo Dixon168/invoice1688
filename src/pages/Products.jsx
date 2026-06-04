@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import { money } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
 import { TextCombo } from '../components/Combo'
+import { adjustStock } from '../lib/inventory'
 
-const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: false, stock_quantity: 0, is_active: true }
+const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: false, stock_quantity: 0, reorder_point: '', is_active: true }
 
 export default function Products() {
   const { company } = useAuth()
@@ -19,6 +20,8 @@ export default function Products() {
   const [form, setForm] = useState(blank)
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [adj, setAdj] = useState(null)
+  const [adjForm, setAdjForm] = useState({ delta: '', note: '' })
   const cur = company?.default_currency || 'USD'
 
   const load = async () => {
@@ -48,6 +51,7 @@ export default function Products() {
       preferred_vendor_id: form.preferred_vendor_id || null,
       track_inventory: !!form.track_inventory,
       stock_quantity: Number(form.stock_quantity) || 0,
+      reorder_point: form.reorder_point === '' || form.reorder_point == null ? null : Number(form.reorder_point),
       is_active: form.is_active, company_id: company.id,
     }
     if (editing) await supabase.from('products').update(payload).eq('id', editing.id)
@@ -57,6 +61,14 @@ export default function Products() {
   const remove = async (p) => {
     if (!confirm(`Delete "${p.name}"?`)) return
     await supabase.from('products').delete().eq('id', p.id); load()
+  }
+  const openAdjust = (p) => { setAdj(p); setAdjForm({ delta: '', note: '' }) }
+  const saveAdjust = async () => {
+    const delta = Number(adjForm.delta)
+    if (!delta) return
+    setBusy(true)
+    await adjustStock(company.id, adj.id, delta, adjForm.note)
+    setBusy(false); setAdj(null); load()
   }
 
   const filtered = (rows || []).filter(p => [p.name, p.sku, p.category, p.subcategory].join(' ').toLowerCase().includes(q.toLowerCase()))
@@ -99,9 +111,18 @@ export default function Products() {
                     <td className="px-4 py-3 text-ink/70">{p.category || '—'}{p.subcategory ? <span className="text-ink/40"> › {p.subcategory}</span> : null}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-ink/60">{p.cost ? money(p.cost, cur) : '—'}</td>
                     <td className="px-4 py-3 text-right font-medium tabular-nums">{money(p.unit_price, cur)}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-ink/70">{p.track_inventory ? Number(p.stock_quantity) : '—'}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-ink/70">
+                      {p.track_inventory ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          {p.reorder_point != null && Number(p.stock_quantity) <= Number(p.reorder_point) &&
+                            <span className="badge bg-red-100 text-red-700">Low</span>}
+                          {Number(p.stock_quantity)}
+                        </span>
+                      ) : '—'}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
+                        {p.track_inventory && <button className="rounded-md p-2 text-ink/50 hover:bg-moss-50 hover:text-moss-700" title="Adjust stock" onClick={() => openAdjust(p)}><Package size={16} /></button>}
                         <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" onClick={() => openEdit(p)}><Pencil size={16} /></button>
                         <button className="rounded-md p-2 text-ink/50 hover:bg-clay/10 hover:text-clay" onClick={() => remove(p)}><Trash2 size={16} /></button>
                       </div>
@@ -145,7 +166,10 @@ export default function Products() {
               <input type="checkbox" checked={form.track_inventory} onChange={e => setForm({ ...form, track_inventory: e.target.checked })} /> Track inventory / stock
             </label>
             {form.track_inventory && (
-              <div className="mt-3"><Field label="Stock quantity"><input className="input" type="number" step="1" value={form.stock_quantity} onChange={e => setForm({ ...form, stock_quantity: e.target.value })} /></Field></div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Field label="Stock quantity"><input className="input" type="number" step="1" value={form.stock_quantity} onChange={e => setForm({ ...form, stock_quantity: e.target.value })} /></Field>
+                <Field label="Reorder point (low-stock alert)"><input className="input" type="number" step="1" value={form.reorder_point} onChange={e => setForm({ ...form, reorder_point: e.target.value })} placeholder="e.g. 5" /></Field>
+              </div>
             )}
           </div>
           <Field label="Description"><textarea className="input min-h-[70px]" value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} /></Field>
@@ -153,6 +177,21 @@ export default function Products() {
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setOpen(false)}>Cancel</button>
           <button className="btn-primary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
+        </div>
+      </Modal>
+
+      <Modal open={!!adj} onClose={() => setAdj(null)} title={`Adjust stock · ${adj?.name || ''}`}>
+        <p className="mb-3 text-sm text-ink/60">Current stock: <span className="font-semibold text-ink">{adj ? Number(adj.stock_quantity) : 0}</span>. Use a positive number to add (restock), negative to remove.</p>
+        <div className="space-y-4">
+          <Field label="Change (+ in / − out)"><input className="input" type="number" step="1" value={adjForm.delta} onChange={e => setAdjForm({ ...adjForm, delta: e.target.value })} placeholder="e.g. 20 or -3" /></Field>
+          <Field label="Note"><input className="input" value={adjForm.note} onChange={e => setAdjForm({ ...adjForm, note: e.target.value })} placeholder="e.g. Restock from Amazon" /></Field>
+          {adjForm.delta !== '' && !isNaN(Number(adjForm.delta)) && (
+            <p className="text-sm text-ink/60">New stock will be <span className="font-semibold text-moss-700">{Number(adj?.stock_quantity || 0) + Number(adjForm.delta)}</span></p>
+          )}
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button className="btn-outline" onClick={() => setAdj(null)}>Cancel</button>
+          <button className="btn-primary" onClick={saveAdjust} disabled={busy}>{busy ? 'Saving…' : 'Apply'}</button>
         </div>
       </Modal>
     </>
