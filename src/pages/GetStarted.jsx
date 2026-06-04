@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { useT } from '../i18n'
 import { supabase } from '../lib/supabase'
+import { sendSignupEmail } from '../lib/emailjs'
 import { Field } from '../components/ui'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 
@@ -35,7 +36,9 @@ export default function GetStarted() {
         postal_code: form.postal_code, country: form.country, notes: form.notes,
         plan: planLabel,
       })
-      // 2) also email the details via Netlify Forms
+      // 2) email the details to support@allinonepayment.com via EmailJS
+      try { await sendSignupEmail(form, planLabel) } catch (e) { /* non-blocking */ }
+      // 3) also email via Netlify Forms (backup)
       await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
