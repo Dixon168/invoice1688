@@ -8,7 +8,7 @@ import { Field } from '../components/ui'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 
 const blank = {
-  company_name: '', contact_name: '', email: '', phone: '',
+  company_name: '', company_phone: '', contact_name: '', email: '', phone: '',
   billing_address: '', city: '', state: '', postal_code: '', country: '', notes: '',
 }
 
@@ -31,7 +31,7 @@ export default function GetStarted() {
     try {
       // 1) save to the admin's pending list in Supabase
       await supabase.from('signups').insert({
-        company_name: form.company_name, contact_name: form.contact_name, email: form.email, phone: form.phone,
+        company_name: form.company_name, company_phone: form.company_phone, contact_name: form.contact_name, email: form.email, phone: form.phone,
         billing_address: form.billing_address, city: form.city, state: form.state,
         postal_code: form.postal_code, country: form.country, notes: form.notes,
         plan: planLabel,
@@ -92,16 +92,22 @@ export default function GetStarted() {
         </div>
 
         <div className="card mt-4 space-y-4 p-6">
+          <div className="label">{t('gs_company_sec')}</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t('f_company_name_req')}><input className="input" value={form.company_name} onChange={e => set({ company_name: e.target.value })} /></Field>
-            <Field label={t('f_contact_name')}><input className="input" value={form.contact_name} onChange={e => set({ contact_name: e.target.value })} /></Field>
-            <Field label={t('f_business_email')}><input className="input" type="email" value={form.email} onChange={e => set({ email: e.target.value })} /></Field>
-            <Field label={t('f_phone')}><input className="input" value={form.phone} onChange={e => set({ phone: e.target.value })} /></Field>
-            <div className="sm:col-span-2"><Field label={t('f_billing_address')}><input className="input" value={form.billing_address} onChange={e => set({ billing_address: e.target.value })} /></Field></div>
+            <Field label={t('f_company_phone')}><input className="input" value={form.company_phone} onChange={e => set({ company_phone: e.target.value })} /></Field>
+            <div className="sm:col-span-2"><Field label={t('f_company_address')}><input className="input" value={form.billing_address} onChange={e => set({ billing_address: e.target.value })} /></Field></div>
             <Field label={t('f_city')}><input className="input" value={form.city} onChange={e => set({ city: e.target.value })} /></Field>
             <Field label={t('f_state')}><input className="input" value={form.state} onChange={e => set({ state: e.target.value })} /></Field>
             <Field label={t('f_postal_code')}><input className="input" value={form.postal_code} onChange={e => set({ postal_code: e.target.value })} /></Field>
             <Field label={t('f_country')}><input className="input" value={form.country} onChange={e => set({ country: e.target.value })} /></Field>
+          </div>
+
+          <div className="label pt-1">{t('gs_contact_sec')}</div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t('f_contact_name')}><input className="input" value={form.contact_name} onChange={e => set({ contact_name: e.target.value })} /></Field>
+            <Field label={t('f_contact_phone')}><input className="input" value={form.phone} onChange={e => set({ phone: e.target.value })} /></Field>
+            <div className="sm:col-span-2"><Field label={t('f_business_email')}><input className="input" type="email" value={form.email} onChange={e => set({ email: e.target.value })} /></Field></div>
             <div className="sm:col-span-2"><Field label={t('f_anything_else')}><textarea className="input min-h-[70px]" value={form.notes} onChange={e => set({ notes: e.target.value })} /></Field></div>
           </div>
 

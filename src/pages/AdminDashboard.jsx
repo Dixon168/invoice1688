@@ -126,7 +126,7 @@ export default function AdminDashboard() {
                 <div key={s.id} className="card p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="font-semibold text-ink">{s.company_name}</div>
+                      <div className="font-semibold text-ink">{s.company_name}{s.company_phone ? <span className="ml-2 text-sm font-normal text-ink/50">· {s.company_phone}</span> : null}</div>
                       <div className="text-sm text-ink/70">{[s.contact_name, s.email, s.phone].filter(Boolean).join(' · ')}</div>
                       <div className="text-sm text-ink/50">{[s.billing_address, s.city, s.state, s.postal_code, s.country].filter(Boolean).join(', ')}</div>
                       {s.notes && <div className="mt-1 text-sm italic text-ink/55">“{s.notes}”</div>}

@@ -20,9 +20,10 @@ export async function sendSignupEmail(form, plan) {
   const message = [
     `Plan: ${plan}`,
     `Company: ${form.company_name}`,
+    `Company phone: ${form.company_phone}`,
     `Contact: ${form.contact_name}`,
     `Email: ${form.email}`,
-    `Phone: ${form.phone}`,
+    `Contact phone: ${form.phone}`,
     `Billing: ${[form.billing_address, form.city, form.state, form.postal_code, form.country].filter(Boolean).join(', ')}`,
     form.notes ? `Notes: ${form.notes}` : '',
   ].filter(Boolean).join('\n')
@@ -35,6 +36,7 @@ export async function sendSignupEmail(form, plan) {
       reply_to: form.email,
       plan,
       company_name: form.company_name,
+      company_phone: form.company_phone,
       contact_name: form.contact_name,
       email: form.email,
       phone: form.phone,

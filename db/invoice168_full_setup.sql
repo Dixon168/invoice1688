@@ -611,6 +611,7 @@ end $$;
 create table if not exists public.signups (
   id uuid primary key default gen_random_uuid(),
   company_name text not null,
+  company_phone text,
   contact_name text, email text, phone text,
   billing_address text, city text, state text, postal_code text, country text,
   notes text, plan text,

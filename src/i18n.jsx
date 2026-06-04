@@ -531,6 +531,15 @@ const EXTRA6 = {
 }
 for (const l of Object.keys(EXTRA6)) Object.assign(T[l], EXTRA6[l])
 
+const EXTRA7 = {
+  en: { gs_company_sec: 'Company', gs_contact_sec: 'Contact person', f_company_phone: 'Company phone', f_contact_phone: 'Contact phone', f_company_address: 'Company address' },
+  zh: { gs_company_sec: '公司', gs_contact_sec: '联系人', f_company_phone: '公司电话', f_contact_phone: '联系人电话', f_company_address: '公司地址' },
+  es: { gs_company_sec: 'Empresa', gs_contact_sec: 'Persona de contacto', f_company_phone: 'Teléfono de la empresa', f_contact_phone: 'Teléfono de contacto', f_company_address: 'Dirección de la empresa' },
+  vi: { gs_company_sec: 'Công ty', gs_contact_sec: 'Người liên hệ', f_company_phone: 'Điện thoại công ty', f_contact_phone: 'Điện thoại liên hệ', f_company_address: 'Địa chỉ công ty' },
+  ko: { gs_company_sec: '회사', gs_contact_sec: '담당자', f_company_phone: '회사 전화', f_contact_phone: '담당자 전화', f_company_address: '회사 주소' },
+}
+for (const l of Object.keys(EXTRA7)) Object.assign(T[l], EXTRA7[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
