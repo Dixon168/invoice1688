@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Users, Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money } from '../lib/format'
+import { money, isOverdue } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
 
 const blank = {
@@ -15,7 +15,9 @@ export default function Customers() {
   const { company } = useAuth()
   const navigate = useNavigate()
   const [rows, setRows] = useState(null)
+  const [overdueIds, setOverdueIds] = useState(new Set())
   const [q, setQ] = useState('')
+  const [filter, setFilter] = useState('all')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blank)
   const [editing, setEditing] = useState(null)
@@ -23,8 +25,14 @@ export default function Customers() {
   const cur = company?.default_currency || 'USD'
 
   const load = async () => {
-    const { data } = await supabase.from('customers').select('*').order('created_at', { ascending: false })
+    const [{ data }, { data: invs }] = await Promise.all([
+      supabase.from('customers').select('*').order('created_at', { ascending: false }),
+      supabase.from('invoices').select('customer_id, due_date, status'),
+    ])
     setRows(data || [])
+    const od = new Set()
+    for (const i of (invs || [])) if (isOverdue(i.due_date, i.status)) od.add(i.customer_id)
+    setOverdueIds(od)
   }
   useEffect(() => { load() }, [])
 
@@ -45,8 +53,9 @@ export default function Customers() {
     await supabase.from('customers').delete().eq('id', c.id); load()
   }
 
-  const filtered = (rows || []).filter(c =>
-    [c.name, c.email, c.phone, c.billing_city].join(' ').toLowerCase().includes(q.toLowerCase()))
+  const filtered = (rows || [])
+    .filter(c => filter === 'all' ? true : filter === 'owing' ? Number(c.balance) > 0 : overdueIds.has(c.id))
+    .filter(c => [c.name, c.email, c.phone, c.billing_city].join(' ').toLowerCase().includes(q.toLowerCase()))
 
   return (
     <>
@@ -58,6 +67,15 @@ export default function Customers() {
         <EmptyState icon={Users} title="No customers yet" hint="Add your first customer to start invoicing."
           action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> New customer</button>} />
       ) : (
+        <>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {['all', 'owing', 'overdue'].map(t => (
+            <button key={t} onClick={() => setFilter(t)}
+              className={`badge px-3 py-1.5 ${filter === t ? 'bg-moss-700 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
+              {t === 'all' ? 'All' : t === 'owing' ? 'Owing' : 'Overdue'}
+            </button>
+          ))}
+        </div>
         <div className="card overflow-hidden">
           <div className="flex items-center gap-2 border-b border-black/[.07] px-4 py-3">
             <Search size={18} className="text-ink/40" />
@@ -78,10 +96,13 @@ export default function Customers() {
               <tbody className="divide-y divide-black/[.05]">
                 {filtered.map(c => (
                   <tr key={c.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/customers/${c.id}`)}>
-                    <td className="px-4 py-3 font-semibold text-ink">{c.name}</td>
+                    <td className="px-4 py-3 font-semibold text-ink">
+                      <span className="flex items-center gap-2">{c.name}
+                        {overdueIds.has(c.id) && <span className="badge bg-red-100 text-red-700">Overdue</span>}</span>
+                    </td>
                     <td className="px-4 py-3 text-ink/70">{c.email || c.phone || '—'}</td>
                     <td className="px-4 py-3 text-ink/70">{c.billing_city || '—'}</td>
-                    <td className="px-4 py-3 text-right font-medium tabular-nums">{money(c.balance, cur)}</td>
+                    <td className={`px-4 py-3 text-right font-medium tabular-nums ${Number(c.balance) > 0 ? 'text-clay' : 'text-ink/40'}`}>{money(c.balance, cur)}</td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
                         <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" onClick={() => openEdit(c)}><Pencil size={16} /></button>
@@ -94,6 +115,7 @@ export default function Customers() {
             </table>
           </div>
         </div>
+        </>
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit customer' : 'New customer'} wide>

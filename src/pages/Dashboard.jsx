@@ -6,13 +6,14 @@ import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, STATUS } from '../lib/format'
 import { PageHeader, Spinner } from '../components/ui'
 
-function Stat({ icon: Icon, label, value, tone = 'ink' }) {
+function Stat({ icon: Icon, label, value, tone = 'ink', onClick }) {
   const tones = { ink: 'text-ink', moss: 'text-moss-700', clay: 'text-clay' }
   return (
-    <div className="card p-5">
+    <button onClick={onClick} disabled={!onClick}
+      className={`card p-5 text-left transition ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''}`}>
       <div className="flex items-center gap-2 text-ink/50"><Icon size={16} /><span className="text-xs font-semibold uppercase tracking-wide">{label}</span></div>
       <div className={`mt-2 font-display text-3xl tabular-nums ${tones[tone]}`}>{value}</div>
-    </div>
+    </button>
   )
 }
 
@@ -53,10 +54,10 @@ export default function Dashboard() {
       </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Clock} label="Outstanding" value={money(data.outstanding, cur)} tone="clay" />
-        <Stat icon={TrendingUp} label="Paid this month" value={money(data.paidThisMonth, cur)} tone="moss" />
-        <Stat icon={AlertTriangle} label="Overdue" value={`${data.overdueCount}`} tone="clay" />
-        <Stat icon={Wallet} label="You owe (bills)" value={money(data.payable, cur)} tone="clay" />
+        <Stat icon={Clock} label="Outstanding" value={money(data.outstanding, cur)} tone="clay" onClick={() => navigate('/invoices?filter=outstanding')} />
+        <Stat icon={TrendingUp} label="Paid this month" value={money(data.paidThisMonth, cur)} tone="moss" onClick={() => navigate('/payments')} />
+        <Stat icon={AlertTriangle} label="Overdue" value={`${data.overdueCount}`} tone="clay" onClick={() => navigate('/invoices?filter=overdue')} />
+        <Stat icon={Wallet} label="You owe (bills)" value={money(data.payable, cur)} tone="clay" onClick={() => navigate('/bills?filter=unpaid')} />
       </div>
 
       <div className="card mt-6 overflow-hidden">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { FileText, Plus, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -9,9 +9,10 @@ import { PageHeader, Spinner, EmptyState } from '../components/ui'
 export default function Invoices() {
   const { company } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [rows, setRows] = useState(null)
   const [q, setQ] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState(searchParams.get('filter') || 'all')
   const cur = company?.default_currency || 'USD'
 
   useEffect(() => {
@@ -21,11 +22,19 @@ export default function Invoices() {
       .then(({ data }) => setRows(data || []))
   }, [])
 
+  const matchFilter = (i) => {
+    if (filter === 'all') return true
+    if (filter === 'overdue') return isOverdue(i.due_date, i.status)
+    if (filter === 'outstanding') return Number(i.amount_due) > 0 && !['paid', 'cancelled', 'draft'].includes(i.status)
+    return i.status === filter
+  }
   const filtered = (rows || [])
-    .filter(i => filter === 'all' ? true : filter === 'overdue' ? isOverdue(i.due_date, i.status) : i.status === filter)
+    .filter(matchFilter)
     .filter(i => [i.invoice_number, i.customer?.name].join(' ').toLowerCase().includes(q.toLowerCase()))
 
-  const tabs = ['all', 'draft', 'sent', 'partial', 'paid', 'overdue']
+  const tabs = filter === 'outstanding' ? ['outstanding', 'all', 'draft', 'sent', 'partial', 'paid', 'overdue']
+    : ['all', 'draft', 'sent', 'partial', 'paid', 'overdue']
+  const tabLabel = (t) => t === 'all' ? 'All' : t === 'outstanding' ? 'Outstanding' : (STATUS[t]?.label || t)
 
   return (
     <>
@@ -41,8 +50,8 @@ export default function Invoices() {
           <div className="mb-4 flex flex-wrap items-center gap-2">
             {tabs.map(t => (
               <button key={t} onClick={() => setFilter(t)}
-                className={`badge px-3 py-1.5 capitalize ${filter === t ? 'bg-moss-700 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
-                {t === 'all' ? 'All' : STATUS[t]?.label || t}
+                className={`badge px-3 py-1.5 ${filter === t ? 'bg-moss-700 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
+                {tabLabel(t)}
               </button>
             ))}
           </div>

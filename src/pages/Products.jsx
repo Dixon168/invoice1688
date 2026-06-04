@@ -16,6 +16,8 @@ export default function Products() {
   const [vendors, setVendors] = useState([])
   const [cats, setCats] = useState([])
   const [q, setQ] = useState('')
+  const [catFilter, setCatFilter] = useState('')
+  const [lowOnly, setLowOnly] = useState(false)
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blank)
   const [editing, setEditing] = useState(null)
@@ -71,7 +73,12 @@ export default function Products() {
     setBusy(false); setAdj(null); load()
   }
 
-  const filtered = (rows || []).filter(p => [p.name, p.sku, p.category, p.subcategory].join(' ').toLowerCase().includes(q.toLowerCase()))
+  const isLow = (p) => p.track_inventory && p.reorder_point != null && Number(p.stock_quantity) <= Number(p.reorder_point)
+  const filtered = (rows || [])
+    .filter(p => [p.name, p.sku, p.category, p.subcategory].join(' ').toLowerCase().includes(q.toLowerCase()))
+    .filter(p => !catFilter || p.category === catFilter)
+    .filter(p => !lowOnly || isLow(p))
+  const lowCount = (rows || []).filter(isLow).length
   const catSuggestions = [...new Set([
     ...cats.filter(c => !c.parent_id).map(c => c.name),
     ...(rows || []).map(r => r.category).filter(Boolean),
@@ -95,9 +102,19 @@ export default function Products() {
           action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> New item</button>} />
       ) : (
         <div className="card overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-black/[.07] px-4 py-3">
-            <Search size={18} className="text-ink/40" />
-            <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder="Search items…" value={q} onChange={e => setQ(e.target.value)} />
+          <div className="flex flex-wrap items-center gap-2 border-b border-black/[.07] px-4 py-3">
+            <div className="flex min-w-[180px] flex-1 items-center gap-2">
+              <Search size={18} className="text-ink/40" />
+              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder="Search items…" value={q} onChange={e => setQ(e.target.value)} />
+            </div>
+            <select className="input max-w-[200px] py-1.5 text-sm" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
+              <option value="">All categories</option>
+              {catSuggestions.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <button onClick={() => setLowOnly(v => !v)}
+              className={`badge px-3 py-1.5 ${lowOnly ? 'bg-red-600 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
+              Low stock{lowCount > 0 ? ` (${lowCount})` : ''}
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

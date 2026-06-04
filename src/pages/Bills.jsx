@@ -23,7 +23,7 @@ export default function Bills() {
   const [bills, setBills] = useState(null)
   const [vendors, setVendors] = useState([])
   const [q, setQ] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState(searchParams.get('filter') || 'all')
 
   const [newOpen, setNewOpen] = useState(false)
   const [form, setForm] = useState(blankBill())
