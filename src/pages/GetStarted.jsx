@@ -29,31 +29,31 @@ export default function GetStarted() {
   const submit = async () => {
     if (!form.company_name.trim() || !form.email.trim()) { setErr('!'); return }
     setErr(''); setBusy(true)
+    // 1) save to admin's pending list (best-effort)
     try {
-      // 1) save to the admin's pending list in Supabase
       await supabase.from('signups').insert({
         company_name: form.company_name, company_phone: form.company_phone, contact_name: form.contact_name, email: form.email, phone: form.phone,
         billing_address: form.billing_address, city: form.city, state: form.state,
         postal_code: form.postal_code, country: form.country, notes: form.notes,
         plan: planLabel,
       })
-      // 2) email the details to support@allinonepayment.com via EmailJS
-      try {
-        const r = await sendSignupEmail(form, planLabel)
-        setEmailNote(r ? 'Email sent ✓' : 'EmailJS not configured')
-      } catch (e) {
-        setEmailNote('Email error: ' + (e?.text || e?.message || JSON.stringify(e)))
-      }
-      // 3) also email via Netlify Forms (backup)
+    } catch (e) { console.error('signups insert failed:', e) }
+    // 2) email via EmailJS (independent)
+    try {
+      const r = await sendSignupEmail(form, planLabel)
+      setEmailNote(r ? 'Email sent ✓' : 'EmailJS not configured')
+    } catch (e) {
+      setEmailNote('Email error: ' + (e?.text || e?.message || JSON.stringify(e)))
+    }
+    // 3) Netlify Forms backup (independent)
+    try {
       await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: encode({ 'form-name': 'signup', 'bot-field': '', plan: planLabel, ...form }),
       })
-      setDone(true)
-    } catch (e) {
-      setErr(e.message)
-    }
+    } catch (e) { console.error('netlify form failed:', e) }
+    setDone(true)
     setBusy(false)
   }
 
