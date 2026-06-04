@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const { t } = useT()
   const navigate = useNavigate()
   const [companies, setCompanies] = useState(null)
+  const [signups, setSignups] = useState([])
   const [newOpen, setNewOpen] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', ownerName: '', paid_until: '' })
   const [busy, setBusy] = useState(false)
@@ -43,6 +44,14 @@ export default function AdminDashboard() {
     }))
   }
   useEffect(() => { load() }, [])
+
+  const loadSignups = async () => {
+    const { data } = await supabase.from('signups').select('*').order('created_at', { ascending: false })
+    setSignups(data || [])
+  }
+  useEffect(() => { loadSignups() }, [])
+  const setSignupStatus = async (id, status) => { await supabase.from('signups').update({ status }).eq('id', id); loadSignups() }
+  const deleteSignup = async (id) => { if (confirm('Delete this signup?')) { await supabase.from('signups').delete().eq('id', id); loadSignups() } }
 
   const openNew = () => { setForm({ name: '', email: '', password: '', ownerName: '', paid_until: plusMonths(1) }); setErr(''); setCreated(null); setNewOpen(true) }
 
@@ -106,6 +115,35 @@ export default function AdminDashboard() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
+        {signups.filter(s => s.status === 'new').length > 0 && (
+          <div className="mb-8">
+            <h2 className="font-display text-2xl text-ink">Pending signups
+              <span className="ml-2 rounded-full bg-clay px-2.5 py-0.5 align-middle text-sm text-white">{signups.filter(s => s.status === 'new').length}</span>
+            </h2>
+            <p className="mt-1 text-sm text-ink/55">People who requested an account from the pricing page. Contact them, take payment, then create their account below.</p>
+            <div className="mt-3 space-y-3">
+              {signups.filter(s => s.status === 'new').map(s => (
+                <div key={s.id} className="card p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-ink">{s.company_name}</div>
+                      <div className="text-sm text-ink/70">{[s.contact_name, s.email, s.phone].filter(Boolean).join(' · ')}</div>
+                      <div className="text-sm text-ink/50">{[s.billing_address, s.city, s.state, s.postal_code, s.country].filter(Boolean).join(', ')}</div>
+                      {s.notes && <div className="mt-1 text-sm italic text-ink/55">“{s.notes}”</div>}
+                      <div className="mt-1 text-xs text-ink/40">{fmtDate(s.created_at)} · {s.plan}</div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button className="btn-outline text-sm" onClick={() => setSignupStatus(s.id, 'contacted')}>Mark contacted</button>
+                      <button className="btn-primary text-sm" onClick={() => { setForm({ name: s.company_name, email: s.email || '', password: '', ownerName: s.contact_name || '', paid_until: plusMonths(1) }); setErr(''); setCreated(null); setNewOpen(true); setSignupStatus(s.id, 'activated') }}>Create account</button>
+                      <button className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay" onClick={() => deleteSignup(s.id)}><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h1 className="font-display text-3xl text-ink">All companies</h1>

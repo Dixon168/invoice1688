@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { useT } from '../i18n'
+import { supabase } from '../lib/supabase'
 import { Field } from '../components/ui'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 
@@ -24,6 +25,14 @@ export default function GetStarted() {
     if (!form.company_name.trim() || !form.email.trim()) { setErr('!'); return }
     setErr(''); setBusy(true)
     try {
+      // 1) save to the admin's pending list in Supabase
+      await supabase.from('signups').insert({
+        company_name: form.company_name, contact_name: form.contact_name, email: form.email, phone: form.phone,
+        billing_address: form.billing_address, city: form.city, state: form.state,
+        postal_code: form.postal_code, country: form.country, notes: form.notes,
+        plan: 'Invoice168 $19.99/month',
+      })
+      // 2) also email the details via Netlify Forms
       await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

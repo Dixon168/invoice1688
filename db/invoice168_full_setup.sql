@@ -605,3 +605,28 @@ do $$ begin
     using (public.is_super_admin()) with check (public.is_super_admin());
 end $$;
 
+
+-- ==== 10. PUBLIC SIGNUPS (pricing-page order form submissions, no card data) ====
+-- invoice168 — public signup/order submissions (no card data)
+create table if not exists public.signups (
+  id uuid primary key default gen_random_uuid(),
+  company_name text not null,
+  contact_name text, email text, phone text,
+  billing_address text, city text, state text, postal_code text, country text,
+  notes text, plan text,
+  status text not null default 'new' check (status in ('new','contacted','activated','declined')),
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_signups_created on public.signups(created_at desc);
+
+alter table public.signups enable row level security;
+do $$ begin
+  -- anyone (public visitor) may submit a signup
+  drop policy if exists signups_insert on public.signups;
+  create policy signups_insert on public.signups for insert with check (true);
+  -- only the platform admin can read / manage them
+  drop policy if exists signups_admin on public.signups;
+  create policy signups_admin on public.signups for all
+    using (public.is_super_admin()) with check (public.is_super_admin());
+end $$;
+
