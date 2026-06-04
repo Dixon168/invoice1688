@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { money, todayISO } from '../lib/format'
 import { computeTotals, recalcCustomer } from '../lib/calc'
 import { Spinner, Field } from '../components/ui'
-import { ItemCombo } from '../components/Combo'
+import { ItemCombo, NameCombo } from '../components/Combo'
 
 const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', quantity: 1, unit_price: 0, tax_rate: 0 })
 
@@ -24,6 +24,7 @@ export default function InvoiceForm() {
   const [taxes, setTaxes] = useState([])
 
   const [customerId, setCustomerId] = useState('')
+  const [customerQuery, setCustomerQuery] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [issueDate, setIssueDate] = useState(todayISO())
   const [dueDate, setDueDate] = useState('')
@@ -47,6 +48,7 @@ export default function InvoiceForm() {
         const { data: its } = await supabase.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
         if (inv) {
           setCustomerId(inv.customer_id); setInvoiceNumber(inv.invoice_number)
+          setCustomerQuery((c || []).find(x => x.id === inv.customer_id)?.name || '')
           setIssueDate(inv.issue_date); setDueDate(inv.due_date || ''); setStatus(inv.status)
           setIsExempt(inv.is_exempt); setNotes(inv.notes || ''); setTerms(inv.terms || '')
           setItems((its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) })))
@@ -59,14 +61,20 @@ export default function InvoiceForm() {
     })()
   }, [id])
 
-  const onPickCustomer = (cid) => {
-    setCustomerId(cid)
-    const c = customers.find(x => x.id === cid)
-    if (c && !editing) {
-      const days = Number(c.payment_terms) || 0
+  const pickCustomer = (cust) => {
+    setCustomerId(cust.id); setCustomerQuery(cust.name)
+    if (!editing) {
+      const days = Number(cust.payment_terms) || 0
       const d = new Date(issueDate); d.setDate(d.getDate() + days)
       setDueDate(d.toISOString().slice(0, 10))
     }
+  }
+  const createCustomer = async (name) => {
+    const { data, error } = await supabase.from('customers')
+      .insert({ company_id: company.id, name }).select('*').single()
+    if (error) { alert(error.message); return }
+    setCustomers(prev => [...prev, data])
+    pickCustomer(data)
   }
 
   const applyProduct = (idx, p) => {
@@ -146,11 +154,11 @@ export default function InvoiceForm() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="card p-5"><Field label="Customer *">
-          <select className="input" value={customerId} onChange={e => onPickCustomer(e.target.value)}>
-            <option value="">Select customer…</option>
-            {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          {customers.length === 0 && <p className="mt-2 text-xs text-clay">Add a customer first (Customers page).</p>}
+          <NameCombo value={customerQuery} options={customers}
+            onText={t => { setCustomerQuery(t); setCustomerId('') }}
+            onPick={pickCustomer} onCreate={createCustomer}
+            placeholder="Search or add customer…" createLabel="Create customer" />
+          {!customerId && customerQuery && <p className="mt-1 text-xs text-clay">Pick a match or create the customer.</p>}
         </Field></div>
         <div className="card p-5"><Field label="Invoice number">
           <input className="input" value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} />

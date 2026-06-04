@@ -35,7 +35,38 @@ export function TextCombo({ value, onChange, suggestions = [], placeholder }) {
   )
 }
 
-// Searchable product picker for invoice lines. Pick an existing item or create a new one.
+// Searchable picker for a customer (or any simple named record). Pick or create.
+export function NameCombo({ value, onText, options = [], onPick, onCreate, placeholder = 'Type to search or add…', createLabel = 'Create' }) {
+  const [open, setOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const ref = useRef()
+  useOutside(ref, () => setOpen(false))
+  const q = (value || '').toLowerCase().trim()
+  const matches = options.filter(o => (o.name || '').toLowerCase().includes(q)).slice(0, 8)
+  const exact = options.some(o => (o.name || '').toLowerCase() === q)
+
+  return (
+    <div className="relative" ref={ref}>
+      <input className="input" value={value || ''} placeholder={placeholder} autoComplete="off"
+        onChange={e => { onText(e.target.value); setOpen(true) }} onFocus={() => setOpen(true)} />
+      {open && (matches.length > 0 || (q && !exact)) && (
+        <div className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-black/10 bg-white py-1 text-sm shadow-lg">
+          {matches.map(o => (
+            <button type="button" key={o.id} className="block w-full px-3 py-2 text-left hover:bg-sand"
+              onMouseDown={() => { onPick(o); setOpen(false) }}>{o.name}</button>
+          ))}
+          {q && !exact && onCreate && (
+            <button type="button" disabled={creating}
+              className="block w-full border-t border-black/5 px-3 py-2 text-left font-medium text-moss-700 hover:bg-moss-50 disabled:opacity-50"
+              onMouseDown={async () => { setCreating(true); await onCreate(value.trim()); setCreating(false); setOpen(false) }}>
+              {creating ? 'Creating…' : `＋ ${createLabel} “${value.trim()}”`}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 export function ItemCombo({ value, onText, products = [], onPick, onCreate, currency = 'USD' }) {
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)

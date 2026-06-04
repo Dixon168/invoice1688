@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard'
 import Customers from './pages/Customers'
 import CustomerDetail from './pages/CustomerDetail'
 import Products from './pages/Products'
+import Categories from './pages/Categories'
 import TaxRates from './pages/TaxRates'
 import Invoices from './pages/Invoices'
 import InvoiceForm from './pages/InvoiceForm'
@@ -55,6 +56,7 @@ function Shell() {
       <Route path="/customers" element={<Protected><Customers /></Protected>} />
       <Route path="/customers/:id" element={<Protected><CustomerDetail /></Protected>} />
       <Route path="/products" element={<Protected><Products /></Protected>} />
+      <Route path="/categories" element={<Protected><Categories /></Protected>} />
       <Route path="/payments" element={<Protected><Payments /></Protected>} />
       <Route path="/vendors" element={<Protected><Vendors /></Protected>} />
       <Route path="/vendors/:id" element={<Protected><VendorDetail /></Protected>} />

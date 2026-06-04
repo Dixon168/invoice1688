@@ -13,6 +13,7 @@ export default function Products() {
   const [rows, setRows] = useState(null)
   const [taxes, setTaxes] = useState([])
   const [vendors, setVendors] = useState([])
+  const [cats, setCats] = useState([])
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blank)
@@ -21,12 +22,13 @@ export default function Products() {
   const cur = company?.default_currency || 'USD'
 
   const load = async () => {
-    const [{ data: p }, { data: t }, { data: v }] = await Promise.all([
+    const [{ data: p }, { data: t }, { data: v }, { data: cats }] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('tax_rates').select('id, name, rate').order('name'),
       supabase.from('vendors').select('id, name').order('name'),
+      supabase.from('categories').select('*').order('name'),
     ])
-    setRows(p || []); setTaxes(t || []); setVendors(v || [])
+    setRows(p || []); setTaxes(t || []); setVendors(v || []); setCats(cats || [])
   }
   useEffect(() => { load() }, [])
 
@@ -58,10 +60,17 @@ export default function Products() {
   }
 
   const filtered = (rows || []).filter(p => [p.name, p.sku, p.category, p.subcategory].join(' ').toLowerCase().includes(q.toLowerCase()))
-  const catSuggestions = [...new Set((rows || []).map(r => r.category).filter(Boolean))]
-  const subcatSuggestions = [...new Set((rows || [])
-    .filter(r => !form.category || r.category === form.category)
-    .map(r => r.subcategory).filter(Boolean))]
+  const catSuggestions = [...new Set([
+    ...cats.filter(c => !c.parent_id).map(c => c.name),
+    ...(rows || []).map(r => r.category).filter(Boolean),
+  ])]
+  const subcatSuggestions = (() => {
+    const top = cats.find(c => !c.parent_id && c.name === form.category)
+    return [...new Set([
+      ...(top ? cats.filter(c => c.parent_id === top.id).map(c => c.name) : []),
+      ...(rows || []).filter(r => !form.category || r.category === form.category).map(r => r.subcategory).filter(Boolean),
+    ])]
+  })()
 
   return (
     <>
