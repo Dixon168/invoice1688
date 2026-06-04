@@ -25,8 +25,10 @@ function AuthShell({ children }) {
       {/* marketing panel */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-moss-800 p-12 text-white lg:flex">
         <div className="flex items-center justify-between">
-          <div className="font-display text-3xl font-700">invoice<span className="text-clay">168</span></div>
+          <div className="font-display text-3xl font-700">Bill<span className="text-clay">&</span>Pays</div>
           <div className="flex items-center gap-2">
+            <Link to="/features" className="hidden rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10 sm:block">{t('nav_features')}</Link>
+            <Link to="/why-us" className="hidden rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10 sm:block">{t('nav_whyus')}</Link>
             <Link to="/pricing" className="rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10">{t('nav_pricing')}</Link>
             <LanguageSwitcher dark />
           </div>
@@ -42,7 +44,7 @@ function AuthShell({ children }) {
             <Feature icon={Globe} title={t('feat_multi_t')} desc={t('feat_multi_d')} />
           </div>
         </div>
-        <div className="text-sm text-white/40">© {new Date().getFullYear()} invoice168 · {t('owner_badge')}</div>
+        <div className="text-sm text-white/40">© {new Date().getFullYear()} Bill&Pays · {t('owner_badge')}</div>
         <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-clay/20 blur-3xl" />
       </div>
       {/* form panel */}
@@ -74,7 +76,7 @@ export function Login() {
   return (
     <>
     <AuthShell>
-      <div className="mb-8 font-display text-2xl text-ink lg:hidden">invoice<span className="text-clay">168</span></div>
+      <div className="mb-8 font-display text-2xl text-ink lg:hidden">Bill<span className="text-clay">&</span>Pays</div>
       <h2 className="font-display text-3xl text-ink">{t('signin_welcome')}</h2>
       <p className="mt-1 text-sm text-ink/55">{t('signin_sub')}</p>
       <div className="mt-7 space-y-4">

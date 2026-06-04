@@ -18,8 +18,10 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-sand">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <Link to="/login" className="font-display text-2xl font-700 text-ink">invoice<span className="text-clay">168</span></Link>
+        <Link to="/login" className="font-display text-2xl font-700 text-ink">Bill<span className="text-clay">&</span>Pays</Link>
         <div className="flex items-center gap-2">
+          <Link to="/features" className="hidden text-sm text-ink/70 hover:text-ink sm:block">{t('nav_features')}</Link>
+          <Link to="/why-us" className="hidden text-sm text-ink/70 hover:text-ink sm:block">{t('nav_whyus')}</Link>
           <LanguageSwitcher />
           <Link to="/login" className="btn-ghost">{t('nav_signin')}</Link>
         </div>

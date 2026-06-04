@@ -707,6 +707,15 @@ const EXTRA15 = {
 }
 for (const l of Object.keys(EXTRA15)) Object.assign(T[l], EXTRA15[l])
 
+const EXTRA16 = {
+  en: { nav_features: 'Features', nav_whyus: 'Why us' },
+  zh: { nav_features: '功能', nav_whyus: '为什么选我们' },
+  es: { nav_features: 'Funciones', nav_whyus: 'Por qué nosotros' },
+  vi: { nav_features: 'Tính năng', nav_whyus: 'Vì sao chọn chúng tôi' },
+  ko: { nav_features: '기능', nav_whyus: '왜 우리인가' },
+}
+for (const l of Object.keys(EXTRA16)) Object.assign(T[l], EXTRA16[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

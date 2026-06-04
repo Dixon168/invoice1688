@@ -27,6 +27,8 @@ import Bills from './pages/Bills'
 import Receiving from './pages/Receiving'
 import Credits from './pages/Credits'
 import Contact from './pages/Contact'
+import Features from './pages/Features'
+import WhyUs from './pages/WhyUs'
 import Settings from './pages/Settings'
 
 function Protected({ children }) {
@@ -53,6 +55,8 @@ function Shell() {
     <Routes>
       <Route path="/login" element={session && !loading ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/features" element={<Features />} />
+      <Route path="/why-us" element={<WhyUs />} />
       <Route path="/get-started" element={<GetStarted />} />
       <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/admin/login" element={<AdminLogin />} />
