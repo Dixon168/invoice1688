@@ -74,7 +74,6 @@ export function Login() {
   }
 
   return (
-    <>
     <AuthShell>
       <div className="mb-8 font-display text-2xl text-ink lg:hidden">Bill<span className="text-clay">&</span>Pays</div>
       <h2 className="font-display text-3xl text-ink">{t('signin_welcome')}</h2>
@@ -101,8 +100,6 @@ export function Login() {
         <Link to="/get-started" className="font-semibold text-moss-700 hover:underline">{t('get_started')}</Link>
       </p>
     </AuthShell>
-    <Link to="/admin/login" className="fixed bottom-3 right-4 z-10 text-xs text-ink/35 transition hover:text-ink/70">{t('admin')}</Link>
-    </>
   )
 }
 
