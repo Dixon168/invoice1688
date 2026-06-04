@@ -5,12 +5,32 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, isOverdue } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
+import { TemplateButton, ImportButton } from '../components/ImportExport'
 import { useT } from '../i18n'
 
 const blank = {
   name: '', email: '', phone: '', payment_terms: 30, notes: '',
   billing_address: '', billing_city: '', billing_state: '', billing_postal_code: '', billing_country: '',
 }
+
+const customerFields = [
+  { key: 'name', label: 'Name', type: 'text', required: true },
+  { key: 'email', label: 'Email', type: 'text' },
+  { key: 'phone', label: 'Phone', type: 'text' },
+  { key: 'payment_terms', label: 'Payment terms (days)', type: 'number' },
+  { key: 'billing_address', label: 'Billing address', type: 'text' },
+  { key: 'billing_city', label: 'Billing city', type: 'text' },
+  { key: 'billing_state', label: 'Billing state', type: 'text' },
+  { key: 'billing_postal_code', label: 'Billing postal code', type: 'text' },
+  { key: 'billing_country', label: 'Billing country', type: 'text' },
+  { key: 'delivery_address', label: 'Delivery address', type: 'text' },
+  { key: 'delivery_city', label: 'Delivery city', type: 'text' },
+  { key: 'delivery_state', label: 'Delivery state', type: 'text' },
+  { key: 'delivery_postal_code', label: 'Delivery postal code', type: 'text' },
+  { key: 'delivery_country', label: 'Delivery country', type: 'text' },
+  { key: 'notes', label: 'Notes', type: 'text' },
+]
+const customerExample = ['John Smith', 'john@email.com', '555-9876', 30, '10 Oak Ave', 'Dallas', 'TX', '75201', 'USA', '', '', '', '', '', '']
 
 export default function Customers() {
   const { company } = useAuth()
@@ -62,6 +82,8 @@ export default function Customers() {
   return (
     <>
       <PageHeader title={t('nav_customers')} subtitle={t('customers_sub')}>
+        <TemplateButton filename="customers_template.xlsx" fields={customerFields} example={customerExample} />
+        <ImportButton table="customers" fields={customerFields} companyId={company.id} onDone={load} />
         <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_customer')}</button>
       </PageHeader>
 

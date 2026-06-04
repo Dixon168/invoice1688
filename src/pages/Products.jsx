@@ -4,11 +4,26 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
+import { TemplateButton, ImportButton } from '../components/ImportExport'
 import { TextCombo } from '../components/Combo'
 import { adjustStock } from '../lib/inventory'
 import { useT } from '../i18n'
 
 const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: true, stock_quantity: 0, reorder_point: '', is_active: true }
+
+const productFields = [
+  { key: 'name', label: 'Name', type: 'text', required: true },
+  { key: 'sku', label: 'SKU', type: 'text' },
+  { key: 'description', label: 'Description', type: 'text' },
+  { key: 'category', label: 'Category', type: 'text' },
+  { key: 'subcategory', label: 'Subcategory', type: 'text' },
+  { key: 'cost', label: 'Cost', type: 'number' },
+  { key: 'unit_price', label: 'Selling price', type: 'number' },
+  { key: 'track_inventory', label: 'Track inventory (yes/no)', type: 'bool' },
+  { key: 'stock_quantity', label: 'Stock qty', type: 'number' },
+  { key: 'reorder_point', label: 'Reorder point', type: 'number' },
+]
+const productExample = ['Widget A', 'SKU-001', 'Sample item', 'Beverages', 'Coffee', 5, 9.99, 'yes', 100, 10]
 
 export default function Products() {
   const { company } = useAuth()
@@ -181,6 +196,8 @@ export default function Products() {
   return (
     <>
       <PageHeader title={t('products_title')} subtitle={t('products_sub')}>
+        <TemplateButton filename="products_template.xlsx" fields={productFields} example={productExample} />
+        <ImportButton table="products" fields={productFields} companyId={company.id} onDone={load} />
         <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_item')}</button>
       </PageHeader>
 

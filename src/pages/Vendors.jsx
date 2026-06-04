@@ -5,12 +5,27 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
+import { TemplateButton, ImportButton } from '../components/ImportExport'
 import { useT } from '../i18n'
 
 const blank = {
   name: '', email: '', phone: '', terms: 30, notes: '',
   billing_address: '', billing_city: '', billing_state: '', billing_postal_code: '', billing_country: '',
 }
+
+const vendorFields = [
+  { key: 'name', label: 'Name', type: 'text', required: true },
+  { key: 'email', label: 'Email', type: 'text' },
+  { key: 'phone', label: 'Phone', type: 'text' },
+  { key: 'terms', label: 'Payment terms (days)', type: 'number' },
+  { key: 'billing_address', label: 'Address', type: 'text' },
+  { key: 'billing_city', label: 'City', type: 'text' },
+  { key: 'billing_state', label: 'State', type: 'text' },
+  { key: 'billing_postal_code', label: 'Postal code', type: 'text' },
+  { key: 'billing_country', label: 'Country', type: 'text' },
+  { key: 'notes', label: 'Notes', type: 'text' },
+]
+const vendorExample = ['Acme Supply', 'ap@acme.com', '555-1234', 30, '1 Main St', 'Austin', 'TX', '78701', 'USA', '']
 
 export default function Vendors() {
   const { company } = useAuth()
@@ -56,6 +71,8 @@ export default function Vendors() {
   return (
     <>
       <PageHeader title={t('vendors_title')} subtitle={t('vendors_sub')}>
+        <TemplateButton filename="vendors_template.xlsx" fields={vendorFields} example={vendorExample} />
+        <ImportButton table="vendors" fields={vendorFields} companyId={company.id} onDone={load} />
         <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_vendor')}</button>
       </PageHeader>
 

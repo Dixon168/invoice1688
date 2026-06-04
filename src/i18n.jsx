@@ -640,6 +640,15 @@ const EXTRA12 = {
 }
 for (const l of Object.keys(EXTRA12)) Object.assign(T[l], EXTRA12[l])
 
+const EXTRA13 = {
+  en: { ie_template: 'Template', ie_import: 'Import', ie_none: 'No valid rows found. Check the required columns.', ie_confirm: 'Import rows:', ie_skipped: 'skipped — missing required fields', ie_imported: 'Imported rows:' },
+  zh: { ie_template: '下载模板', ie_import: '批量导入', ie_none: '没有可导入的有效行，请检查必填列。', ie_confirm: '确认导入行数：', ie_skipped: '行被跳过（缺必填字段）', ie_imported: '已导入行数：' },
+  es: { ie_template: 'Plantilla', ie_import: 'Importar', ie_none: 'No se encontraron filas válidas. Revise las columnas obligatorias.', ie_confirm: 'Importar filas:', ie_skipped: 'omitidas — faltan campos obligatorios', ie_imported: 'Filas importadas:' },
+  vi: { ie_template: 'Mẫu', ie_import: 'Nhập hàng loạt', ie_none: 'Không có dòng hợp lệ. Kiểm tra cột bắt buộc.', ie_confirm: 'Nhập số dòng:', ie_skipped: 'bị bỏ qua — thiếu trường bắt buộc', ie_imported: 'Đã nhập số dòng:' },
+  ko: { ie_template: '템플릿', ie_import: '일괄 가져오기', ie_none: '유효한 행이 없습니다. 필수 열을 확인하세요.', ie_confirm: '가져올 행 수:', ie_skipped: '건너뜀 — 필수 항목 누락', ie_imported: '가져온 행 수:' },
+}
+for (const l of Object.keys(EXTRA13)) Object.assign(T[l], EXTRA13[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
