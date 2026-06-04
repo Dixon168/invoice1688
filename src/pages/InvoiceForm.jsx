@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { money, todayISO } from '../lib/format'
 import { computeTotals, recalcCustomer } from '../lib/calc'
 import { Spinner, Field } from '../components/ui'
+import { ItemCombo } from '../components/Combo'
 
 const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', quantity: 1, unit_price: 0, tax_rate: 0 })
 
@@ -68,15 +69,24 @@ export default function InvoiceForm() {
     }
   }
 
-  const onPickProduct = (idx, pid) => {
-    const p = products.find(x => x.id === pid)
+  const applyProduct = (idx, p) => {
     const tax = p?.tax_rate_id ? (taxes.find(t => t.id === p.tax_rate_id)?.rate || 0) : 0
     setItems(items.map((it, i) => i === idx ? {
-      ...it, product_id: pid,
-      description: p ? p.name : it.description,
-      unit_price: p ? Number(p.unit_price) : it.unit_price,
+      ...it, product_id: p.id,
+      description: p.name,
+      unit_price: Number(p.unit_price) || 0,
       tax_rate: Number(tax),
     } : it))
+  }
+
+  const createAndPick = async (idx, name) => {
+    const line = items[idx]
+    const { data, error } = await supabase.from('products')
+      .insert({ company_id: company.id, name, unit_price: Number(line?.unit_price) || 0 })
+      .select('*').single()
+    if (error) { alert(error.message); return }
+    setProducts(prev => [...prev, data])
+    applyProduct(idx, data)
   }
   const setItem = (idx, patch) => setItems(items.map((it, i) => i === idx ? { ...it, ...patch } : it))
   const addItem = () => setItems([...items, emptyItem()])
@@ -168,13 +178,10 @@ export default function InvoiceForm() {
               {items.map((it, idx) => (
                 <tr key={it.key}>
                   <td className="px-3 py-2">
-                    {products.length > 0 && (
-                      <select className="input mb-1 py-1.5 text-xs" value={it.product_id} onChange={e => onPickProduct(idx, e.target.value)}>
-                        <option value="">— pick item —</option>
-                        {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                    )}
-                    <input className="input py-1.5" value={it.description} onChange={e => setItem(idx, { description: e.target.value })} placeholder="Description" />
+                    <ItemCombo value={it.description} products={products} currency={cur}
+                      onText={t => setItem(idx, { description: t, product_id: '' })}
+                      onPick={p => applyProduct(idx, p)}
+                      onCreate={name => createAndPick(idx, name)} />
                   </td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value })} /></td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} /></td>
