@@ -23,6 +23,7 @@ export default function GetStarted() {
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')
+  const [emailNote, setEmailNote] = useState('')
   const set = (patch) => setForm({ ...form, ...patch })
 
   const submit = async () => {
@@ -37,7 +38,12 @@ export default function GetStarted() {
         plan: planLabel,
       })
       // 2) email the details to support@allinonepayment.com via EmailJS
-      try { await sendSignupEmail(form, planLabel) } catch (e) { /* non-blocking */ }
+      try {
+        const r = await sendSignupEmail(form, planLabel)
+        setEmailNote(r ? 'Email sent ✓' : 'EmailJS not configured')
+      } catch (e) {
+        setEmailNote('Email error: ' + (e?.text || e?.message || JSON.stringify(e)))
+      }
       // 3) also email via Netlify Forms (backup)
       await fetch('/', {
         method: 'POST',
@@ -58,6 +64,7 @@ export default function GetStarted() {
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-moss-100 text-moss-700"><CheckCircle2 size={28} /></div>
           <h1 className="font-display text-3xl text-ink">{t('gs_thanks_t')}</h1>
           <p className="mt-3 text-sm text-ink/60">{t('gs_thanks_d')}</p>
+          {emailNote && <p className="mt-3 text-xs text-ink/40">{emailNote}</p>}
           <Link to="/login" className="btn-primary mt-6 w-full justify-center">{t('gs_back_home')}</Link>
         </div>
       </div>
