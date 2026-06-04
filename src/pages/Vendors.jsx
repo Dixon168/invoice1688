@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Truck, Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -12,6 +13,7 @@ const blank = {
 
 export default function Vendors() {
   const { company } = useAuth()
+  const navigate = useNavigate()
   const [rows, setRows] = useState(null)
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
@@ -76,11 +78,11 @@ export default function Vendors() {
               </thead>
               <tbody className="divide-y divide-black/[.05]">
                 {filtered.map(v => (
-                  <tr key={v.id} className="hover:bg-sand/40">
+                  <tr key={v.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/vendors/${v.id}`)}>
                     <td className="px-4 py-3 font-semibold text-ink">{v.name}</td>
                     <td className="px-4 py-3 text-ink/70">{v.email || v.phone || '—'}</td>
                     <td className="px-4 py-3 text-right font-medium tabular-nums text-clay">{money(v.balance, cur)}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
                         <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" onClick={() => openEdit(v)}><Pencil size={16} /></button>
                         <button className="rounded-md p-2 text-ink/50 hover:bg-clay/10 hover:text-clay" onClick={() => remove(v)}><Trash2 size={16} /></button>

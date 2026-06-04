@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ReceiptText, Plus, Search, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, fmtDate, todayISO } from '../lib/format'
+import { money, fmtDate, todayISO, isOverdue } from '../lib/format'
 import { recalcVendorBill, recalcVendor } from '../lib/calc'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
 
@@ -11,6 +11,7 @@ const BILL_STATUS = {
   partial:   { label: 'Partial',   cls: 'bg-blue-100 text-blue-700' },
   paid:      { label: 'Paid',      cls: 'bg-moss-100 text-moss-700' },
   cancelled: { label: 'Cancelled', cls: 'bg-black/8 text-ink/40 line-through' },
+  overdue:   { label: 'Overdue',   cls: 'bg-red-100 text-red-700' },
 }
 const blankBill = () => ({ vendor_id: '', bill_number: '', bill_date: todayISO(), due_date: '', total: '', notes: '' })
 
@@ -142,7 +143,8 @@ export default function Bills() {
                 </thead>
                 <tbody className="divide-y divide-black/[.05]">
                   {filtered.map(b => {
-                    const s = BILL_STATUS[b.status] || BILL_STATUS.unpaid
+                    const od = isOverdue(b.due_date, b.status)
+                    const s = od ? BILL_STATUS.overdue : (BILL_STATUS[b.status] || BILL_STATUS.unpaid)
                     return (
                       <tr key={b.id} className="cursor-pointer hover:bg-sand/40" onClick={() => openDetail(b)}>
                         <td className="px-4 py-3 font-semibold text-ink">{b.vendor?.name || '—'}</td>

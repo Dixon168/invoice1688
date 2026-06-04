@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Plus, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, fmtDate, STATUS } from '../lib/format'
+import { money, fmtDate, STATUS, isOverdue } from '../lib/format'
 import { PageHeader, Spinner, EmptyState } from '../components/ui'
 
 export default function Invoices() {
@@ -22,7 +22,7 @@ export default function Invoices() {
   }, [])
 
   const filtered = (rows || [])
-    .filter(i => filter === 'all' ? true : i.status === filter)
+    .filter(i => filter === 'all' ? true : filter === 'overdue' ? isOverdue(i.due_date, i.status) : i.status === filter)
     .filter(i => [i.invoice_number, i.customer?.name].join(' ').toLowerCase().includes(q.toLowerCase()))
 
   const tabs = ['all', 'draft', 'sent', 'partial', 'paid', 'overdue']
@@ -65,7 +65,8 @@ export default function Invoices() {
                 </thead>
                 <tbody className="divide-y divide-black/[.05]">
                   {filtered.map(i => {
-                    const s = STATUS[i.status] || STATUS.draft
+                    const od = isOverdue(i.due_date, i.status)
+                    const s = od ? { label: 'Overdue', cls: STATUS.overdue.cls } : (STATUS[i.status] || STATUS.draft)
                     return (
                       <tr key={i.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/invoices/${i.id}`)}>
                         <td className="px-4 py-3 font-semibold text-ink">{i.invoice_number}</td>
