@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
+import { useT } from '../i18n'
 
 const blank = {
   name: '', email: '', phone: '', terms: 30, notes: '',
@@ -13,6 +14,7 @@ const blank = {
 
 export default function Vendors() {
   const { company } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [rows, setRows] = useState(null)
   const [q, setQ] = useState('')
@@ -53,13 +55,13 @@ export default function Vendors() {
 
   return (
     <>
-      <PageHeader title="Vendors" subtitle="Suppliers you buy from and owe money to.">
-        <button className="btn-primary" onClick={openNew}><Plus size={18} /> New vendor</button>
+      <PageHeader title={t('vendors_title')} subtitle={t('vendors_sub')}>
+        <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_vendor')}</button>
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
         <EmptyState icon={Truck} title="No vendors yet" hint="Add a supplier to start tracking bills and what you owe."
-          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> New vendor</button>} />
+          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_vendor')}</button>} />
       ) : (
         <>
         <div className="mb-4 flex flex-wrap gap-2">

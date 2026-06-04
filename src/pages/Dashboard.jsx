@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, STATUS } from '../lib/format'
 import { PageHeader, Spinner } from '../components/ui'
+import { useT } from '../i18n'
 
 function Stat({ icon: Icon, label, value, tone = 'ink', onClick }) {
   const tones = { ink: 'text-ink', moss: 'text-moss-700', clay: 'text-clay' }
@@ -19,6 +20,7 @@ function Stat({ icon: Icon, label, value, tone = 'ink', onClick }) {
 
 export default function Dashboard() {
   const { company } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
   const cur = company?.default_currency || 'USD'
@@ -49,20 +51,20 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader title={`Welcome${company?.name ? `, ${company.name}` : ''}`} subtitle="Here's where things stand today.">
-        <Link to="/invoices/new" className="btn-primary"><Plus size={18} /> New invoice</Link>
+      <PageHeader title={t('dash_title')} subtitle={company?.name || ''}>
+        <Link to="/invoices/new" className="btn-primary"><Plus size={18} /> {t('new_invoice')}</Link>
       </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Clock} label="Outstanding" value={money(data.outstanding, cur)} tone="clay" onClick={() => navigate('/invoices?filter=outstanding')} />
-        <Stat icon={TrendingUp} label="Paid this month" value={money(data.paidThisMonth, cur)} tone="moss" onClick={() => navigate('/payments')} />
-        <Stat icon={AlertTriangle} label="Overdue" value={`${data.overdueCount}`} tone="clay" onClick={() => navigate('/invoices?filter=overdue')} />
-        <Stat icon={Wallet} label="You owe (bills)" value={money(data.payable, cur)} tone="clay" onClick={() => navigate('/bills?filter=unpaid')} />
+        <Stat icon={Clock} label={t('stat_outstanding')} value={money(data.outstanding, cur)} tone="clay" onClick={() => navigate('/invoices?filter=outstanding')} />
+        <Stat icon={TrendingUp} label={t('stat_paid_month')} value={money(data.paidThisMonth, cur)} tone="moss" onClick={() => navigate('/payments')} />
+        <Stat icon={AlertTriangle} label={t('stat_overdue')} value={`${data.overdueCount}`} tone="clay" onClick={() => navigate('/invoices?filter=overdue')} />
+        <Stat icon={Wallet} label={t('stat_owe')} value={money(data.payable, cur)} tone="clay" onClick={() => navigate('/bills?filter=unpaid')} />
       </div>
 
       <div className="card mt-6 overflow-hidden">
         <div className="flex items-center justify-between border-b border-black/[.07] px-5 py-4">
-          <h2 className="font-display text-xl text-ink">Recent invoices</h2>
+          <h2 className="font-display text-xl text-ink">{t('recent_invoices')}</h2>
           <Link to="/invoices" className="text-sm font-semibold text-moss-700 hover:underline">View all</Link>
         </div>
         {data.recent.length === 0 ? (

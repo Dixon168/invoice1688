@@ -2,23 +2,26 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Users, Package, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag, ClipboardList } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useT } from '../i18n'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const nav = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/estimates', label: 'Estimates', icon: ClipboardList },
-  { to: '/invoices', label: 'Invoices', icon: FileText },
-  { to: '/customers', label: 'Customers', icon: Users },
-  { to: '/products', label: 'Products', icon: Package },
-  { to: '/categories', label: 'Categories', icon: Tag },
-  { to: '/payments', label: 'Payments', icon: CreditCard },
-  { to: '/vendors', label: 'Vendors', icon: Truck },
-  { to: '/bills', label: 'Bills', icon: ReceiptText },
-  { to: '/tax-rates', label: 'Tax Rates', icon: Percent },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/', key: 'nav_dashboard', icon: LayoutDashboard, end: true },
+  { to: '/estimates', key: 'nav_estimates', icon: ClipboardList },
+  { to: '/invoices', key: 'nav_invoices', icon: FileText },
+  { to: '/customers', key: 'nav_customers', icon: Users },
+  { to: '/products', key: 'nav_products', icon: Package },
+  { to: '/categories', key: 'nav_categories', icon: Tag },
+  { to: '/payments', key: 'nav_payments', icon: CreditCard },
+  { to: '/vendors', key: 'nav_vendors', icon: Truck },
+  { to: '/bills', key: 'nav_bills', icon: ReceiptText },
+  { to: '/tax-rates', key: 'nav_taxrates', icon: Percent },
+  { to: '/settings', key: 'nav_settings', icon: Settings },
 ]
 
 export default function Layout({ children }) {
   const { company, user, signOut } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
 
@@ -29,21 +32,22 @@ export default function Layout({ children }) {
         <div className="mt-1 truncate text-sm text-white/55">{company?.name || '—'}</div>
       </div>
       <nav className="flex-1 space-y-1 px-3">
-        {nav.map(({ to, label, icon: Icon, end }) => (
+        {nav.map(({ to, key, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                 isActive ? 'bg-white/15 text-white' : 'text-white/65 hover:bg-white/10 hover:text-white'
               }`}>
-            <Icon size={18} /> {label}
+            <Icon size={18} /> {t(key)}
           </NavLink>
         ))}
       </nav>
       <div className="border-t border-white/10 p-3">
+        <div className="px-1 pb-2"><LanguageSwitcher dark /></div>
         <div className="truncate px-3 pb-2 text-xs text-white/45">{user?.email}</div>
         <button onClick={async () => { await signOut(); navigate('/login') }}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/65 transition hover:bg-white/10 hover:text-white">
-          <LogOut size={18} /> Sign out
+          <LogOut size={18} /> {t('signout')}
         </button>
       </div>
     </>
@@ -54,7 +58,10 @@ export default function Layout({ children }) {
       {/* mobile top bar */}
       <div className="flex items-center justify-between bg-moss-800 px-4 py-3 lg:hidden">
         <div className="font-display text-xl font-700 text-white">invoice<span className="text-clay">168</span></div>
-        <button onClick={() => setOpen(true)} className="text-white"><Menu /></button>
+        <div className="flex items-center gap-1">
+          <LanguageSwitcher dark />
+          <button onClick={() => setOpen(true)} className="text-white"><Menu /></button>
+        </div>
       </div>
 
       {/* desktop sidebar */}

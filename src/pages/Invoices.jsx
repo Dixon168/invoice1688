@@ -5,9 +5,11 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, STATUS, isOverdue } from '../lib/format'
 import { PageHeader, Spinner, EmptyState } from '../components/ui'
+import { useT } from '../i18n'
 
 export default function Invoices() {
   const { company } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [rows, setRows] = useState(null)
@@ -38,13 +40,13 @@ export default function Invoices() {
 
   return (
     <>
-      <PageHeader title="Invoices" subtitle="Create, send and track what you're owed.">
-        <Link to="/invoices/new" className="btn-primary"><Plus size={18} /> New invoice</Link>
+      <PageHeader title={t('nav_invoices')} subtitle={t('invoices_sub')}>
+        <Link to="/invoices/new" className="btn-primary"><Plus size={18} /> {t('new_invoice')}</Link>
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
         <EmptyState icon={FileText} title="No invoices yet" hint="Create your first invoice to start getting paid."
-          action={<Link to="/invoices/new" className="btn-primary"><Plus size={18} /> New invoice</Link>} />
+          action={<Link to="/invoices/new" className="btn-primary"><Plus size={18} /> {t('new_invoice')}</Link>} />
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">

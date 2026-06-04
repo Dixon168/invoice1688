@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { PageHeader, Field } from '../components/ui'
+import { useT } from '../i18n'
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'HKD', 'CNY', 'JPY', 'KRW', 'VND']
 
 export default function Settings() {
   const { company, refreshCompany } = useAuth()
+  const { t } = useT()
   const [form, setForm] = useState(null)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -54,7 +56,7 @@ export default function Settings() {
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Your company details, shown on invoices." />
+      <PageHeader title={t('settings_title')} subtitle={t('settings_sub')} />
       <div className="card max-w-2xl p-6">
         <div className="mb-5">
           <span className="label">Logo</span>

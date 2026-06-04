@@ -3,11 +3,13 @@ import { Percent, Plus, Pencil, Trash2, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
+import { useT } from '../i18n'
 
 const blank = { name: '', rate: 0, region: '', is_default: false }
 
 export default function TaxRates() {
   const { company } = useAuth()
+  const { t } = useT()
   const [rows, setRows] = useState(null)
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blank)
@@ -39,13 +41,13 @@ export default function TaxRates() {
 
   return (
     <>
-      <PageHeader title="Tax Rates" subtitle="Reusable rates you can apply to invoice lines.">
-        <button className="btn-primary" onClick={openNew}><Plus size={18} /> New rate</button>
+      <PageHeader title={t('taxrates_title')} subtitle={t('taxrates_sub')}>
+        <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_taxrate')}</button>
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
         <EmptyState icon={Percent} title="No tax rates yet" hint="Add rates like 'NY Sales Tax 8.875%' to reuse on invoices."
-          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> New rate</button>} />
+          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_taxrate')}</button>} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map(t => (

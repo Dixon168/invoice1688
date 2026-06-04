@@ -3,9 +3,11 @@ import { Tag, Plus, Trash2, ChevronRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { PageHeader, Spinner, EmptyState } from '../components/ui'
+import { useT } from '../i18n'
 
 export default function Categories() {
   const { company } = useAuth()
+  const { t } = useT()
   const [rows, setRows] = useState(null)
   const [newCat, setNewCat] = useState('')
   const [subInputs, setSubInputs] = useState({})
@@ -44,7 +46,7 @@ export default function Categories() {
 
   return (
     <>
-      <PageHeader title="Categories" subtitle="Organise your products into categories and sub-categories." />
+      <PageHeader title={t('categories_title')} subtitle={t('categories_sub')} />
 
       <div className="card mb-4 flex gap-2 p-4">
         <input className="input" value={newCat} onChange={e => setNewCat(e.target.value)}

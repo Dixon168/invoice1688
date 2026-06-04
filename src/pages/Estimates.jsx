@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, isExpired } from '../lib/format'
 import { PageHeader, Spinner, EmptyState } from '../components/ui'
+import { useT } from '../i18n'
 
 export const EST_STATUS = {
   draft:     { label: 'Draft',     cls: 'bg-black/8 text-ink/70' },
@@ -17,6 +18,7 @@ export const EST_STATUS = {
 
 export default function Estimates() {
   const { company } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [rows, setRows] = useState(null)
   const [q, setQ] = useState('')
@@ -35,13 +37,13 @@ export default function Estimates() {
 
   return (
     <>
-      <PageHeader title="Estimates" subtitle="Quotes you send before invoicing.">
-        <Link to="/estimates/new" className="btn-primary"><Plus size={18} /> New estimate</Link>
+      <PageHeader title={t('estimates_title')} subtitle={t('estimates_sub')}>
+        <Link to="/estimates/new" className="btn-primary"><Plus size={18} /> {t('new_estimate')}</Link>
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
         <EmptyState icon={ClipboardList} title="No estimates yet" hint="Send a quote, then convert it to an invoice when accepted."
-          action={<Link to="/estimates/new" className="btn-primary"><Plus size={18} /> New estimate</Link>} />
+          action={<Link to="/estimates/new" className="btn-primary"><Plus size={18} /> {t('new_estimate')}</Link>} />
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">

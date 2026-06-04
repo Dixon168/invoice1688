@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, todayISO, isOverdue } from '../lib/format'
 import { recalcVendorBill, recalcVendor } from '../lib/calc'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
+import { useT } from '../i18n'
 
 const BILL_STATUS = {
   unpaid:    { label: 'Unpaid',    cls: 'bg-amber-100 text-amber-700' },
@@ -18,6 +19,7 @@ const blankBill = () => ({ vendor_id: '', bill_number: '', bill_date: todayISO()
 
 export default function Bills() {
   const { company } = useAuth()
+  const { t } = useT()
   const cur = company?.default_currency || 'USD'
   const [searchParams, setSearchParams] = useSearchParams()
   const [bills, setBills] = useState(null)
@@ -115,15 +117,15 @@ export default function Bills() {
 
   return (
     <>
-      <PageHeader title="Bills" subtitle="What your vendors have billed you.">
-        <button className="btn-primary" onClick={() => { setForm(blankBill()); setNewOpen(true) }} disabled={vendors.length === 0}><Plus size={18} /> New bill</button>
+      <PageHeader title={t('bills_title')} subtitle={t('bills_sub')}>
+        <button className="btn-primary" onClick={() => { setForm(blankBill()); setNewOpen(true) }} disabled={vendors.length === 0}><Plus size={18} /> {t('new_bill')}</button>
       </PageHeader>
 
       {bills === null ? <Spinner /> : vendors.length === 0 ? (
         <EmptyState icon={ReceiptText} title="Add a vendor first" hint="Create a vendor, then you can record their bills here." />
       ) : bills.length === 0 ? (
         <EmptyState icon={ReceiptText} title="No bills yet" hint="Record a bill from a vendor to track what you owe."
-          action={<button className="btn-primary" onClick={() => setNewOpen(true)}><Plus size={18} /> New bill</button>} />
+          action={<button className="btn-primary" onClick={() => setNewOpen(true)}><Plus size={18} /> {t('new_bill')}</button>} />
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">

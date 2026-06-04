@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, isOverdue } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
+import { useT } from '../i18n'
 
 const blank = {
   name: '', email: '', phone: '', payment_terms: 30, notes: '',
@@ -13,6 +14,7 @@ const blank = {
 
 export default function Customers() {
   const { company } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [rows, setRows] = useState(null)
   const [overdueIds, setOverdueIds] = useState(new Set())
@@ -59,13 +61,13 @@ export default function Customers() {
 
   return (
     <>
-      <PageHeader title="Customers" subtitle="People and companies you invoice.">
-        <button className="btn-primary" onClick={openNew}><Plus size={18} /> New customer</button>
+      <PageHeader title={t('nav_customers')} subtitle={t('customers_sub')}>
+        <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_customer')}</button>
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
         <EmptyState icon={Users} title="No customers yet" hint="Add your first customer to start invoicing."
-          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> New customer</button>} />
+          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_customer')}</button>} />
       ) : (
         <>
         <div className="mb-4 flex flex-wrap gap-2">

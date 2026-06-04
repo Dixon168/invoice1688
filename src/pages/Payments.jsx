@@ -5,9 +5,11 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate } from '../lib/format'
 import { PageHeader, Spinner, EmptyState } from '../components/ui'
+import { useT } from '../i18n'
 
 export default function Payments() {
   const { company } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [rows, setRows] = useState(null)
   const [q, setQ] = useState('')
@@ -26,7 +28,7 @@ export default function Payments() {
 
   return (
     <>
-      <PageHeader title="Payments" subtitle="Everything you've collected." />
+      <PageHeader title={t('payments_title')} subtitle={t('payments_sub')} />
       {rows === null ? <Spinner /> : rows.length === 0 ? (
         <EmptyState icon={CreditCard} title="No payments yet" hint="Payments you record on invoices show up here." />
       ) : (

@@ -6,11 +6,13 @@ import { money } from '../lib/format'
 import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
 import { TextCombo } from '../components/Combo'
 import { adjustStock } from '../lib/inventory'
+import { useT } from '../i18n'
 
 const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: false, stock_quantity: 0, reorder_point: '', is_active: true }
 
 export default function Products() {
   const { company } = useAuth()
+  const { t } = useT()
   const [rows, setRows] = useState(null)
   const [taxes, setTaxes] = useState([])
   const [vendors, setVendors] = useState([])
@@ -93,13 +95,13 @@ export default function Products() {
 
   return (
     <>
-      <PageHeader title="Products & Services" subtitle="Items you put on invoices.">
-        <button className="btn-primary" onClick={openNew}><Plus size={18} /> New item</button>
+      <PageHeader title={t('products_title')} subtitle={t('products_sub')}>
+        <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_item')}</button>
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
         <EmptyState icon={Package} title="No items yet" hint="Add products or services to drop onto invoices quickly."
-          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> New item</button>} />
+          action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_item')}</button>} />
       ) : (
         <div className="card overflow-hidden">
           <div className="flex flex-wrap items-center gap-2 border-b border-black/[.07] px-4 py-3">
