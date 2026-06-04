@@ -658,6 +658,55 @@ const EXTRA14 = {
 }
 for (const l of Object.keys(EXTRA14)) Object.assign(T[l], EXTRA14[l])
 
+const EXTRA15 = {
+  en: {
+    nav_contact: 'Contact & Support', contact_title: 'Contact & Support', contact_sub: 'Reach us for cancellations, bug reports, or suggestions',
+    powered_by: 'Powered by All In One Payment',
+    c_company_info: 'Company', c_address: 'Address', c_phone: 'Phone', c_email: 'Email',
+    c_type: 'How can we help?', type_cancel: 'Cancel subscription', type_bug: 'Report a bug', type_suggestion: 'Suggestion', type_billing: 'Billing question', type_other: 'Other',
+    c_name: 'Your name', c_your_email: 'Your email', c_message: 'Message', c_send: 'Send message', c_sending: 'Sending…',
+    c_sent_title: 'Message sent', c_sent_body: 'Thanks — we received your message and will get back to you by email.', c_send_another: 'Send another',
+    c_need_msg: 'Please enter a message.', c_failed: 'Could not send right now. Please email us directly at support@allinonepayment.com.',
+  },
+  zh: {
+    nav_contact: '联系与支持', contact_title: '联系与支持', contact_sub: '取消订阅、报告问题或提出建议，都可联系我们',
+    powered_by: '技术支持 All In One Payment',
+    c_company_info: '公司', c_address: '地址', c_phone: '电话', c_email: '邮箱',
+    c_type: '需要什么帮助？', type_cancel: '取消订阅', type_bug: '报告 Bug', type_suggestion: '建议', type_billing: '账单问题', type_other: '其他',
+    c_name: '你的称呼', c_your_email: '你的邮箱', c_message: '留言', c_send: '发送', c_sending: '发送中…',
+    c_sent_title: '已发送', c_sent_body: '谢谢——我们已收到你的留言，会通过邮件回复你。', c_send_another: '再发一条',
+    c_need_msg: '请填写留言内容。', c_failed: '暂时发送失败，请直接邮件 support@allinonepayment.com。',
+  },
+  es: {
+    nav_contact: 'Contacto y soporte', contact_title: 'Contacto y soporte', contact_sub: 'Cancelaciones, errores o sugerencias',
+    powered_by: 'Desarrollado por All In One Payment',
+    c_company_info: 'Empresa', c_address: 'Dirección', c_phone: 'Teléfono', c_email: 'Correo',
+    c_type: '¿Cómo podemos ayudar?', type_cancel: 'Cancelar suscripción', type_bug: 'Reportar un error', type_suggestion: 'Sugerencia', type_billing: 'Facturación', type_other: 'Otro',
+    c_name: 'Tu nombre', c_your_email: 'Tu correo', c_message: 'Mensaje', c_send: 'Enviar', c_sending: 'Enviando…',
+    c_sent_title: 'Mensaje enviado', c_sent_body: 'Gracias, recibimos tu mensaje y te responderemos por correo.', c_send_another: 'Enviar otro',
+    c_need_msg: 'Escribe un mensaje.', c_failed: 'No se pudo enviar. Escríbenos a support@allinonepayment.com.',
+  },
+  vi: {
+    nav_contact: 'Liên hệ & Hỗ trợ', contact_title: 'Liên hệ & Hỗ trợ', contact_sub: 'Hủy đăng ký, báo lỗi hoặc góp ý',
+    powered_by: 'Cung cấp bởi All In One Payment',
+    c_company_info: 'Công ty', c_address: 'Địa chỉ', c_phone: 'Điện thoại', c_email: 'Email',
+    c_type: 'Chúng tôi giúp gì?', type_cancel: 'Hủy đăng ký', type_bug: 'Báo lỗi', type_suggestion: 'Góp ý', type_billing: 'Thanh toán', type_other: 'Khác',
+    c_name: 'Tên của bạn', c_your_email: 'Email của bạn', c_message: 'Nội dung', c_send: 'Gửi', c_sending: 'Đang gửi…',
+    c_sent_title: 'Đã gửi', c_sent_body: 'Cảm ơn — chúng tôi đã nhận và sẽ phản hồi qua email.', c_send_another: 'Gửi tiếp',
+    c_need_msg: 'Vui lòng nhập nội dung.', c_failed: 'Không gửi được. Vui lòng email support@allinonepayment.com.',
+  },
+  ko: {
+    nav_contact: '문의 & 지원', contact_title: '문의 & 지원', contact_sub: '해지, 버그 신고, 제안을 보내주세요',
+    powered_by: 'Powered by All In One Payment',
+    c_company_info: '회사', c_address: '주소', c_phone: '전화', c_email: '이메일',
+    c_type: '무엇을 도와드릴까요?', type_cancel: '구독 취소', type_bug: '버그 신고', type_suggestion: '제안', type_billing: '결제 문의', type_other: '기타',
+    c_name: '이름', c_your_email: '이메일', c_message: '내용', c_send: '보내기', c_sending: '전송 중…',
+    c_sent_title: '전송 완료', c_sent_body: '감사합니다 — 메시지를 받았으며 이메일로 회신드리겠습니다.', c_send_another: '다시 보내기',
+    c_need_msg: '내용을 입력하세요.', c_failed: '전송하지 못했습니다. support@allinonepayment.com 으로 메일 주세요.',
+  },
+}
+for (const l of Object.keys(EXTRA15)) Object.assign(T[l], EXTRA15[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

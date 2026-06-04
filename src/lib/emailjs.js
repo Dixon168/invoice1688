@@ -54,6 +54,39 @@ export async function sendSignupEmail(form, plan) {
   )
 }
 
+// Sends a support message (cancel / bug / suggestion / other) to your inbox.
+export async function sendSupportEmail(form) {
+  if (!configured()) return
+  const message = [
+    `Type: ${form.type}`,
+    form.company_name ? `Company: ${form.company_name}` : '',
+    `Name: ${form.name}`,
+    `Email: ${form.email}`,
+    form.phone ? `Phone: ${form.phone}` : '',
+    '',
+    form.message,
+  ].filter(v => v !== undefined && v !== null).join('\n')
+
+  return emailjs.send(
+    EMAILJS.serviceId,
+    EMAILJS.templateId,
+    {
+      to_email: 'support@allinonepayment.com',
+      reply_to: form.email,
+      plan: `Support · ${form.type}`,
+      company_name: form.company_name || form.name,
+      contact_name: form.name,
+      email: form.email,
+      phone: form.phone || '',
+      company_phone: '',
+      billing_address: '', city: '', state: '', postal_code: '', country: '',
+      notes: form.type,
+      message,
+    },
+    { publicKey: EMAILJS.publicKey },
+  )
+}
+
 // Notifies you when a client changes their own password (the new password is NOT sent, for security).
 export async function sendPasswordChangeEmail(company, email) {
   if (!configured()) return

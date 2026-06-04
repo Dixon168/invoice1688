@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Package, PackagePlus, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag, ClipboardList, Undo2 } from 'lucide-react'
+import { LayoutDashboard, Users, Package, PackagePlus, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag, ClipboardList, Undo2, LifeBuoy } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { fmtDate } from '../lib/format'
 import { useT } from '../i18n'
@@ -19,6 +19,7 @@ const nav = [
   { to: '/vendors', key: 'nav_vendors', icon: Truck },
   { to: '/bills', key: 'nav_bills', icon: ReceiptText },
   { to: '/tax-rates', key: 'nav_taxrates', icon: Percent },
+  { to: '/contact', key: 'nav_contact', icon: LifeBuoy },
   { to: '/settings', key: 'nav_settings', icon: Settings },
 ]
 
@@ -53,6 +54,9 @@ export default function Layout({ children }) {
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/65 transition hover:bg-white/10 hover:text-white">
           <LogOut size={18} /> {t('signout')}
         </button>
+        <div className="mt-2 border-t border-white/10 px-3 pt-2 text-[11px] leading-tight text-white/35">
+          {t('powered_by')}<br />646-703-8888
+        </div>
       </div>
     </>
   )
