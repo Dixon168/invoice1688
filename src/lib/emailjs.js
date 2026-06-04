@@ -7,7 +7,7 @@ import emailjs from '@emailjs/browser'
 // (These are safe to keep in front-end code; EmailJS is designed for client-side use.)
 export const EMAILJS = {
   publicKey: '',
-  serviceId: '',
+  serviceId: 'service_b8lul4l',
   templateId: '',
 }
 
