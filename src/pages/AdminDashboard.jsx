@@ -97,11 +97,18 @@ export default function AdminDashboard() {
     load()
   }
 
-  const openManage = (c) => { setManage(c); setErr(''); setMForm({ subscription_status: c.subscription_status || 'active', paid_until: c.paid_until || '', newPassword: '' }) }
+  const openManage = (c) => { setManage(c); setErr(''); setMForm({
+    name: c.name || '', email: c.email || '', phone: c.phone || '', address: c.address || '',
+    city: c.city || '', state: c.state || '', postal_code: c.postal_code || '', country: c.country || '',
+    subscription_status: c.subscription_status || 'active', paid_until: c.paid_until || '', newPassword: '' }) }
   const saveManage = async () => {
     setErr(''); setBusy(true)
     await supabase.from('companies')
-      .update({ subscription_status: mForm.subscription_status, paid_until: mForm.paid_until || null })
+      .update({
+        name: mForm.name, email: mForm.email, phone: mForm.phone, address: mForm.address,
+        city: mForm.city, state: mForm.state, postal_code: mForm.postal_code, country: mForm.country,
+        subscription_status: mForm.subscription_status, paid_until: mForm.paid_until || null,
+      })
       .eq('id', manage.id)
     // optional password change for the company's login
     if (mForm.newPassword) {
@@ -208,8 +215,10 @@ export default function AdminDashboard() {
                     {companies.map(c => (
                       <tr key={c.id} className="hover:bg-sand/50">
                         <td className="px-5 py-3">
-                          <div className="font-semibold text-ink">{c.name}</div>
-                          <div className="text-xs text-ink/45">{c.email || '—'}</div>
+                          <button onClick={() => openManage(c)} className="text-left">
+                            <div className="font-semibold text-ink hover:text-clay">{c.name}</div>
+                            <div className="text-xs text-ink/45">{c.email || '—'}</div>
+                          </button>
                         </td>
                         <td className="px-5 py-3">
                           {(() => { const s = subState(c); return (
@@ -233,7 +242,7 @@ export default function AdminDashboard() {
                         <td className="px-5 py-3 text-right tabular-nums text-clay">{money(c.outstanding, c.default_currency)}</td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex justify-end gap-1">
-                            <button onClick={() => openManage(c)} className="rounded-md p-2 text-ink/40 hover:bg-black/5 hover:text-ink" title="Manage subscription"><CreditCard size={16} /></button>
+                            <button onClick={() => openManage(c)} className="rounded-md p-2 text-ink/40 hover:bg-black/5 hover:text-ink" title="Manage company"><CreditCard size={16} /></button>
                             <button onClick={() => deleteCompany(c)} className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay" title="Delete"><Trash2 size={16} /></button>
                           </div>
                         </td>
@@ -277,8 +286,21 @@ export default function AdminDashboard() {
           </div>
         )}
       </Modal>
-      <Modal open={!!manage} onClose={() => setManage(null)} title={`Subscription · ${manage?.name || ''}`}>
+      <Modal open={!!manage} onClose={() => setManage(null)} title={`Manage · ${manage?.name || ''}`} wide>
         <div className="space-y-4">
+          <div className="label">Company info</div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2"><Field label={t('f_company_name')}><input className="input" value={mForm.name} onChange={e => setMForm({ ...mForm, name: e.target.value })} /></Field></div>
+            <Field label={t('email')}><input className="input" value={mForm.email} onChange={e => setMForm({ ...mForm, email: e.target.value })} /></Field>
+            <Field label={t('f_phone')}><input className="input" value={mForm.phone} onChange={e => setMForm({ ...mForm, phone: e.target.value })} /></Field>
+            <div className="sm:col-span-2"><Field label={t('f_address')}><input className="input" value={mForm.address} onChange={e => setMForm({ ...mForm, address: e.target.value })} /></Field></div>
+            <Field label={t('f_city')}><input className="input" value={mForm.city} onChange={e => setMForm({ ...mForm, city: e.target.value })} /></Field>
+            <Field label={t('f_state')}><input className="input" value={mForm.state} onChange={e => setMForm({ ...mForm, state: e.target.value })} /></Field>
+            <Field label={t('f_postal_code')}><input className="input" value={mForm.postal_code} onChange={e => setMForm({ ...mForm, postal_code: e.target.value })} /></Field>
+            <Field label={t('f_country')}><input className="input" value={mForm.country} onChange={e => setMForm({ ...mForm, country: e.target.value })} /></Field>
+          </div>
+
+          <div className="label border-t border-black/[.07] pt-4">Subscription</div>
           <div className="flex gap-2">
             <button onClick={() => setMForm({ ...mForm, subscription_status: 'active' })}
               className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold ${mForm.subscription_status === 'active' ? 'border-moss-600 bg-moss-50 text-moss-700' : 'border-black/15 text-ink/60'}`}>Active</button>
