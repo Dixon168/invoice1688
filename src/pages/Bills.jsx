@@ -9,11 +9,11 @@ import { PageHeader, Spinner, EmptyState, Modal, Field } from '../components/ui'
 import { useT } from '../i18n'
 
 const BILL_STATUS = {
-  unpaid:    { label: 'Unpaid',    cls: 'bg-amber-100 text-amber-700' },
-  partial:   { label: 'Partial',   cls: 'bg-blue-100 text-blue-700' },
-  paid:      { label: 'Paid',      cls: 'bg-moss-100 text-moss-700' },
-  cancelled: { label: 'Cancelled', cls: 'bg-black/8 text-ink/40 line-through' },
-  overdue:   { label: 'Overdue',   cls: 'bg-red-100 text-red-700' },
+  unpaid:    { key: 'st_unpaid',    cls: 'bg-amber-100 text-amber-700' },
+  partial:   { key: 'st_partial',   cls: 'bg-blue-100 text-blue-700' },
+  paid:      { key: 'st_paid',      cls: 'bg-moss-100 text-moss-700' },
+  cancelled: { key: 'st_cancelled', cls: 'bg-black/8 text-ink/40 line-through' },
+  overdue:   { key: 'st_overdue',   cls: 'bg-red-100 text-red-700' },
 }
 const blankBill = () => ({ vendor_id: '', bill_number: '', bill_date: todayISO(), due_date: '', total: '', notes: '' })
 
@@ -122,35 +122,35 @@ export default function Bills() {
       </PageHeader>
 
       {bills === null ? <Spinner /> : vendors.length === 0 ? (
-        <EmptyState icon={ReceiptText} title="Add a vendor first" hint="Create a vendor, then you can record their bills here." />
+        <EmptyState icon={ReceiptText} title={t('es_add_vendor_first')} hint="Create a vendor, then you can record their bills here." />
       ) : bills.length === 0 ? (
-        <EmptyState icon={ReceiptText} title="No bills yet" hint="Record a bill from a vendor to track what you owe."
+        <EmptyState icon={ReceiptText} title={t('es_no_bills')} hint="Record a bill from a vendor to track what you owe."
           action={<button className="btn-primary" onClick={() => setNewOpen(true)}><Plus size={18} /> {t('new_bill')}</button>} />
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            {tabs.map(t => (
-              <button key={t} onClick={() => setFilter(t)} className={`badge px-3 py-1.5 capitalize ${filter === t ? 'bg-moss-700 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
-                {t === 'all' ? 'All' : BILL_STATUS[t]?.label}
+            {tabs.map(t2 => (
+              <button key={t2} onClick={() => setFilter(t2)} className={`badge px-3 py-1.5 capitalize ${filter === t2 ? 'bg-moss-700 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
+                {t2 === 'all' ? t('all') : t(BILL_STATUS[t2]?.key)}
               </button>
             ))}
-            <div className="ml-auto text-sm text-ink/55">You owe <span className="font-display text-lg text-clay">{money(totalOwed, cur)}</span></div>
+            <div className="ml-auto text-sm text-ink/55">{t('m_you_owe')} <span className="font-display text-lg text-clay">{money(totalOwed, cur)}</span></div>
           </div>
           <div className="card overflow-hidden">
             <div className="flex items-center gap-2 border-b border-black/[.07] px-4 py-3">
               <Search size={18} className="text-ink/40" />
-              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder="Search bill # or vendor…" value={q} onChange={e => setQ(e.target.value)} />
+              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder={t('ph_search_bill_vendor')} value={q} onChange={e => setQ(e.target.value)} />
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Vendor</th>
-                    <th className="px-4 py-3 font-semibold">Bill #</th>
-                    <th className="px-4 py-3 font-semibold">Due</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 text-right font-semibold">Total</th>
-                    <th className="px-4 py-3 text-right font-semibold">Owed</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_vendor')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_bill_no')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_due')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_status')}</th>
+                    <th className="px-4 py-3 text-right font-semibold">{t('th_total')}</th>
+                    <th className="px-4 py-3 text-right font-semibold">{t('th_owed')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/[.05]">
@@ -162,7 +162,7 @@ export default function Bills() {
                         <td className="px-4 py-3 font-semibold text-ink">{b.vendor?.name || '—'}</td>
                         <td className="px-4 py-3 text-ink/70">{b.bill_number || '—'}</td>
                         <td className="px-4 py-3 text-ink/60">{fmtDate(b.due_date)}</td>
-                        <td className="px-4 py-3"><span className={`badge ${s.cls}`}>{s.label}</span></td>
+                        <td className="px-4 py-3"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
                         <td className="px-4 py-3 text-right tabular-nums">{money(b.total, cur)}</td>
                         <td className="px-4 py-3 text-right font-medium tabular-nums text-clay">{money(b.amount_due, cur)}</td>
                       </tr>
@@ -178,24 +178,24 @@ export default function Bills() {
       {/* New bill */}
       <Modal open={newOpen} onClose={() => setNewOpen(false)} title="New bill">
         <div className="space-y-4">
-          <Field label="Vendor *">
+          <Field label={t('f_vendor_req')}>
             <select className="input" value={form.vendor_id} onChange={e => onPickVendor(e.target.value)}>
               <option value="">Select vendor…</option>
               {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Bill #"><input className="input" value={form.bill_number} onChange={e => setForm({ ...form, bill_number: e.target.value })} placeholder="Their ref" /></Field>
-            <Field label="Amount *"><input className="input" type="number" step="0.01" value={form.total} onChange={e => setForm({ ...form, total: e.target.value })} /></Field>
+            <Field label={t('f_bill_no')}><input className="input" value={form.bill_number} onChange={e => setForm({ ...form, bill_number: e.target.value })} placeholder={t('ph_their_ref')} /></Field>
+            <Field label={t('f_amount_req')}><input className="input" type="number" step="0.01" value={form.total} onChange={e => setForm({ ...form, total: e.target.value })} /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Bill date"><input className="input" type="date" value={form.bill_date} onChange={e => setForm({ ...form, bill_date: e.target.value })} /></Field>
-            <Field label="Due date"><input className="input" type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></Field>
+            <Field label={t('f_bill_date')}><input className="input" type="date" value={form.bill_date} onChange={e => setForm({ ...form, bill_date: e.target.value })} /></Field>
+            <Field label={t('f_due_date')}><input className="input" type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></Field>
           </div>
-          <Field label="Notes"><textarea className="input min-h-[60px]" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></Field>
+          <Field label={t('f_notes')}><textarea className="input min-h-[60px]" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></Field>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setNewOpen(false)}>Cancel</button>
+          <button className="btn-outline" onClick={() => setNewOpen(false)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={createBill} disabled={busy}>{busy ? 'Saving…' : 'Save bill'}</button>
         </div>
       </Modal>
@@ -206,17 +206,17 @@ export default function Bills() {
           <>
             <div className="grid grid-cols-2 gap-4 rounded-lg bg-sand p-4 text-sm sm:grid-cols-4">
               <div><div className="label">Bill #</div>{detail.bill_number || '—'}</div>
-              <div><div className="label">Bill date</div>{fmtDate(detail.bill_date)}</div>
-              <div><div className="label">Total</div><span className="tabular-nums">{money(detail.total, cur)}</span></div>
-              <div><div className="label">Owed</div><span className="font-semibold tabular-nums text-clay">{money(detail.amount_due, cur)}</span></div>
+              <div><div className="label">{t('f_bill_date')}</div>{fmtDate(detail.bill_date)}</div>
+              <div><div className="label">{t('m_total')}</div><span className="tabular-nums">{money(detail.total, cur)}</span></div>
+              <div><div className="label">{t('th_owed')}</div><span className="font-semibold tabular-nums text-clay">{money(detail.amount_due, cur)}</span></div>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-display text-lg text-ink">Payments</h3>
+              <h3 className="font-display text-lg text-ink">{t('sec_payments')}</h3>
               <div className="flex gap-2">
                 {detail.status !== 'paid' && detail.status !== 'cancelled' &&
-                  <button className="btn-primary" onClick={() => { setPay(p => ({ ...p, amount: String(detail.amount_due) })); setPayOpen(true) }}><Plus size={16} /> Record payment</button>}
-                {detail.status !== 'cancelled' && detail.status !== 'paid' && <button className="btn-ghost" onClick={cancelBill}>Cancel bill</button>}
+                  <button className="btn-primary" onClick={() => { setPay(p => ({ ...p, amount: String(detail.amount_due) })); setPayOpen(true) }}><Plus size={16} /> {t('record_payment')}</button>}
+                {detail.status !== 'cancelled' && detail.status !== 'paid' && <button className="btn-ghost" onClick={cancelBill}>{t('cancel_bill')}</button>}
                 <button className="btn-danger" onClick={deleteBill}><Trash2 size={16} /></button>
               </div>
             </div>
@@ -242,20 +242,20 @@ export default function Bills() {
 
       <Modal open={payOpen} onClose={() => setPayOpen(false)} title="Record payment to vendor">
         <div className="space-y-4">
-          <Field label="Amount"><input className="input" type="number" step="0.01" value={pay.amount} onChange={e => setPay({ ...pay, amount: e.target.value })} /></Field>
+          <Field label={t('f_amount')}><input className="input" type="number" step="0.01" value={pay.amount} onChange={e => setPay({ ...pay, amount: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Date"><input className="input" type="date" value={pay.payment_date} onChange={e => setPay({ ...pay, payment_date: e.target.value })} /></Field>
-            <Field label="Method">
+            <Field label={t('f_date')}><input className="input" type="date" value={pay.payment_date} onChange={e => setPay({ ...pay, payment_date: e.target.value })} /></Field>
+            <Field label={t('f_method')}>
               <select className="input" value={pay.method} onChange={e => setPay({ ...pay, method: e.target.value })}>
-                <option value="bank_transfer">Bank transfer</option><option value="card">Card</option>
-                <option value="cash">Cash</option><option value="check">Check</option><option value="other">Other</option>
+                <option value="bank_transfer">{t('pm_bank')}</option><option value="card">{t('pm_card')}</option>
+                <option value="cash">{t('pm_cash')}</option><option value="check">{t('pm_check')}</option><option value="other">{t('pm_other')}</option>
               </select>
             </Field>
           </div>
-          <Field label="Reference"><input className="input" value={pay.reference} onChange={e => setPay({ ...pay, reference: e.target.value })} placeholder="Optional" /></Field>
+          <Field label={t('f_reference')}><input className="input" value={pay.reference} onChange={e => setPay({ ...pay, reference: e.target.value })} placeholder="Optional" /></Field>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setPayOpen(false)}>Cancel</button>
+          <button className="btn-outline" onClick={() => setPayOpen(false)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={recordPayment} disabled={busy}>{busy ? 'Saving…' : 'Record payment'}</button>
         </div>
       </Modal>

@@ -66,7 +66,7 @@ export default function Customers() {
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
-        <EmptyState icon={Users} title="No customers yet" hint="Add your first customer to start invoicing."
+        <EmptyState icon={Users} title={t('es_no_customers')} hint={t('es_no_customers_h')}
           action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_customer')}</button>} />
       ) : (
         <>
@@ -82,16 +82,16 @@ export default function Customers() {
           <div className="flex items-center gap-2 border-b border-black/[.07] px-4 py-3">
             <Search size={18} className="text-ink/40" />
             <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30"
-              placeholder="Search by name, phone, city…" value={q} onChange={e => setQ(e.target.value)} />
+              placeholder={t('ph_search_name_phone_city')} value={q} onChange={e => setQ(e.target.value)} />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Name</th>
-                  <th className="px-4 py-3 font-semibold">Contact</th>
-                  <th className="px-4 py-3 font-semibold">Location</th>
-                  <th className="px-4 py-3 text-right font-semibold">Balance</th>
+                  <th className="px-4 py-3 font-semibold">{t('th_name')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('th_contact')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('th_location')}</th>
+                  <th className="px-4 py-3 text-right font-semibold">{t('th_balance')}</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -120,21 +120,21 @@ export default function Customers() {
         </>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit customer' : 'New customer'} wide>
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? `${t('edit')} ${t('th_customer')}` : t('new_customer')} wide>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Name *"><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
-          <Field label="Email"><input className="input" value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} /></Field>
-          <Field label="Phone"><input className="input" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} /></Field>
-          <Field label="Payment terms (days)"><input className="input" type="number" value={form.payment_terms} onChange={e => setForm({ ...form, payment_terms: e.target.value })} /></Field>
-          <div className="sm:col-span-2"><Field label="Billing address"><input className="input" value={form.billing_address || ''} onChange={e => setForm({ ...form, billing_address: e.target.value })} /></Field></div>
-          <Field label="City"><input className="input" value={form.billing_city || ''} onChange={e => setForm({ ...form, billing_city: e.target.value })} /></Field>
-          <Field label="State"><input className="input" value={form.billing_state || ''} onChange={e => setForm({ ...form, billing_state: e.target.value })} /></Field>
-          <Field label="Postal code"><input className="input" value={form.billing_postal_code || ''} onChange={e => setForm({ ...form, billing_postal_code: e.target.value })} /></Field>
-          <Field label="Country"><input className="input" value={form.billing_country || ''} onChange={e => setForm({ ...form, billing_country: e.target.value })} /></Field>
-          <div className="sm:col-span-2"><Field label="Notes"><textarea className="input min-h-[70px]" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></Field></div>
+          <Field label={t('f_name_req')}><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
+          <Field label={t('email')}><input className="input" value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} /></Field>
+          <Field label={t('f_phone')}><input className="input" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} /></Field>
+          <Field label={t('f_payment_terms')}><input className="input" type="number" value={form.payment_terms} onChange={e => setForm({ ...form, payment_terms: e.target.value })} /></Field>
+          <div className="sm:col-span-2"><Field label={t('f_billing_address')}><input className="input" value={form.billing_address || ''} onChange={e => setForm({ ...form, billing_address: e.target.value })} /></Field></div>
+          <Field label={t('f_city')}><input className="input" value={form.billing_city || ''} onChange={e => setForm({ ...form, billing_city: e.target.value })} /></Field>
+          <Field label={t('f_state')}><input className="input" value={form.billing_state || ''} onChange={e => setForm({ ...form, billing_state: e.target.value })} /></Field>
+          <Field label={t('f_postal_code')}><input className="input" value={form.billing_postal_code || ''} onChange={e => setForm({ ...form, billing_postal_code: e.target.value })} /></Field>
+          <Field label={t('f_country')}><input className="input" value={form.billing_country || ''} onChange={e => setForm({ ...form, billing_country: e.target.value })} /></Field>
+          <div className="sm:col-span-2"><Field label={t('f_notes')}><textarea className="input min-h-[70px]" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></Field></div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setOpen(false)}>Cancel</button>
+          <button className="btn-outline" onClick={() => setOpen(false)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </Modal>

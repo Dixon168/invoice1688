@@ -59,7 +59,7 @@ export default function Settings() {
       <PageHeader title={t('settings_title')} subtitle={t('settings_sub')} />
       <div className="card max-w-2xl p-6">
         <div className="mb-5">
-          <span className="label">Logo</span>
+          <span className="label">{t('logo')}</span>
           <div className="flex items-center gap-4">
             {form.logo_url
               ? <img src={form.logo_url} alt="logo" className="h-16 w-16 rounded-lg border border-black/10 object-contain bg-white" />
@@ -68,40 +68,40 @@ export default function Settings() {
               <label className="btn-outline cursor-pointer">
                 Upload<input type="file" accept="image/*" className="hidden" onChange={onLogo} />
               </label>
-              {form.logo_url && <button className="btn-ghost" onClick={() => set({ logo_url: '' })}>Remove</button>}
+              {form.logo_url && <button className="btn-ghost" onClick={() => set({ logo_url: '' })}>{t('remove')}</button>}
             </div>
           </div>
-          <p className="mt-1 text-xs text-ink/45">Shown on your invoices and PDFs.</p>
+          <p className="mt-1 text-xs text-ink/45">{t('shown_on_pdf')}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2"><Field label="Company name"><input className="input" value={form.name || ''} onChange={e => set({ name: e.target.value })} /></Field></div>
-          <Field label="Email"><input className="input" value={form.email || ''} onChange={e => set({ email: e.target.value })} /></Field>
-          <Field label="Phone"><input className="input" value={form.phone || ''} onChange={e => set({ phone: e.target.value })} /></Field>
-          <div className="sm:col-span-2"><Field label="Address"><input className="input" value={form.address || ''} onChange={e => set({ address: e.target.value })} /></Field></div>
-          <Field label="City"><input className="input" value={form.city || ''} onChange={e => set({ city: e.target.value })} /></Field>
-          <Field label="State"><input className="input" value={form.state || ''} onChange={e => set({ state: e.target.value })} /></Field>
-          <Field label="Postal code"><input className="input" value={form.postal_code || ''} onChange={e => set({ postal_code: e.target.value })} /></Field>
-          <Field label="Country"><input className="input" value={form.country || ''} onChange={e => set({ country: e.target.value })} /></Field>
-          <Field label="Default currency">
+          <div className="sm:col-span-2"><Field label={t('f_company_name')}><input className="input" value={form.name || ''} onChange={e => set({ name: e.target.value })} /></Field></div>
+          <Field label={t('email')}><input className="input" value={form.email || ''} onChange={e => set({ email: e.target.value })} /></Field>
+          <Field label={t('f_phone')}><input className="input" value={form.phone || ''} onChange={e => set({ phone: e.target.value })} /></Field>
+          <div className="sm:col-span-2"><Field label={t('f_address')}><input className="input" value={form.address || ''} onChange={e => set({ address: e.target.value })} /></Field></div>
+          <Field label={t('f_city')}><input className="input" value={form.city || ''} onChange={e => set({ city: e.target.value })} /></Field>
+          <Field label={t('f_state')}><input className="input" value={form.state || ''} onChange={e => set({ state: e.target.value })} /></Field>
+          <Field label={t('f_postal_code')}><input className="input" value={form.postal_code || ''} onChange={e => set({ postal_code: e.target.value })} /></Field>
+          <Field label={t('f_country')}><input className="input" value={form.country || ''} onChange={e => set({ country: e.target.value })} /></Field>
+          <Field label={t('f_default_currency')}>
             <select className="input" value={form.default_currency} onChange={e => set({ default_currency: e.target.value })}>
               {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </Field>
-          <Field label="Invoice prefix"><input className="input" value={form.invoice_prefix || ''} onChange={e => set({ invoice_prefix: e.target.value })} placeholder="INV-" /></Field>
+          <Field label={t('f_invoice_prefix')}><input className="input" value={form.invoice_prefix || ''} onChange={e => set({ invoice_prefix: e.target.value })} placeholder="INV-" /></Field>
         </div>
 
         <div className="mt-6 space-y-4 border-t border-black/[.07] pt-5">
           <h2 className="font-display text-lg text-ink">Invoice defaults</h2>
           <p className="-mt-2 text-xs text-ink/45">These auto-fill every new invoice/estimate so you don't retype them.</p>
-          <Field label="Default notes"><textarea className="input min-h-[60px]" value={form.default_notes || ''} onChange={e => set({ default_notes: e.target.value })} placeholder="Thanks for your business!" /></Field>
-          <Field label="Default terms"><textarea className="input min-h-[60px]" value={form.default_terms || ''} onChange={e => set({ default_terms: e.target.value })} placeholder="Payment due within 30 days." /></Field>
-          <Field label="Payment instructions (shown on invoice PDF)"><textarea className="input min-h-[60px]" value={form.payment_instructions || ''} onChange={e => set({ payment_instructions: e.target.value })} placeholder="Bank: ... / Account: ... / Zelle: ..." /></Field>
+          <Field label={t('f_default_notes')}><textarea className="input min-h-[60px]" value={form.default_notes || ''} onChange={e => set({ default_notes: e.target.value })} placeholder={t('ph_thanks')} /></Field>
+          <Field label={t('f_default_terms')}><textarea className="input min-h-[60px]" value={form.default_terms || ''} onChange={e => set({ default_terms: e.target.value })} placeholder={t('ph_payment_due_30')} /></Field>
+          <Field label={t('f_payment_instructions')}><textarea className="input min-h-[60px]" value={form.payment_instructions || ''} onChange={e => set({ payment_instructions: e.target.value })} placeholder={t('ph_bank')} /></Field>
         </div>
 
         <div className="mt-6 flex items-center gap-3">
-          <button className="btn-primary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
-          {saved && <span className="text-sm text-moss-700">Saved ✓</span>}
+          <button className="btn-primary" onClick={save} disabled={busy}>{busy ? t('saving') : t('save_changes')}</button>
+          {saved && <span className="text-sm text-moss-700">{t('saved')} ✓</span>}
         </div>
       </div>
     </>

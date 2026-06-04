@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { money, todayISO } from '../lib/format'
 import { Modal, Field } from './ui'
+import { useT } from '../i18n'
 
 // items: [{ id, label, sub, due }]  (due = outstanding amount, caps the input)
 // onSubmit(rows, meta) where rows=[{id, amount}], meta={payment_date, method, reference}
 export default function AllocatePayment({ open, onClose, title, items, currency = 'USD', methods, defaultMethod, onSubmit }) {
+  const { t } = useT()
   const [meta, setMeta] = useState({ payment_date: todayISO(), method: defaultMethod, reference: '' })
   const [alloc, setAlloc] = useState({})
   const [busy, setBusy] = useState(false)
@@ -30,26 +32,26 @@ export default function AllocatePayment({ open, onClose, title, items, currency 
   return (
     <Modal open={open} onClose={onClose} title={title} wide>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Date"><input className="input" type="date" value={meta.payment_date} onChange={e => setMeta({ ...meta, payment_date: e.target.value })} /></Field>
-        <Field label="Method">
+        <Field label={t('f_date')}><input className="input" type="date" value={meta.payment_date} onChange={e => setMeta({ ...meta, payment_date: e.target.value })} /></Field>
+        <Field label={t('f_method')}>
           <select className="input" value={meta.method} onChange={e => setMeta({ ...meta, method: e.target.value })}>
             {methods.map(m => <option key={m} value={m}>{m.replace('_', ' ')}</option>)}
           </select>
         </Field>
-        <Field label="Reference"><input className="input" value={meta.reference} onChange={e => setMeta({ ...meta, reference: e.target.value })} placeholder="Optional" /></Field>
+        <Field label={t('f_reference')}><input className="input" value={meta.reference} onChange={e => setMeta({ ...meta, reference: e.target.value })} placeholder={t('optional')} /></Field>
       </div>
 
       <div className="mt-4 flex items-center justify-between">
-        <div className="label !mb-0">Apply to</div>
-        <button className="btn-outline text-xs" onClick={payAll}>Pay all in full</button>
+        <div className="label !mb-0">{t('m_apply_to')}</div>
+        <button className="btn-outline text-xs" onClick={payAll}>{t('pay_all_full')}</button>
       </div>
       {items.length === 0 ? (
-        <p className="py-6 text-center text-sm text-ink/50">Nothing outstanding.</p>
+        <p className="py-6 text-center text-sm text-ink/50">{t('nothing_outstanding')}</p>
       ) : (
         <div className="mt-2 overflow-hidden rounded-lg border border-black/[.07]">
           <table className="w-full text-sm">
             <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
-              <tr><th className="px-3 py-2 font-semibold">Item</th><th className="px-3 py-2 text-right font-semibold">Outstanding</th><th className="w-32 px-3 py-2 text-right font-semibold">Apply</th></tr>
+              <tr><th className="px-3 py-2 font-semibold">{t('th_item')}</th><th className="px-3 py-2 text-right font-semibold">{t('th_outstanding')}</th><th className="w-32 px-3 py-2 text-right font-semibold">{t('th_apply')}</th></tr>
             </thead>
             <tbody className="divide-y divide-black/[.05]">
               {items.map(it => (
@@ -69,12 +71,12 @@ export default function AllocatePayment({ open, onClose, title, items, currency 
       )}
 
       <div className="mt-4 flex items-center justify-between border-t border-black/10 pt-3">
-        <span className="text-sm text-ink/60">Total payment</span>
+        <span className="text-sm text-ink/60">{t('m_total_payment')}</span>
         <span className="font-display text-2xl text-ink tabular-nums">{money(total, currency)}</span>
       </div>
       <div className="mt-4 flex justify-end gap-2">
-        <button className="btn-outline" onClick={onClose}>Cancel</button>
-        <button className="btn-primary" onClick={submit} disabled={busy || total <= 0}>{busy ? 'Saving…' : `Record ${money(total, currency)}`}</button>
+        <button className="btn-outline" onClick={onClose}>{t('cancel')}</button>
+        <button className="btn-primary" onClick={submit} disabled={busy || total <= 0}>{busy ? t('saving') : `${t('record_payment')} ${money(total, currency)}`}</button>
       </div>
     </Modal>
   )

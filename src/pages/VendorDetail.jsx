@@ -7,17 +7,19 @@ import { money, fmtDate, isOverdue } from '../lib/format'
 import { recalcVendorBill, recalcVendor } from '../lib/calc'
 import { Spinner } from '../components/ui'
 import AllocatePayment from '../components/AllocatePayment'
+import { useT } from '../i18n'
 
 const BILL_STATUS = {
-  unpaid: { label: 'Unpaid', cls: 'bg-amber-100 text-amber-700' },
-  partial: { label: 'Partial', cls: 'bg-blue-100 text-blue-700' },
-  paid: { label: 'Paid', cls: 'bg-moss-100 text-moss-700' },
-  cancelled: { label: 'Cancelled', cls: 'bg-black/8 text-ink/40 line-through' },
-  overdue: { label: 'Overdue', cls: 'bg-red-100 text-red-700' },
+  unpaid: { key: 'st_unpaid', cls: 'bg-amber-100 text-amber-700' },
+  partial: { key: 'st_partial', cls: 'bg-blue-100 text-blue-700' },
+  paid: { key: 'st_paid', cls: 'bg-moss-100 text-moss-700' },
+  cancelled: { key: 'st_cancelled', cls: 'bg-black/8 text-ink/40 line-through' },
+  overdue: { key: 'st_overdue', cls: 'bg-red-100 text-red-700' },
 }
 
 export default function VendorDetail() {
   const { id } = useParams()
+  const { t } = useT()
   const navigate = useNavigate()
   const { company } = useAuth()
   const cur = company?.default_currency || 'USD'
@@ -66,11 +68,11 @@ export default function VendorDetail() {
           <p className="mt-1 text-sm text-ink/60">{[v.email, v.phone, v.billing_city].filter(Boolean).join(' · ') || '—'}</p>
         </div>
         <div className="text-right">
-          <div className="label">You owe</div>
+          <div className="label">{t('m_you_owe')}</div>
           <div className="font-display text-3xl text-clay tabular-nums">{money(v.balance, cur)}</div>
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-          <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> Pay bills</button>
+          <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> {t('pay_bills')}</button>
           <Link className="btn-outline" to={`/bills?vendor=${id}`}><Plus size={16} /> New bill</Link>
         </div>
       </div>
@@ -88,7 +90,7 @@ export default function VendorDetail() {
                     <tr key={b.id}>
                       <td className="px-5 py-2.5 font-semibold text-ink">{b.bill_number || '—'}</td>
                       <td className="px-5 py-2.5 text-ink/55">{fmtDate(b.bill_date)}</td>
-                      <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{s.label}</span></td>
+                      <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
                       <td className="px-5 py-2.5 text-right tabular-nums">{money(b.total, cur)}</td>
                       <td className="px-5 py-2.5 text-right tabular-nums text-clay">{money(b.amount_due, cur)}</td>
                     </tr>
@@ -100,7 +102,7 @@ export default function VendorDetail() {
         </div>
 
         <div className="card overflow-hidden">
-          <div className="border-b border-black/[.07] px-5 py-3 font-display text-lg text-ink">Payments made</div>
+          <div className="border-b border-black/[.07] px-5 py-3 font-display text-lg text-ink">{t('sec_payments_made')}</div>
           {payments.length === 0 ? <p className="px-5 py-8 text-center text-sm text-ink/50">No payments yet.</p> : (
             <table className="w-full text-sm">
               <tbody className="divide-y divide-black/[.05]">
@@ -118,7 +120,7 @@ export default function VendorDetail() {
         </div>
       </div>
 
-      <AllocatePayment open={payOpen} onClose={() => setPayOpen(false)} title={`Pay bills · ${v.name}`}
+      <AllocatePayment open={payOpen} onClose={() => setPayOpen(false)} title={`${t('pay_bills')} · ${v.name}`}
         items={items} currency={cur} methods={['bank_transfer', 'card', 'cash', 'check', 'other']} defaultMethod="bank_transfer"
         onSubmit={payBills} />
     </div>

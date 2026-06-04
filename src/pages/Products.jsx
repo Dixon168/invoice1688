@@ -100,14 +100,14 @@ export default function Products() {
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
-        <EmptyState icon={Package} title="No items yet" hint="Add products or services to drop onto invoices quickly."
+        <EmptyState icon={Package} title={t('es_no_items')} hint={t('es_no_items_h')}
           action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_item')}</button>} />
       ) : (
         <div className="card overflow-hidden">
           <div className="flex flex-wrap items-center gap-2 border-b border-black/[.07] px-4 py-3">
             <div className="flex min-w-[180px] flex-1 items-center gap-2">
               <Search size={18} className="text-ink/40" />
-              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder="Search items…" value={q} onChange={e => setQ(e.target.value)} />
+              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder={t('ph_search_items')} value={q} onChange={e => setQ(e.target.value)} />
             </div>
             <select className="input max-w-[200px] py-1.5 text-sm" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
               <option value="">All categories</option>
@@ -121,7 +121,7 @@ export default function Products() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
-                <tr><th className="px-4 py-3 font-semibold">Name</th><th className="px-4 py-3 font-semibold">Category</th><th className="px-4 py-3 text-right font-semibold">Cost</th><th className="px-4 py-3 text-right font-semibold">Price</th><th className="px-4 py-3 text-right font-semibold">Stock</th><th className="px-4 py-3"></th></tr>
+                <tr><th className="px-4 py-3 font-semibold">{t('th_name')}</th><th className="px-4 py-3 font-semibold">{t('th_category')}</th><th className="px-4 py-3 text-right font-semibold">{t('th_cost')}</th><th className="px-4 py-3 text-right font-semibold">{t('th_price')}</th><th className="px-4 py-3 text-right font-semibold">{t('th_stock')}</th><th className="px-4 py-3"></th></tr>
               </thead>
               <tbody className="divide-y divide-black/[.05]">
                 {filtered.map(p => (
@@ -154,27 +154,27 @@ export default function Products() {
         </div>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit item' : 'New item'}>
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? `${t('edit')} ${t('th_item')}` : t('new_item')}>
         <div className="space-y-4">
-          <Field label="Name *"><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
+          <Field label={t('f_name_req')}><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Category"><TextCombo value={form.category} onChange={v => setForm({ ...form, category: v })} suggestions={catSuggestions} placeholder="e.g. Beverages" /></Field>
-            <Field label="Sub-category"><TextCombo value={form.subcategory} onChange={v => setForm({ ...form, subcategory: v })} suggestions={subcatSuggestions} placeholder="e.g. Coffee" /></Field>
+            <Field label={t('f_category')}><TextCombo value={form.category} onChange={v => setForm({ ...form, category: v })} suggestions={catSuggestions} placeholder="e.g. Beverages" /></Field>
+            <Field label={t('f_subcategory')}><TextCombo value={form.subcategory} onChange={v => setForm({ ...form, subcategory: v })} suggestions={subcatSuggestions} placeholder="e.g. Coffee" /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="SKU"><input className="input" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} /></Field>
-            <Field label="Cost"><input className="input" type="number" step="0.01" value={form.cost} onChange={e => setForm({ ...form, cost: e.target.value })} /></Field>
+            <Field label={t('f_sku')}><input className="input" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} /></Field>
+            <Field label={t('f_cost')}><input className="input" type="number" step="0.01" value={form.cost} onChange={e => setForm({ ...form, cost: e.target.value })} /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Selling price"><input className="input" type="number" step="0.01" value={form.unit_price} onChange={e => setForm({ ...form, unit_price: e.target.value })} /></Field>
-            <Field label="Default tax rate">
+            <Field label={t('f_selling_price')}><input className="input" type="number" step="0.01" value={form.unit_price} onChange={e => setForm({ ...form, unit_price: e.target.value })} /></Field>
+            <Field label={t('f_default_tax')}>
               <select className="input" value={form.tax_rate_id || ''} onChange={e => setForm({ ...form, tax_rate_id: e.target.value })}>
                 <option value="">No tax</option>
                 {taxes.map(t => <option key={t.id} value={t.id}>{t.name} ({Number(t.rate)}%)</option>)}
               </select>
             </Field>
           </div>
-          <Field label="Preferred vendor (where you buy it)">
+          <Field label={t('f_preferred_vendor')}>
             <select className="input" value={form.preferred_vendor_id || ''} onChange={e => setForm({ ...form, preferred_vendor_id: e.target.value })}>
               <option value="">None</option>
               {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -186,30 +186,30 @@ export default function Products() {
             </label>
             {form.track_inventory && (
               <div className="mt-3 grid grid-cols-2 gap-3">
-                <Field label="Stock quantity"><input className="input" type="number" step="1" value={form.stock_quantity} onChange={e => setForm({ ...form, stock_quantity: e.target.value })} /></Field>
-                <Field label="Reorder point (low-stock alert)"><input className="input" type="number" step="1" value={form.reorder_point} onChange={e => setForm({ ...form, reorder_point: e.target.value })} placeholder="e.g. 5" /></Field>
+                <Field label={t('f_stock_qty')}><input className="input" type="number" step="1" value={form.stock_quantity} onChange={e => setForm({ ...form, stock_quantity: e.target.value })} /></Field>
+                <Field label={t('f_reorder_point')}><input className="input" type="number" step="1" value={form.reorder_point} onChange={e => setForm({ ...form, reorder_point: e.target.value })} placeholder="e.g. 5" /></Field>
               </div>
             )}
           </div>
-          <Field label="Description"><textarea className="input min-h-[70px]" value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} /></Field>
+          <Field label={t('f_description')}><textarea className="input min-h-[70px]" value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} /></Field>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setOpen(false)}>Cancel</button>
+          <button className="btn-outline" onClick={() => setOpen(false)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </Modal>
 
-      <Modal open={!!adj} onClose={() => setAdj(null)} title={`Adjust stock · ${adj?.name || ''}`}>
+      <Modal open={!!adj} onClose={() => setAdj(null)} title={`${t('adjust_stock')} · ${adj?.name || ''}`}>
         <p className="mb-3 text-sm text-ink/60">Current stock: <span className="font-semibold text-ink">{adj ? Number(adj.stock_quantity) : 0}</span>. Use a positive number to add (restock), negative to remove.</p>
         <div className="space-y-4">
-          <Field label="Change (+ in / − out)"><input className="input" type="number" step="1" value={adjForm.delta} onChange={e => setAdjForm({ ...adjForm, delta: e.target.value })} placeholder="e.g. 20 or -3" /></Field>
-          <Field label="Note"><input className="input" value={adjForm.note} onChange={e => setAdjForm({ ...adjForm, note: e.target.value })} placeholder="e.g. Restock from Amazon" /></Field>
+          <Field label={t('f_change_inout')}><input className="input" type="number" step="1" value={adjForm.delta} onChange={e => setAdjForm({ ...adjForm, delta: e.target.value })} placeholder="e.g. 20 or -3" /></Field>
+          <Field label={t('f_note')}><input className="input" value={adjForm.note} onChange={e => setAdjForm({ ...adjForm, note: e.target.value })} placeholder="e.g. Restock from Amazon" /></Field>
           {adjForm.delta !== '' && !isNaN(Number(adjForm.delta)) && (
             <p className="text-sm text-ink/60">New stock will be <span className="font-semibold text-moss-700">{Number(adj?.stock_quantity || 0) + Number(adjForm.delta)}</span></p>
           )}
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setAdj(null)}>Cancel</button>
+          <button className="btn-outline" onClick={() => setAdj(null)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={saveAdjust} disabled={busy}>{busy ? 'Saving…' : 'Apply'}</button>
         </div>
       </Modal>

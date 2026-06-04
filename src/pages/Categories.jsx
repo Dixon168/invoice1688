@@ -50,12 +50,12 @@ export default function Categories() {
 
       <div className="card mb-4 flex gap-2 p-4">
         <input className="input" value={newCat} onChange={e => setNewCat(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addCategory()} placeholder="New category name…" />
-        <button className="btn-primary shrink-0" onClick={addCategory}><Plus size={18} /> Add</button>
+          onKeyDown={e => e.key === 'Enter' && addCategory()} placeholder={t('ph_new_category')} />
+        <button className="btn-primary shrink-0" onClick={addCategory}><Plus size={18} /> {t('add')}</button>
       </div>
 
       {rows === null ? <Spinner /> : tops.length === 0 ? (
-        <EmptyState icon={Tag} title="No categories yet" hint="Add a category above, then add sub-categories under it." />
+        <EmptyState icon={Tag} title={t('es_no_categories')} hint={t('es_no_categories_h')} />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {tops.map(cat => (
@@ -76,7 +76,7 @@ export default function Categories() {
               <div className="mt-2 flex gap-2">
                 <input className="input py-1.5 text-sm" value={subInputs[cat.id] || ''}
                   onChange={e => setSubInputs({ ...subInputs, [cat.id]: e.target.value })}
-                  onKeyDown={e => e.key === 'Enter' && addSub(cat.id)} placeholder="Add sub-category…" />
+                  onKeyDown={e => e.key === 'Enter' && addSub(cat.id)} placeholder={t('ph_add_subcat')} />
                 <button className="btn-outline shrink-0 px-3 py-1.5 text-sm" onClick={() => addSub(cat.id)}><Plus size={15} /></button>
               </div>
             </div>

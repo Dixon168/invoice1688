@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { money } from '../lib/format'
+import { useT } from '../i18n'
 
 function useOutside(ref, cb) {
   useEffect(() => {
@@ -11,6 +12,7 @@ function useOutside(ref, cb) {
 
 // Free-text field with suggestions from existing values. Typing a new value = creating it.
 export function TextCombo({ value, onChange, suggestions = [], placeholder }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const ref = useRef()
   useOutside(ref, () => setOpen(false))
@@ -21,7 +23,7 @@ export function TextCombo({ value, onChange, suggestions = [], placeholder }) {
 
   return (
     <div className="relative" ref={ref}>
-      <input className="input" value={value || ''} placeholder={placeholder} autoComplete="off"
+      <input className="input" value={value || ''} placeholder={placeholder || t('combo_type_add')} autoComplete="off"
         onChange={e => { onChange(e.target.value); setOpen(true) }} onFocus={() => setOpen(true)} />
       {open && filtered.length > 0 && (
         <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-black/10 bg-white py-1 shadow-lg">
@@ -36,7 +38,8 @@ export function TextCombo({ value, onChange, suggestions = [], placeholder }) {
 }
 
 // Searchable picker for a customer (or any simple named record). Pick or create.
-export function NameCombo({ value, onText, options = [], onPick, onCreate, placeholder = 'Type to search or add…', createLabel = 'Create' }) {
+export function NameCombo({ value, onText, options = [], onPick, onCreate, placeholder, createLabel }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const ref = useRef()
@@ -47,7 +50,7 @@ export function NameCombo({ value, onText, options = [], onPick, onCreate, place
 
   return (
     <div className="relative" ref={ref}>
-      <input className="input" value={value || ''} placeholder={placeholder} autoComplete="off"
+      <input className="input" value={value || ''} placeholder={placeholder || t('combo_type_add')} autoComplete="off"
         onChange={e => { onText(e.target.value); setOpen(true) }} onFocus={() => setOpen(true)} />
       {open && (matches.length > 0 || (q && !exact)) && (
         <div className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-black/10 bg-white py-1 text-sm shadow-lg">
@@ -59,7 +62,7 @@ export function NameCombo({ value, onText, options = [], onPick, onCreate, place
             <button type="button" disabled={creating}
               className="block w-full border-t border-black/5 px-3 py-2 text-left font-medium text-moss-700 hover:bg-moss-50 disabled:opacity-50"
               onMouseDown={async () => { setCreating(true); await onCreate(value.trim()); setCreating(false); setOpen(false) }}>
-              {creating ? 'Creating…' : `＋ ${createLabel} “${value.trim()}”`}
+              {creating ? 'Creating…' : `＋ ${createLabel || t('combo_create')} “${value.trim()}”`}
             </button>
           )}
         </div>
@@ -68,6 +71,7 @@ export function NameCombo({ value, onText, options = [], onPick, onCreate, place
   )
 }
 export function ItemCombo({ value, onText, products = [], onPick, onCreate, currency = 'USD' }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const ref = useRef()
@@ -80,7 +84,7 @@ export function ItemCombo({ value, onText, products = [], onPick, onCreate, curr
 
   return (
     <div className="relative" ref={ref}>
-      <input className="input py-1.5" value={value || ''} placeholder="Type to search or add item…" autoComplete="off"
+      <input className="input py-1.5" value={value || ''} placeholder={t('ph_type_search_item')} autoComplete="off"
         onChange={e => { onText(e.target.value); setOpen(true) }} onFocus={() => setOpen(true)} />
       {open && (matches.length > 0 || (q && !exact)) && (
         <div className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-black/10 bg-white py-1 text-sm shadow-lg">

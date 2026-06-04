@@ -8,6 +8,7 @@ import { computeTotals, recalcCustomer, recalcInvoice } from '../lib/calc'
 import { applyInvoiceInventory } from '../lib/inventory'
 import { Spinner, Field } from '../components/ui'
 import { ItemCombo, NameCombo } from '../components/Combo'
+import { useT } from '../i18n'
 
 const CFG = {
   invoice: {
@@ -28,6 +29,7 @@ const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id:
 export default function DocumentForm({ kind = 'invoice' }) {
   const cfg = CFG[kind]
   const { id } = useParams()
+  const { t } = useT()
   const editing = !!id
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -163,21 +165,21 @@ export default function DocumentForm({ kind = 'invoice' }) {
   return (
     <div>
       <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Back</button>
-      <h1 className="mb-6 font-display text-3xl capitalize text-ink">{editing ? `Edit ${cfg.title}` : `New ${cfg.title}`}</h1>
+      <h1 className="mb-6 font-display text-3xl text-ink">{editing ? `${t('edit')} ${t(kind === 'invoice' ? 'th_invoice' : 'th_estimate')}` : t(kind === 'invoice' ? 'new_invoice' : 'new_estimate')}</h1>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="card p-5"><Field label="Customer *">
+        <div className="card p-5"><Field label={t('f_customer_req')}>
           <NameCombo value={customerQuery} options={customers}
             onText={t => { setCustomerQuery(t); setCustomerId('') }}
             onPick={pickCustomer} onCreate={createCustomer}
-            placeholder="Search or add customer…" createLabel="Create customer" />
+            placeholder={t('ph_search_or_add_customer')} createLabel={t('create_customer')} />
           {!customerId && customerQuery && <p className="mt-1 text-xs text-clay">Pick a match or create the customer.</p>}
         </Field></div>
         <div className="card p-5"><Field label={`${cfg.title} number`}>
           <input className="input capitalize-first" value={number} onChange={e => setNumber(e.target.value)} />
         </Field></div>
         <div className="card grid grid-cols-2 gap-3 p-5">
-          <Field label="Issue date"><input className="input" type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></Field>
+          <Field label={t('f_issue_date')}><input className="input" type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></Field>
           <Field label={cfg.dateLabel}><input className="input" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></Field>
         </div>
       </div>
@@ -187,11 +189,11 @@ export default function DocumentForm({ kind = 'invoice' }) {
           <table className="w-full text-sm">
             <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
               <tr>
-                <th className="px-3 py-3 font-semibold">Item / description</th>
-                <th className="w-20 px-3 py-3 text-right font-semibold">Qty</th>
-                <th className="w-28 px-3 py-3 text-right font-semibold">Price</th>
-                <th className="w-24 px-3 py-3 text-right font-semibold">Tax %</th>
-                <th className="w-28 px-3 py-3 text-right font-semibold">Amount</th>
+                <th className="px-3 py-3 font-semibold">{t('th_item_desc')}</th>
+                <th className="w-20 px-3 py-3 text-right font-semibold">{t('th_qty')}</th>
+                <th className="w-28 px-3 py-3 text-right font-semibold">{t('th_price')}</th>
+                <th className="w-24 px-3 py-3 text-right font-semibold">{t('th_tax_pct')}</th>
+                <th className="w-28 px-3 py-3 text-right font-semibold">{t('th_amount')}</th>
                 <th className="w-10"></th>
               </tr>
             </thead>
@@ -214,27 +216,27 @@ export default function DocumentForm({ kind = 'invoice' }) {
           </table>
         </div>
         <div className="border-t border-black/[.07] p-3">
-          <button onClick={addItem} className="btn-ghost text-sm"><Plus size={16} /> Add line</button>
+          <button onClick={addItem} className="btn-ghost text-sm"><Plus size={16} /> {t('add_line')}</button>
         </div>
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="card space-y-4 p-5">
-          <Field label="Notes"><textarea className="input min-h-[70px]" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Visible to customer" /></Field>
-          <Field label="Terms"><textarea className="input min-h-[60px]" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
+          <Field label={t('f_notes')}><textarea className="input min-h-[70px]" value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('ph_visible_customer')} /></Field>
+          <Field label={t('f_terms')}><textarea className="input min-h-[60px]" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
           <label className="flex items-center gap-2 text-sm text-ink/80">
-            <input type="checkbox" checked={isExempt} onChange={e => setIsExempt(e.target.checked)} /> Tax exempt (no tax)
+            <input type="checkbox" checked={isExempt} onChange={e => setIsExempt(e.target.checked)} /> {t('tax_exempt')}
           </label>
         </div>
         <div className="card p-5">
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-ink/60">Subtotal</span><span className="tabular-nums">{money(totals.subtotal, cur)}</span></div>
-            <div className="flex justify-between"><span className="text-ink/60">Tax</span><span className="tabular-nums">{money(totals.taxTotal, cur)}</span></div>
-            <div className="mt-2 flex justify-between border-t border-black/10 pt-3 font-display text-2xl text-ink"><span>Total</span><span className="tabular-nums">{money(totals.total, cur)}</span></div>
+            <div className="flex justify-between"><span className="text-ink/60">{t('m_subtotal')}</span><span className="tabular-nums">{money(totals.subtotal, cur)}</span></div>
+            <div className="flex justify-between"><span className="text-ink/60">{t('m_tax')}</span><span className="tabular-nums">{money(totals.taxTotal, cur)}</span></div>
+            <div className="mt-2 flex justify-between border-t border-black/10 pt-3 font-display text-2xl text-ink"><span>{t('m_total')}</span><span className="tabular-nums">{money(totals.total, cur)}</span></div>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
-            <button className="btn-outline" onClick={() => save('draft')} disabled={busy}>Save draft</button>
-            <button className="btn-primary flex-1" onClick={() => save('sent')} disabled={busy}>{busy ? 'Saving…' : cfg.primaryLabel}</button>
+            <button className="btn-outline" onClick={() => save('draft')} disabled={busy}>{t('save_draft')}</button>
+            <button className="btn-primary flex-1" onClick={() => save('sent')} disabled={busy}>{busy ? t('saving') : t(kind === 'invoice' ? 'mark_sent_save' : 'send_save')}</button>
           </div>
         </div>
       </div>

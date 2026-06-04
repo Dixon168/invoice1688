@@ -5,11 +5,13 @@ import { supabase, makeTempClient } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, todayISO, subState, SUB_BADGE } from '../lib/format'
 import { Spinner, Modal, Field } from '../components/ui'
+import { useT } from '../i18n'
 
 const plusMonths = (n) => { const d = new Date(); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0, 10) }
 
 export default function AdminDashboard() {
   const { signOut, user } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [companies, setCompanies] = useState(null)
   const [newOpen, setNewOpen] = useState(false)
@@ -109,7 +111,7 @@ export default function AdminDashboard() {
             <h1 className="font-display text-3xl text-ink">All companies</h1>
             <p className="mt-1 text-sm text-ink/55">Every business account on the platform.</p>
           </div>
-          <button className="btn-primary" onClick={openNew}><Plus size={18} /> New company</button>
+          <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_company')}</button>
         </div>
 
         {companies === null ? <Spinner /> : companies.length === 0 ? (
@@ -119,7 +121,7 @@ export default function AdminDashboard() {
             <div className="mb-4 grid gap-4 sm:grid-cols-3">
               <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Companies</div><div className="mt-1 font-display text-3xl text-ink">{companies.length}</div></div>
               <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Total invoiced</div><div className="mt-1 font-display text-3xl text-ink tabular-nums">{money(companies.reduce((s, c) => s + c.invoiced, 0))}</div></div>
-              <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Outstanding</div><div className="mt-1 font-display text-3xl text-clay tabular-nums">{money(companies.reduce((s, c) => s + c.outstanding, 0))}</div></div>
+              <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">{t('m_outstanding')}</div><div className="mt-1 font-display text-3xl text-clay tabular-nums">{money(companies.reduce((s, c) => s + c.outstanding, 0))}</div></div>
             </div>
 
             <div className="card overflow-hidden">
@@ -127,13 +129,13 @@ export default function AdminDashboard() {
                 <table className="w-full text-sm">
                   <thead className="bg-ink/5 text-left text-xs uppercase tracking-wide text-ink/50">
                     <tr>
-                      <th className="px-5 py-3 font-semibold">Company</th>
-                      <th className="px-5 py-3 font-semibold">Subscription</th>
-                      <th className="px-5 py-3 text-center font-semibold">Users</th>
-                      <th className="px-5 py-3 text-center font-semibold">Customers</th>
-                      <th className="px-5 py-3 text-center font-semibold">Invoices</th>
-                      <th className="px-5 py-3 text-right font-semibold">Invoiced</th>
-                      <th className="px-5 py-3 text-right font-semibold">Outstanding</th>
+                      <th className="px-5 py-3 font-semibold">{t('th_company')}</th>
+                      <th className="px-5 py-3 font-semibold">{t('th_subscription')}</th>
+                      <th className="px-5 py-3 text-center font-semibold">{t('th_users')}</th>
+                      <th className="px-5 py-3 text-center font-semibold">{t('nav_customers')}</th>
+                      <th className="px-5 py-3 text-center font-semibold">{t('nav_invoices')}</th>
+                      <th className="px-5 py-3 text-right font-semibold">{t('th_invoiced')}</th>
+                      <th className="px-5 py-3 text-right font-semibold">{t('th_outstanding')}</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -147,7 +149,7 @@ export default function AdminDashboard() {
                         <td className="px-5 py-3">
                           {(() => { const s = subState(c); return (
                             <button onClick={() => openManage(c)} className="group flex items-center gap-2 text-left">
-                              <span className={`badge ${SUB_BADGE[s.state]}`}>{s.label}</span>
+                              <span className={`badge ${SUB_BADGE[s.state]}`}>{t(s.key)}</span>
                               <span className="text-xs text-ink/45 group-hover:text-ink/70">
                                 {c.paid_until ? `until ${fmtDate(c.paid_until)}` : 'no date'}
                               </span>
@@ -187,19 +189,19 @@ export default function AdminDashboard() {
               <p className="text-sm text-clay">Note: email confirmation is ON in Supabase, so the client must confirm via their inbox before logging in. Turn it off in Supabase → Authentication if you'd rather hand out passwords directly.</p>
             )}
             <div className="flex justify-end">
-              <button className="btn-primary" onClick={() => setNewOpen(false)}>Done</button>
+              <button className="btn-primary" onClick={() => setNewOpen(false)}>{t('done')}</button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <Field label="Company name *"><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Client's business name" /></Field>
-            <Field label="Owner name"><input className="input" value={form.ownerName} onChange={e => setForm({ ...form, ownerName: e.target.value })} placeholder="Optional" /></Field>
-            <Field label="Login email *"><input className="input" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="client@example.com" /></Field>
-            <Field label="Password *"><input className="input" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" /></Field>
-            <Field label="Paid until ($20/mo plan)"><input className="input" type="date" value={form.paid_until} onChange={e => setForm({ ...form, paid_until: e.target.value })} /></Field>
+            <Field label={t('f_company_name_req')}><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Client's business name" /></Field>
+            <Field label={t('f_owner_name')}><input className="input" value={form.ownerName} onChange={e => setForm({ ...form, ownerName: e.target.value })} placeholder="Optional" /></Field>
+            <Field label={t('f_login_email_req')}><input className="input" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="client@example.com" /></Field>
+            <Field label={t('f_password_req')}><input className="input" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" /></Field>
+            <Field label={t('f_paid_until_plan')}><input className="input" type="date" value={form.paid_until} onChange={e => setForm({ ...form, paid_until: e.target.value })} /></Field>
             {err && <p className="text-sm text-clay">{err}</p>}
             <div className="flex justify-end gap-2">
-              <button className="btn-outline" onClick={() => setNewOpen(false)}>Cancel</button>
+              <button className="btn-outline" onClick={() => setNewOpen(false)}>{t('cancel')}</button>
               <button className="btn-primary" onClick={createAccount} disabled={busy}>{busy ? 'Creating…' : 'Create company + login'}</button>
             </div>
           </div>
@@ -213,7 +215,7 @@ export default function AdminDashboard() {
             <button onClick={() => setMForm({ ...mForm, subscription_status: 'suspended' })}
               className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold ${mForm.subscription_status === 'suspended' ? 'border-clay bg-clay/10 text-clay' : 'border-black/15 text-ink/60'}`}>Suspended</button>
           </div>
-          <Field label="Paid until"><input className="input" type="date" value={mForm.paid_until} onChange={e => setMForm({ ...mForm, paid_until: e.target.value })} /></Field>
+          <Field label={t('f_paid_until')}><input className="input" type="date" value={mForm.paid_until} onChange={e => setMForm({ ...mForm, paid_until: e.target.value })} /></Field>
           <div className="flex flex-wrap gap-2">
             <button className="btn-outline text-xs" onClick={() => setMForm({ ...mForm, paid_until: plusMonths(1) })}>+1 month from today</button>
             <button className="btn-outline text-xs" onClick={() => setMForm({ ...mForm, paid_until: plusMonths(12) })}>+12 months</button>
@@ -221,7 +223,7 @@ export default function AdminDashboard() {
           <p className="text-xs text-ink/50">When "Paid until" passes, or you set Suspended, the client is automatically blocked from using the app until you renew it.</p>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setManage(null)}>Cancel</button>
+          <button className="btn-outline" onClick={() => setManage(null)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={saveManage} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </Modal>

@@ -8,9 +8,11 @@ import { recalcCustomer } from '../lib/calc'
 import { documentPDF } from '../lib/pdf'
 import { Spinner } from '../components/ui'
 import { EST_STATUS } from './Estimates'
+import { useT } from '../i18n'
 
 export default function EstimateDetail() {
   const { id } = useParams()
+  const { t } = useT()
   const navigate = useNavigate()
   const { company, refreshCompany } = useAuth()
   const cur = company?.default_currency || 'USD'
@@ -76,9 +78,9 @@ export default function EstimateDetail() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate('/estimates')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Estimates</button>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-outline" onClick={() => documentPDF({ kind: 'estimate', doc: est, items, customer, company })}><FileDown size={16} /> PDF</button>
+          <button className="btn-outline" onClick={() => documentPDF({ kind: 'estimate', doc: est, items, customer, company })}><FileDown size={16} /> {t('pdf')}</button>
           {est.status !== 'converted' && <Link className="btn-outline" to={`/estimates/${id}/edit`}><Pencil size={16} /> Edit</Link>}
-          {est.status !== 'converted' && <button className="btn-primary" onClick={convertToInvoice} disabled={busy}><ArrowRightLeft size={16} /> Convert to invoice</button>}
+          {est.status !== 'converted' && <button className="btn-primary" onClick={convertToInvoice} disabled={busy}><ArrowRightLeft size={16} /> {t('convert_invoice')}</button>}
           <button className="btn-danger" onClick={remove}><Trash2 size={16} /></button>
         </div>
       </div>
@@ -98,12 +100,12 @@ export default function EstimateDetail() {
 
         <div className="grid gap-6 p-6 sm:grid-cols-2">
           <div>
-            <div className="label">Quote for</div>
+            <div className="label">{t('m_quote_for')}</div>
             <div className="font-semibold text-ink">{customer?.name || '—'}</div>
             <div className="text-sm text-ink/60">{customer?.email}</div>
           </div>
           <div className="sm:text-right">
-            <div className="label">From</div>
+            <div className="label">{t('m_from')}</div>
             <div className="font-semibold text-ink">{company?.name}</div>
           </div>
         </div>
@@ -112,10 +114,10 @@ export default function EstimateDetail() {
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-ink/50">
               <tr className="border-b border-black/10">
-                <th className="py-2 font-semibold">Description</th>
-                <th className="py-2 text-right font-semibold">Qty</th>
-                <th className="py-2 text-right font-semibold">Price</th>
-                <th className="py-2 text-right font-semibold">Amount</th>
+                <th className="py-2 font-semibold">{t('f_description')}</th>
+                <th className="py-2 text-right font-semibold">{t('th_qty')}</th>
+                <th className="py-2 text-right font-semibold">{t('th_price')}</th>
+                <th className="py-2 text-right font-semibold">{t('th_amount')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/[.05]">
@@ -133,19 +135,19 @@ export default function EstimateDetail() {
 
         <div className="flex justify-end p-6">
           <div className="w-full max-w-xs space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-ink/60">Subtotal</span><span className="tabular-nums">{money(est.subtotal, cur)}</span></div>
-            <div className="flex justify-between"><span className="text-ink/60">Tax</span><span className="tabular-nums">{money(est.tax_total, cur)}</span></div>
-            <div className="flex justify-between border-t border-black/10 pt-2 font-display text-xl text-ink"><span>Total</span><span className="tabular-nums">{money(est.total, cur)}</span></div>
+            <div className="flex justify-between"><span className="text-ink/60">{t('m_subtotal')}</span><span className="tabular-nums">{money(est.subtotal, cur)}</span></div>
+            <div className="flex justify-between"><span className="text-ink/60">{t('m_tax')}</span><span className="tabular-nums">{money(est.tax_total, cur)}</span></div>
+            <div className="flex justify-between border-t border-black/10 pt-2 font-display text-xl text-ink"><span>{t('m_total')}</span><span className="tabular-nums">{money(est.total, cur)}</span></div>
           </div>
         </div>
       </div>
 
       {est.status !== 'converted' && (
         <div className="card mt-4 flex flex-wrap items-center gap-2 p-4">
-          <span className="text-sm text-ink/60">Mark as:</span>
-          {est.status === 'draft' && <button className="btn-outline" onClick={() => setStatus('sent')}>Sent</button>}
-          <button className="btn-outline" onClick={() => setStatus('accepted')}><Check size={16} /> Accepted</button>
-          <button className="btn-ghost" onClick={() => setStatus('declined')}><X size={16} /> Declined</button>
+          <span className="text-sm text-ink/60">{t('mark_as')}</span>
+          {est.status === 'draft' && <button className="btn-outline" onClick={() => setStatus('sent')}>{t('st_sent')}</button>}
+          <button className="btn-outline" onClick={() => setStatus('accepted')}><Check size={16} /> {t('st_accepted')}</button>
+          <button className="btn-ghost" onClick={() => setStatus('declined')}><X size={16} /> {t('st_declined')}</button>
         </div>
       )}
     </div>

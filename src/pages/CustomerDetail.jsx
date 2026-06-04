@@ -7,9 +7,11 @@ import { money, fmtDate, STATUS, isOverdue } from '../lib/format'
 import { recalcInvoice, recalcCustomer } from '../lib/calc'
 import { Spinner } from '../components/ui'
 import AllocatePayment from '../components/AllocatePayment'
+import { useT } from '../i18n'
 
 export default function CustomerDetail() {
   const { id } = useParams()
+  const { t } = useT()
   const navigate = useNavigate()
   const { company } = useAuth()
   const cur = company?.default_currency || 'USD'
@@ -58,11 +60,11 @@ export default function CustomerDetail() {
           <p className="mt-1 text-sm text-ink/60">{[c.email, c.phone, c.billing_city].filter(Boolean).join(' · ') || '—'}</p>
         </div>
         <div className="text-right">
-          <div className="label">Balance owed</div>
+          <div className="label">{t('m_balance_owed')}</div>
           <div className="font-display text-3xl text-clay tabular-nums">{money(c.balance, cur)}</div>
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-          <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> Receive payment</button>
+          <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> {t('receive_payment')}</button>
           <Link className="btn-outline" to={`/invoices/new?customer=${id}`}><FileText size={16} /> New invoice</Link>
           <Link className="btn-outline" to={`/estimates/new?customer=${id}`}>New estimate</Link>
         </div>
@@ -76,12 +78,12 @@ export default function CustomerDetail() {
               <tbody className="divide-y divide-black/[.05]">
                 {invoices.map(i => {
                   const od = isOverdue(i.due_date, i.status)
-                  const s = od ? { label: 'Overdue', cls: STATUS.overdue.cls } : (STATUS[i.status] || STATUS.draft)
+                  const s = od ? STATUS.overdue : (STATUS[i.status] || STATUS.draft)
                   return (
                     <tr key={i.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/invoices/${i.id}`)}>
                       <td className="px-5 py-2.5 font-semibold text-ink">{i.invoice_number}</td>
                       <td className="px-5 py-2.5 text-ink/55">{fmtDate(i.issue_date)}</td>
-                      <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{s.label}</span></td>
+                      <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
                       <td className="px-5 py-2.5 text-right tabular-nums">{money(i.total, cur)}</td>
                       <td className="px-5 py-2.5 text-right tabular-nums text-ink/60">{money(i.amount_due, cur)}</td>
                     </tr>
@@ -93,7 +95,7 @@ export default function CustomerDetail() {
         </div>
 
         <div className="card overflow-hidden">
-          <div className="border-b border-black/[.07] px-5 py-3 font-display text-lg text-ink">Payments received</div>
+          <div className="border-b border-black/[.07] px-5 py-3 font-display text-lg text-ink">{t('sec_payments_received')}</div>
           {payments.length === 0 ? <p className="px-5 py-8 text-center text-sm text-ink/50">No payments yet.</p> : (
             <table className="w-full text-sm">
               <tbody className="divide-y divide-black/[.05]">
@@ -111,7 +113,7 @@ export default function CustomerDetail() {
         </div>
       </div>
 
-      <AllocatePayment open={payOpen} onClose={() => setPayOpen(false)} title={`Receive payment · ${c.name}`}
+      <AllocatePayment open={payOpen} onClose={() => setPayOpen(false)} title={`${t('receive_payment')} · ${c.name}`}
         items={items} currency={cur} methods={['cash', 'card', 'bank_transfer', 'check', 'other']} defaultMethod="cash"
         onSubmit={receivePayment} />
     </div>

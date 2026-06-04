@@ -4,6 +4,7 @@ import { ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Field } from '../components/ui'
+import { useT } from '../i18n'
 
 // Friendly username -> real Supabase account (password is verified by Supabase, never stored in code)
 const ADMIN_USERNAME = 'Dixon168'
@@ -11,6 +12,7 @@ const ADMIN_EMAIL = 'dixon168@icloud.com'
 
 export default function AdminLogin() {
   const { signIn, signOut } = useAuth()
+  const { t } = useT()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -39,11 +41,11 @@ export default function AdminLogin() {
         </div>
         <div className="card p-6">
           <div className="space-y-4">
-            <Field label="Username">
+            <Field label={t('f_username')}>
               <input className="input" value={username} onChange={e => setUsername(e.target.value)} placeholder="Dixon168"
                 autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck="false" />
             </Field>
-            <Field label="Password">
+            <Field label={t('password')}>
               <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submit()} placeholder="••••••••" autoComplete="new-password" />
             </Field>

@@ -46,7 +46,7 @@ export default function TaxRates() {
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
-        <EmptyState icon={Percent} title="No tax rates yet" hint="Add rates like 'NY Sales Tax 8.875%' to reuse on invoices."
+        <EmptyState icon={Percent} title={t('es_no_taxrates')} hint={t('es_no_taxrates_h')}
           action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_taxrate')}</button>} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -71,17 +71,17 @@ export default function TaxRates() {
         </div>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit tax rate' : 'New tax rate'}>
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? `${t('edit')} ${t('taxrates_title')}` : t('new_taxrate')}>
         <div className="space-y-4">
-          <Field label="Name *"><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="NY Sales Tax" /></Field>
-          <Field label="Rate (%)"><input className="input" type="number" step="0.0001" value={form.rate} onChange={e => setForm({ ...form, rate: e.target.value })} placeholder="8.875" /></Field>
-          <Field label="Region"><input className="input" value={form.region || ''} onChange={e => setForm({ ...form, region: e.target.value })} placeholder="New York" /></Field>
+          <Field label={t('f_name_req')}><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="NY Sales Tax" /></Field>
+          <Field label={t('f_rate_pct')}><input className="input" type="number" step="0.0001" value={form.rate} onChange={e => setForm({ ...form, rate: e.target.value })} placeholder="8.875" /></Field>
+          <Field label={t('f_region')}><input className="input" value={form.region || ''} onChange={e => setForm({ ...form, region: e.target.value })} placeholder="New York" /></Field>
           <label className="flex items-center gap-2 text-sm text-ink/80">
             <input type="checkbox" checked={form.is_default} onChange={e => setForm({ ...form, is_default: e.target.checked })} /> Set as default rate
           </label>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={() => setOpen(false)}>Cancel</button>
+          <button className="btn-outline" onClick={() => setOpen(false)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </Modal>

@@ -79,7 +79,7 @@ export default function Dashboard() {
                     <td className="px-5 py-3 font-semibold text-ink">{i.invoice_number}</td>
                     <td className="px-5 py-3 text-ink/70">{i.customer?.name || '—'}</td>
                     <td className="px-5 py-3 text-ink/55">{fmtDate(i.issue_date)}</td>
-                    <td className="px-5 py-3"><span className={`badge ${s.cls}`}>{s.label}</span></td>
+                    <td className="px-5 py-3"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
                     <td className="px-5 py-3 text-right font-medium tabular-nums">{money(i.total, cur)}</td>
                   </tr>
                 )

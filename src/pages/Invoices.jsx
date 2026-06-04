@@ -36,7 +36,7 @@ export default function Invoices() {
 
   const tabs = filter === 'outstanding' ? ['outstanding', 'all', 'draft', 'sent', 'partial', 'paid', 'overdue']
     : ['all', 'draft', 'sent', 'partial', 'paid', 'overdue']
-  const tabLabel = (t) => t === 'all' ? 'All' : t === 'outstanding' ? 'Outstanding' : (STATUS[t]?.label || t)
+  const tabLabel = (code) => code === 'all' ? t('all') : code === 'outstanding' ? t('m_outstanding') : t(STATUS[code]?.key || code)
 
   return (
     <>
@@ -45,7 +45,7 @@ export default function Invoices() {
       </PageHeader>
 
       {rows === null ? <Spinner /> : rows.length === 0 ? (
-        <EmptyState icon={FileText} title="No invoices yet" hint="Create your first invoice to start getting paid."
+        <EmptyState icon={FileText} title={t('es_no_invoices')} hint={t('es_no_invoices_h')}
           action={<Link to="/invoices/new" className="btn-primary"><Plus size={18} /> {t('new_invoice')}</Link>} />
       ) : (
         <>
@@ -60,30 +60,30 @@ export default function Invoices() {
           <div className="card overflow-hidden">
             <div className="flex items-center gap-2 border-b border-black/[.07] px-4 py-3">
               <Search size={18} className="text-ink/40" />
-              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder="Search invoice # or customer…" value={q} onChange={e => setQ(e.target.value)} />
+              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder={t('ph_search_inv_cust')} value={q} onChange={e => setQ(e.target.value)} />
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Invoice</th>
-                    <th className="px-4 py-3 font-semibold">Customer</th>
-                    <th className="px-4 py-3 font-semibold">Due</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 text-right font-semibold">Total</th>
-                    <th className="px-4 py-3 text-right font-semibold">Due</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_invoice')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_customer')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_due')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_status')}</th>
+                    <th className="px-4 py-3 text-right font-semibold">{t('th_total')}</th>
+                    <th className="px-4 py-3 text-right font-semibold">{t('th_due')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/[.05]">
                   {filtered.map(i => {
                     const od = isOverdue(i.due_date, i.status)
-                    const s = od ? { label: 'Overdue', cls: STATUS.overdue.cls } : (STATUS[i.status] || STATUS.draft)
+                    const s = od ? STATUS.overdue : (STATUS[i.status] || STATUS.draft)
                     return (
                       <tr key={i.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/invoices/${i.id}`)}>
                         <td className="px-4 py-3 font-semibold text-ink">{i.invoice_number}</td>
                         <td className="px-4 py-3 text-ink/70">{i.customer?.name || '—'}</td>
                         <td className="px-4 py-3 text-ink/60">{fmtDate(i.due_date)}</td>
-                        <td className="px-4 py-3"><span className={`badge ${s.cls}`}>{s.label}</span></td>
+                        <td className="px-4 py-3"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
                         <td className="px-4 py-3 text-right font-medium tabular-nums">{money(i.total, cur)}</td>
                         <td className="px-4 py-3 text-right tabular-nums text-ink/70">{money(i.amount_due, cur)}</td>
                       </tr>

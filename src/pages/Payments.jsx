@@ -30,13 +30,13 @@ export default function Payments() {
     <>
       <PageHeader title={t('payments_title')} subtitle={t('payments_sub')} />
       {rows === null ? <Spinner /> : rows.length === 0 ? (
-        <EmptyState icon={CreditCard} title="No payments yet" hint="Payments you record on invoices show up here." />
+        <EmptyState icon={CreditCard} title={t('es_no_payments')} hint={t('es_no_payments_h')} />
       ) : (
         <div className="card overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/[.07] px-5 py-3">
             <div className="flex min-w-[180px] flex-1 items-center gap-2">
               <Search size={18} className="text-ink/40" />
-              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder="Search customer, invoice, method…" value={q} onChange={e => setQ(e.target.value)} />
+              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder={t('ph_search_cust_inv_method')} value={q} onChange={e => setQ(e.target.value)} />
             </div>
             <span className="text-sm text-ink/55">{filtered.length} · <span className="font-display text-lg text-moss-700">{money(total, cur)}</span></span>
           </div>
@@ -44,11 +44,11 @@ export default function Payments() {
             <table className="w-full text-sm">
               <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
                 <tr>
-                  <th className="px-5 py-3 font-semibold">Date</th>
-                  <th className="px-5 py-3 font-semibold">Customer</th>
-                  <th className="px-5 py-3 font-semibold">Invoice</th>
-                  <th className="px-5 py-3 font-semibold">Method</th>
-                  <th className="px-5 py-3 text-right font-semibold">Amount</th>
+                  <th className="px-5 py-3 font-semibold">{t('th_date')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('th_customer')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('th_invoice')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('th_method')}</th>
+                  <th className="px-5 py-3 text-right font-semibold">{t('th_amount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/[.05]">
