@@ -8,7 +8,7 @@ import { TextCombo } from '../components/Combo'
 import { adjustStock } from '../lib/inventory'
 import { useT } from '../i18n'
 
-const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: false, stock_quantity: 0, reorder_point: '', is_active: true }
+const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: true, stock_quantity: 0, reorder_point: '', is_active: true }
 
 export default function Products() {
   const { company } = useAuth()
@@ -39,8 +39,9 @@ export default function Products() {
   }
   useEffect(() => { load() }, [])
 
-  const openNew = () => { setEditing(null); setForm(blank); setOpen(true) }
-  const openEdit = (p) => { setEditing(p); setForm({ ...blank, ...p, tax_rate_id: p.tax_rate_id || '' }); setOpen(true) }
+  const refreshCats = async () => { const { data } = await supabase.from('categories').select('*').order('name'); setCats(data || []) }
+  const openNew = () => { setEditing(null); setForm(blank); refreshCats(); setOpen(true) }
+  const openEdit = (p) => { setEditing(p); setForm({ ...blank, ...p, tax_rate_id: p.tax_rate_id || '' }); refreshCats(); setOpen(true) }
 
   const save = async () => {
     if (!form.name.trim()) return
