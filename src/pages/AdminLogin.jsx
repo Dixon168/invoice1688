@@ -40,11 +40,12 @@ export default function AdminLogin() {
         <div className="card p-6">
           <div className="space-y-4">
             <Field label="Username">
-              <input className="input" value={username} onChange={e => setUsername(e.target.value)} placeholder="Dixon168" autoComplete="off" />
+              <input className="input" value={username} onChange={e => setUsername(e.target.value)} placeholder="Dixon168"
+                autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck="false" />
             </Field>
             <Field label="Password">
               <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && submit()} placeholder="••••••••" />
+                onKeyDown={e => e.key === 'Enter' && submit()} placeholder="••••••••" autoComplete="new-password" />
             </Field>
             {err && <p className="text-sm text-clay">{err}</p>}
             <button className="btn-primary w-full" onClick={submit} disabled={busy}>{busy ? 'Checking…' : 'Sign in'}</button>

@@ -47,11 +47,13 @@ export function Login() {
       <div className="mt-7 space-y-4">
         <Field label="Email">
           <input className="input" type="email" value={email} onChange={e => setEmail(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && submit()} placeholder="you@company.com" />
+            onKeyDown={e => e.key === 'Enter' && submit()} placeholder="you@company.com"
+            autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck="false" />
         </Field>
         <Field label="Password">
           <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && submit()} placeholder="••••••••" />
+            onKeyDown={e => e.key === 'Enter' && submit()} placeholder="••••••••"
+            autoComplete="new-password" />
         </Field>
         {err && <p className="text-sm text-clay">{err}</p>}
         <button className="btn-primary w-full" onClick={submit} disabled={busy}>
