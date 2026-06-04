@@ -1,50 +1,31 @@
 import { Link } from 'react-router-dom'
 import { Check, Minus, Globe, Boxes, Undo2, HandHeart, Tag, Upload } from 'lucide-react'
 import { PublicHeader, PublicFooter } from '../components/PublicChrome'
+import { useT } from '../i18n'
 
-const ROWS = [
-  { label: 'Invoicing, inventory, receiving & A/P in one plan', us: 'Included', them: 'Higher tiers / add-ons' },
-  { label: 'Returns with restock & customer store credit', us: 'Built in', them: 'Limited / manual' },
-  { label: 'Full multi-language interface (EN/中文/ES/VI/KO)', us: '5 languages', them: 'Mostly English' },
-  { label: 'Designed for small retail & wholesale', us: 'Yes', them: 'General accounting' },
-  { label: 'Simple enough without an accountant', us: 'Yes', them: 'Steeper learning curve' },
-  { label: 'Transparent flat pricing', us: '$19.99/mo', them: 'Tiered, add-ons' },
-  { label: 'Local, real-person support (Flushing, NY)', us: 'Yes', them: 'Call center' },
-  { label: 'Bulk Excel import for products/customers/vendors', us: 'Yes', them: 'Varies by plan' },
-]
-
-const HIGHLIGHTS = [
-  { icon: Boxes, title: 'One system, not five', desc: 'Invoices, inventory, receiving, vendors, payments and returns live together — not split across add-ons.' },
-  { icon: Globe, title: 'Speaks your language', desc: 'The entire app works in English, Chinese, Spanish, Vietnamese and Korean — great for diverse teams and customers.' },
-  { icon: Undo2, title: 'Built for the way you sell', desc: 'Receive stock, return goods to inventory, and hand out store credit — workflows real shops actually use.' },
-  { icon: HandHeart, title: 'A real person answers', desc: 'Based in Flushing, NY. Call 646-703-8888 and talk to someone who knows the product.' },
-  { icon: Tag, title: 'Honest pricing', desc: 'One simple plan. No per-feature upsells just to unlock the basics.' },
-  { icon: Upload, title: 'Easy to switch', desc: 'Import your products, customers and vendors from Excel and be running the same day.' },
-]
+const HL_ICONS = [Boxes, Globe, Undo2, HandHeart, Tag, Upload]
 
 export default function WhyUs() {
+  const { t } = useT()
+  const rows = [1, 2, 3, 4, 5, 6, 7, 8].map(i => ({ label: t(`r${i}_l`), us: t(`r${i}_u`), them: t(`r${i}_x`) }))
+  const highlights = HL_ICONS.map((Icon, i) => ({ Icon, title: t(`h${i + 1}_t`), desc: t(`h${i + 1}_d`) }))
   return (
     <div className="min-h-screen bg-sand">
       <PublicHeader />
       <main>
         <section className="mx-auto max-w-6xl px-6 pb-4 pt-8 text-center">
-          <h1 className="mx-auto max-w-3xl font-display text-4xl text-ink sm:text-5xl">
-            Why businesses choose us over QuickBooks
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-ink/60">
-            All the everyday tools a shop needs — billing, stock and payments — in one simple, affordable place.
-          </p>
+          <h1 className="mx-auto max-w-3xl font-display text-4xl text-ink sm:text-5xl">{t('why_hero_t')}</h1>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-ink/60">{t('why_hero_sub')}</p>
         </section>
 
-        {/* comparison table */}
         <section className="mx-auto max-w-4xl px-6 py-10">
           <div className="card overflow-hidden p-0">
             <div className="grid grid-cols-12 border-b border-black/10 bg-sand/60 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-ink/50">
-              <div className="col-span-6">Capability</div>
+              <div className="col-span-6">{t('why_col_cap')}</div>
               <div className="col-span-3 text-center">Bill&amp;Pays</div>
-              <div className="col-span-3 text-center">QuickBooks</div>
+              <div className="col-span-3 text-center">{t('why_col_them')}</div>
             </div>
-            {ROWS.map((r, i) => (
+            {rows.map((r, i) => (
               <div key={i} className="grid grid-cols-12 items-center border-b border-black/[.06] px-5 py-3 text-sm last:border-0">
                 <div className="col-span-6 pr-3 text-ink/80">{r.label}</div>
                 <div className="col-span-3 text-center">
@@ -56,19 +37,16 @@ export default function WhyUs() {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-center text-xs text-ink/40">
-            Comparison reflects typical small-business plans and is provided for general guidance. QuickBooks is a trademark of Intuit Inc.; we are not affiliated with Intuit. Features and pricing of other products may change.
-          </p>
+          <p className="mt-3 text-center text-xs text-ink/40">{t('why_disclaimer')}</p>
         </section>
 
-        {/* highlights */}
         <section className="mx-auto max-w-6xl px-6 py-8">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {HIGHLIGHTS.map(h => (
-              <div key={h.title} className="card p-6">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-moss-100 text-moss-700"><h.icon size={22} /></div>
-                <h3 className="mt-4 font-display text-lg text-ink">{h.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-ink/60">{h.desc}</p>
+            {highlights.map(({ Icon, title, desc }) => (
+              <div key={title} className="card p-6">
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-moss-100 text-moss-700"><Icon size={22} /></div>
+                <h3 className="mt-4 font-display text-lg text-ink">{title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink/60">{desc}</p>
               </div>
             ))}
           </div>
@@ -76,11 +54,11 @@ export default function WhyUs() {
 
         <section className="mx-auto max-w-3xl px-6 pb-20 pt-4 text-center">
           <div className="card bg-moss-800 p-10 text-white">
-            <h2 className="font-display text-3xl">See the difference for your shop.</h2>
-            <p className="mt-3 text-white/70">No contract. Cancel anytime. Local support when you need it.</p>
+            <h2 className="font-display text-3xl">{t('why_cta_t')}</h2>
+            <p className="mt-3 text-white/70">{t('why_cta_sub')}</p>
             <div className="mt-6 flex justify-center gap-3">
-              <Link to="/get-started" className="btn-primary bg-white !text-moss-800 hover:bg-white/90">Get started</Link>
-              <Link to="/pricing" className="btn-outline border-white/40 !text-white hover:bg-white/10">See pricing</Link>
+              <Link to="/get-started" className="btn-primary bg-white !text-moss-800 hover:bg-white/90">{t('cta_get_started')}</Link>
+              <Link to="/pricing" className="btn-outline border-white/40 !text-white hover:bg-white/10">{t('cta_see_pricing')}</Link>
             </div>
           </div>
         </section>
