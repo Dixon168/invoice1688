@@ -28,15 +28,18 @@ export default function AdminDashboard() {
       supabase.from('companies').select('*').order('created_at', { ascending: false }),
       supabase.from('customers').select('id, company_id'),
       supabase.from('invoices').select('company_id, total, amount_due, status'),
-      supabase.from('profiles').select('company_id'),
+      supabase.from('profiles').select('id, company_id, role'),
     ])
     const byCompany = (arr, cid) => (arr || []).filter(x => x.company_id === cid)
     setCompanies((comps || []).map(c => {
       const ci = byCompany(invs, c.id).filter(i => i.status !== 'cancelled')
+      const cp = byCompany(profs, c.id)
+      const adminProfile = cp.find(p => p.role === 'admin') || cp[0]
       return {
         ...c,
         customers: byCompany(custs, c.id).length,
-        users: byCompany(profs, c.id).length,
+        users: cp.length,
+        userId: adminProfile?.id || null,
         invoices: ci.length,
         invoiced: ci.reduce((s, i) => s + Number(i.total || 0), 0),
         outstanding: ci.reduce((s, i) => s + Number(i.amount_due || 0), 0),
@@ -65,7 +68,16 @@ export default function AdminDashboard() {
     // 1) create the client's auth account on an isolated client (keeps admin signed in)
     const temp = makeTempClient()
     const { data: su, error: e1 } = await temp.auth.signUp({ email, password })
-    if (e1) { setBusy(false); return setErr(e1.message) }
+    if (e1) {
+      setBusy(false)
+      if (/already|registered|exists/i.test(e1.message)) return setErr('This email already has an account. One email = one account — find that company in the list below to manage or renew it.')
+      return setErr(e1.message)
+    }
+    // Supabase hides existing-email signups by returning a user with no identities
+    if (su?.user && Array.isArray(su.user.identities) && su.user.identities.length === 0) {
+      setBusy(false)
+      return setErr('This email already has an account. One email = one account — find that company in the list below to manage or renew it.')
+    }
     const newUserId = su?.user?.id
     if (!newUserId) { setBusy(false); return setErr('Could not create the account. Try a different email.') }
 
@@ -85,12 +97,26 @@ export default function AdminDashboard() {
     load()
   }
 
-  const openManage = (c) => { setManage(c); setMForm({ subscription_status: c.subscription_status || 'active', paid_until: c.paid_until || '' }) }
+  const openManage = (c) => { setManage(c); setErr(''); setMForm({ subscription_status: c.subscription_status || 'active', paid_until: c.paid_until || '', newPassword: '' }) }
   const saveManage = async () => {
-    setBusy(true)
+    setErr(''); setBusy(true)
     await supabase.from('companies')
       .update({ subscription_status: mForm.subscription_status, paid_until: mForm.paid_until || null })
       .eq('id', manage.id)
+    // optional password change for the company's login
+    if (mForm.newPassword) {
+      if (mForm.newPassword.length < 6) { setBusy(false); return setErr('Password must be at least 6 characters.') }
+      if (!manage.userId) { setBusy(false); return setErr('No login account is linked to this company yet.') }
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch('/.netlify/functions/admin-set-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+          body: JSON.stringify({ userId: manage.userId, password: mForm.newPassword }),
+        })
+        if (!res.ok) { setBusy(false); return setErr('Password change failed: ' + (await res.text())) }
+      } catch (e) { setBusy(false); return setErr('Password change failed: ' + e.message) }
+    }
     setBusy(false); setManage(null); load()
   }
 
@@ -265,6 +291,14 @@ export default function AdminDashboard() {
             <button className="btn-outline text-xs" onClick={() => setMForm({ ...mForm, paid_until: plusMonths(12) })}>+12 months</button>
           </div>
           <p className="text-xs text-ink/50">When "Paid until" passes, or you set Suspended, the client is automatically blocked from using the app until you renew it.</p>
+
+          <div className="border-t border-black/[.07] pt-4">
+            <Field label="Set new login password (optional)">
+              <input className="input" type="text" value={mForm.newPassword || ''} onChange={e => setMForm({ ...mForm, newPassword: e.target.value })} placeholder="Leave blank to keep current password" />
+            </Field>
+            <p className="mt-1 text-xs text-ink/50">The client signs in with their email + this new password. Min 6 characters.</p>
+          </div>
+          {err && <p className="text-sm text-clay">{err}</p>}
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setManage(null)}>{t('cancel')}</button>
