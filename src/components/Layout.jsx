@@ -12,12 +12,12 @@ const nav = [
   { to: '/invoices', key: 'nav_invoices', icon: FileText },
   { to: '/customers', key: 'nav_customers', icon: Users },
   { to: '/products', key: 'nav_products', icon: Package },
+  { to: '/receiving', key: 'nav_receiving', icon: PackagePlus },
   { to: '/categories', key: 'nav_categories', icon: Tag },
   { to: '/payments', key: 'nav_payments', icon: CreditCard },
   { to: '/credits', key: 'nav_credits', icon: Undo2 },
   { to: '/vendors', key: 'nav_vendors', icon: Truck },
   { to: '/bills', key: 'nav_bills', icon: ReceiptText },
-  { to: '/receiving', key: 'nav_receiving', icon: PackagePlus },
   { to: '/tax-rates', key: 'nav_taxrates', icon: Percent },
   { to: '/settings', key: 'nav_settings', icon: Settings },
 ]
