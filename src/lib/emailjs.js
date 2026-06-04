@@ -6,9 +6,9 @@ import emailjs from '@emailjs/browser'
 // templateId: Email Templates → your template → "Template ID"
 // (These are safe to keep in front-end code; EmailJS is designed for client-side use.)
 export const EMAILJS = {
-  publicKey: '',
+  publicKey: 'NMKFVvA_8ljHYQZHK',
   serviceId: 'service_b8lul4l',
-  templateId: '',
+  templateId: 'template_b9bqzgi',
 }
 
 export const configured = () =>
