@@ -4,6 +4,8 @@ import { subState } from './lib/format'
 import { Spinner } from './components/ui'
 import Layout from './components/Layout'
 import { Login, CreateCompany } from './pages/Auth'
+import Pricing from './pages/Pricing'
+import GetStarted from './pages/GetStarted'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import Blocked from './pages/Blocked'
@@ -47,6 +49,8 @@ function Shell() {
   return (
     <Routes>
       <Route path="/login" element={session && !loading ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/get-started" element={<GetStarted />} />
       <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

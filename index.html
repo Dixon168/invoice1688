@@ -9,6 +9,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
+    <!-- Netlify Forms detection (hidden). The React form posts to this. No card data is collected. -->
+    <form name="signup" netlify netlify-honeypot="bot-field" hidden>
+      <input type="text" name="bot-field" />
+      <input type="text" name="company_name" />
+      <input type="text" name="contact_name" />
+      <input type="email" name="email" />
+      <input type="text" name="phone" />
+      <input type="text" name="billing_address" />
+      <input type="text" name="city" />
+      <input type="text" name="state" />
+      <input type="text" name="postal_code" />
+      <input type="text" name="country" />
+      <input type="text" name="plan" />
+      <textarea name="notes"></textarea>
+    </form>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

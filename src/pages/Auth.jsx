@@ -26,7 +26,10 @@ function AuthShell({ children }) {
       <div className="relative hidden flex-col justify-between overflow-hidden bg-moss-800 p-12 text-white lg:flex">
         <div className="flex items-center justify-between">
           <div className="font-display text-3xl font-700">invoice<span className="text-clay">168</span></div>
-          <LanguageSwitcher dark />
+          <div className="flex items-center gap-2">
+            <Link to="/pricing" className="rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10">{t('nav_pricing')}</Link>
+            <LanguageSwitcher dark />
+          </div>
         </div>
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70"><Globe size={13} /> {t('owner_badge')}</span>
@@ -90,6 +93,11 @@ export function Login() {
           {busy ? t('signing_in') : t('signin')}
         </button>
       </div>
+      <p className="mt-6 text-center text-sm text-ink/55">
+        <Link to="/pricing" className="font-semibold text-moss-700 hover:underline">{t('nav_pricing')}</Link>
+        <span className="mx-2 text-ink/30">·</span>
+        <Link to="/get-started" className="font-semibold text-moss-700 hover:underline">{t('get_started')}</Link>
+      </p>
     </AuthShell>
     <Link to="/admin/login" className="fixed bottom-3 right-4 z-10 text-xs text-ink/35 transition hover:text-ink/70">{t('admin')}</Link>
     </>
