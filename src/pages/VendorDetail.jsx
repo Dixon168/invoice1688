@@ -69,8 +69,9 @@ export default function VendorDetail() {
           <div className="label">You owe</div>
           <div className="font-display text-3xl text-clay tabular-nums">{money(v.balance, cur)}</div>
         </div>
-        <div className="flex w-full gap-2 sm:w-auto">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> Pay bills</button>
+          <Link className="btn-outline" to={`/bills?vendor=${id}`}><Plus size={16} /> New bill</Link>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ReceiptText, Plus, Search, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -18,6 +19,7 @@ const blankBill = () => ({ vendor_id: '', bill_number: '', bill_date: todayISO()
 export default function Bills() {
   const { company } = useAuth()
   const cur = company?.default_currency || 'USD'
+  const [searchParams, setSearchParams] = useSearchParams()
   const [bills, setBills] = useState(null)
   const [vendors, setVendors] = useState([])
   const [q, setQ] = useState('')
@@ -38,6 +40,14 @@ export default function Bills() {
       supabase.from('vendors').select('id, name, terms').order('name'),
     ])
     setBills(b || []); setVendors(v || [])
+    const vid = searchParams.get('vendor')
+    if (vid && (v || []).some(x => x.id === vid)) {
+      const vend = v.find(x => x.id === vid)
+      const due = (() => { const d = new Date(); d.setDate(d.getDate() + (Number(vend.terms) || 0)); return d.toISOString().slice(0, 10) })()
+      setForm({ ...blankBill(), vendor_id: vid, due_date: due })
+      setNewOpen(true)
+      setSearchParams({}, { replace: true })
+    }
   }
   useEffect(() => { load() }, [])
 

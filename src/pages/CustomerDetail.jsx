@@ -61,9 +61,10 @@ export default function CustomerDetail() {
           <div className="label">Balance owed</div>
           <div className="font-display text-3xl text-clay tabular-nums">{money(c.balance, cur)}</div>
         </div>
-        <div className="flex w-full gap-2 sm:w-auto">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> Receive payment</button>
-          <Link className="btn-outline" to="/invoices/new"><FileText size={16} /> New invoice</Link>
+          <Link className="btn-outline" to={`/invoices/new?customer=${id}`}><FileText size={16} /> New invoice</Link>
+          <Link className="btn-outline" to={`/estimates/new?customer=${id}`}>New estimate</Link>
         </div>
       </div>
 

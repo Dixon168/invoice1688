@@ -102,6 +102,7 @@ export default function InvoiceDetail() {
           </div>
           <div className="sm:text-right">
             <div className="label">From</div>
+            {company?.logo_url && <img src={company.logo_url} alt="" className="mb-1 h-12 object-contain sm:ml-auto" />}
             <div className="font-semibold text-ink">{company?.name}</div>
             <div className="text-sm text-ink/60">{company?.email}</div>
           </div>

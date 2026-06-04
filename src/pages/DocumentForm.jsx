@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Plus, Trash2, ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, todayISO } from '../lib/format'
-import { computeTotals, recalcCustomer } from '../lib/calc'
+import { computeTotals, recalcCustomer, recalcInvoice } from '../lib/calc'
 import { Spinner, Field } from '../components/ui'
 import { ItemCombo, NameCombo } from '../components/Combo'
 
@@ -29,6 +29,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const { id } = useParams()
   const editing = !!id
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { company, refreshCompany } = useAuth()
   const cur = company?.default_currency || 'USD'
 
@@ -72,6 +73,16 @@ export default function DocumentForm({ kind = 'invoice' }) {
       } else {
         const seq = company?.[cfg.seqField] || 1
         setNumber(`${company?.[cfg.prefixField] || cfg.prefixDefault}${String(seq).padStart(4, '0')}`)
+        setNotes(company?.default_notes || '')
+        setTerms(company?.default_terms || '')
+        const cidParam = searchParams.get('customer')
+        const cust = cidParam ? (c || []).find(x => x.id === cidParam) : null
+        if (cust) {
+          setCustomerId(cust.id); setCustomerQuery(cust.name)
+          const days = Number(cust.payment_terms) || 0
+          const d = new Date(); d.setDate(d.getDate() + days)
+          setEndDate(d.toISOString().slice(0, 10))
+        }
       }
     })()
   }, [id, kind])
@@ -138,7 +149,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
       sort_order: idx,
     }))
     await supabase.from(cfg.itemTable).insert(rows)
-    if (kind === 'invoice') await recalcCustomer(customerId)
+    if (kind === 'invoice') { await recalcInvoice(docId); await recalcCustomer(customerId) }
     setBusy(false)
     navigate(`${cfg.basePath}/${docId}`)
   }

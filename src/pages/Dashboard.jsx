@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, TrendingUp, Clock, AlertTriangle, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -18,6 +18,7 @@ function Stat({ icon: Icon, label, value, tone = 'ink' }) {
 
 export default function Dashboard() {
   const { company } = useAuth()
+  const navigate = useNavigate()
   const [data, setData] = useState(null)
   const cur = company?.default_currency || 'USD'
 
@@ -71,7 +72,7 @@ export default function Dashboard() {
               {data.recent.map(i => {
                 const s = STATUS[i.status] || STATUS.draft
                 return (
-                  <tr key={i.id} className="cursor-pointer hover:bg-sand/40" onClick={() => location.assign(`/invoices/${i.id}`)}>
+                  <tr key={i.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/invoices/${i.id}`)}>
                     <td className="px-5 py-3 font-semibold text-ink">{i.invoice_number}</td>
                     <td className="px-5 py-3 text-ink/70">{i.customer?.name || '—'}</td>
                     <td className="px-5 py-3 text-ink/55">{fmtDate(i.issue_date)}</td>

@@ -15,12 +15,21 @@ function addressLines(o, prefix = 'billing_') {
 }
 
 function header(pdf, company, title, accentNumber) {
+  let textX = 14
+  if (company?.logo_url) {
+    try {
+      const props = pdf.getImageProperties(company.logo_url)
+      const w = 26, h = Math.min(26, w * props.height / props.width)
+      pdf.addImage(company.logo_url, props.fileType || 'PNG', 14, 12, w, h)
+      textX = 14 + w + 6
+    } catch (e) { /* ignore bad logo */ }
+  }
   pdf.setFont('helvetica', 'bold'); pdf.setFontSize(20); pdf.setTextColor(...INK)
-  pdf.text(company?.name || 'Company', 14, 20)
+  pdf.text(company?.name || 'Company', textX, 20)
   pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
   let y = 26
   for (const line of [company?.email, company?.phone, ...addressLines(company)].filter(Boolean)) {
-    pdf.text(String(line), 14, y); y += 4.5
+    pdf.text(String(line), textX, y); y += 4.5
   }
   pdf.setFont('helvetica', 'bold'); pdf.setFontSize(22); pdf.setTextColor(...MOSS)
   pdf.text(title.toUpperCase(), 196, 20, { align: 'right' })
@@ -86,11 +95,17 @@ export function documentPDF({ kind, doc: d, items, customer, company }) {
     row('Amount due', money(d.amount_due, cur), true)
   }
 
-  // notes / terms
+  // notes / terms / payment instructions
   if (d.notes || d.terms) {
     ty += 6; pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
     if (d.notes) { pdf.text('Notes', 14, ty); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.notes, 120), 14, ty + 5); ty += 5 + pdf.splitTextToSize(d.notes, 120).length * 4.5 }
-    if (d.terms) { pdf.setFont('helvetica', 'bold'); pdf.setTextColor(...MUTED); pdf.text('Terms', 14, ty + 4); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.terms, 120), 14, ty + 9) }
+    if (d.terms) { pdf.setFont('helvetica', 'bold'); pdf.setTextColor(...MUTED); pdf.text('Terms', 14, ty + 4); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.terms, 120), 14, ty + 9); ty += 9 + pdf.splitTextToSize(d.terms, 120).length * 4.5 }
+  }
+  if (kind === 'invoice' && company?.payment_instructions) {
+    ty += 8; pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    pdf.text('Payment instructions', 14, ty)
+    pdf.setFont('helvetica', 'normal'); pdf.setTextColor(...INK)
+    pdf.text(pdf.splitTextToSize(company.payment_instructions, 120), 14, ty + 5)
   }
 
   pdf.save(`${kind}-${numberLabel}.pdf`)
