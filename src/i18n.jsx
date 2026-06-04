@@ -540,6 +540,15 @@ const EXTRA7 = {
 }
 for (const l of Object.keys(EXTRA7)) Object.assign(T[l], EXTRA7[l])
 
+const EXTRA8 = {
+  en: { sec_password: 'Change password', f_new_password: 'New password', f_confirm_password: 'Confirm password', pw_save: 'Update password', pw_changed: 'Password updated ✓', pw_mismatch: 'Passwords do not match.', pw_short: 'Password must be at least 6 characters.' },
+  zh: { sec_password: '修改密码', f_new_password: '新密码', f_confirm_password: '确认密码', pw_save: '更新密码', pw_changed: '密码已更新 ✓', pw_mismatch: '两次密码不一致。', pw_short: '密码至少 6 位。' },
+  es: { sec_password: 'Cambiar contraseña', f_new_password: 'Nueva contraseña', f_confirm_password: 'Confirmar contraseña', pw_save: 'Actualizar contraseña', pw_changed: 'Contraseña actualizada ✓', pw_mismatch: 'Las contraseñas no coinciden.', pw_short: 'La contraseña debe tener al menos 6 caracteres.' },
+  vi: { sec_password: 'Đổi mật khẩu', f_new_password: 'Mật khẩu mới', f_confirm_password: 'Xác nhận mật khẩu', pw_save: 'Cập nhật mật khẩu', pw_changed: 'Đã cập nhật mật khẩu ✓', pw_mismatch: 'Mật khẩu không khớp.', pw_short: 'Mật khẩu phải có ít nhất 6 ký tự.' },
+  ko: { sec_password: '비밀번호 변경', f_new_password: '새 비밀번호', f_confirm_password: '비밀번호 확인', pw_save: '비밀번호 업데이트', pw_changed: '비밀번호가 변경되었습니다 ✓', pw_mismatch: '비밀번호가 일치하지 않습니다.', pw_short: '비밀번호는 6자 이상이어야 합니다.' },
+}
+for (const l of Object.keys(EXTRA8)) Object.assign(T[l], EXTRA8[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

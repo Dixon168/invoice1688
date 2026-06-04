@@ -9,6 +9,8 @@ export const EMAILJS = {
   publicKey: 'NMKFVvA_8ljHYQZHK',
   serviceId: 'service_b8lul4l',
   templateId: 'template_b9bqzgi',
+  // optional: a separate template for password-change alerts. Falls back to templateId.
+  passwordTemplateId: '',
 }
 
 export const configured = () =>
@@ -46,6 +48,34 @@ export async function sendSignupEmail(form, plan) {
       postal_code: form.postal_code,
       country: form.country,
       notes: form.notes,
+      message,
+    },
+    { publicKey: EMAILJS.publicKey },
+  )
+}
+
+// Notifies you when a client changes their own password (the new password is NOT sent, for security).
+export async function sendPasswordChangeEmail(company, email) {
+  if (!configured()) return
+  const when = new Date().toLocaleString()
+  const message = [
+    'A client changed their own login password.',
+    `Company: ${company?.name || ''}`,
+    `Login email: ${email || ''}`,
+    `When: ${when}`,
+    '(The new password is not included for security. If they get locked out, set a new one from Admin.)',
+  ].join('\n')
+  return emailjs.send(
+    EMAILJS.serviceId,
+    EMAILJS.passwordTemplateId || EMAILJS.templateId,
+    {
+      to_email: 'support@allinonepayment.com',
+      reply_to: email,
+      plan: 'Password changed',
+      company_name: `${company?.name || ''} — password changed`,
+      contact_name: '', email: email || '', phone: '', company_phone: '',
+      billing_address: '', city: '', state: '', postal_code: '', country: '',
+      notes: `Password changed at ${when}`,
       message,
     },
     { publicKey: EMAILJS.publicKey },

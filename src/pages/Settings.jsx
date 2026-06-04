@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { sendPasswordChangeEmail } from '../lib/emailjs'
 import { useAuth } from '../context/AuthContext'
 import { subState, SUB_BADGE, fmtDate } from '../lib/format'
 import { PageHeader, Field } from '../components/ui'
@@ -8,11 +9,26 @@ import { useT } from '../i18n'
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'HKD', 'CNY', 'JPY', 'KRW', 'VND']
 
 export default function Settings() {
-  const { company, refreshCompany } = useAuth()
+  const { company, user, refreshCompany } = useAuth()
   const { t } = useT()
   const [form, setForm] = useState(null)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [pw, setPw] = useState({ a: '', b: '' })
+  const [pwBusy, setPwBusy] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
+
+  const changePassword = async () => {
+    setPwMsg('')
+    if (pw.a.length < 6) return setPwMsg(t('pw_short'))
+    if (pw.a !== pw.b) return setPwMsg(t('pw_mismatch'))
+    setPwBusy(true)
+    const { error } = await supabase.auth.updateUser({ password: pw.a })
+    if (error) { setPwBusy(false); return setPwMsg(error.message) }
+    try { await sendPasswordChangeEmail(company, user?.email) } catch (e) { /* non-blocking */ }
+    setPwBusy(false); setPw({ a: '', b: '' }); setPwMsg(t('pw_changed'))
+    setTimeout(() => setPwMsg(''), 3000)
+  }
 
   useEffect(() => { if (company) setForm({ ...company }) }, [company])
   if (!form) return null
@@ -116,6 +132,18 @@ export default function Settings() {
         <div className="mt-6 flex items-center gap-3">
           <button className="btn-primary" onClick={save} disabled={busy}>{busy ? t('saving') : t('save_changes')}</button>
           {saved && <span className="text-sm text-moss-700">{t('saved')} ✓</span>}
+        </div>
+      </div>
+
+      <div className="card mt-4 max-w-2xl p-6">
+        <h2 className="font-display text-lg text-ink">{t('sec_password')}</h2>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field label={t('f_new_password')}><input className="input" type="password" value={pw.a} onChange={e => setPw({ ...pw, a: e.target.value })} autoComplete="new-password" /></Field>
+          <Field label={t('f_confirm_password')}><input className="input" type="password" value={pw.b} onChange={e => setPw({ ...pw, b: e.target.value })} autoComplete="new-password" /></Field>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <button className="btn-outline" onClick={changePassword} disabled={pwBusy || !pw.a}>{pwBusy ? t('saving') : t('pw_save')}</button>
+          {pwMsg && <span className={`text-sm ${pwMsg === t('pw_changed') ? 'text-moss-700' : 'text-clay'}`}>{pwMsg}</span>}
         </div>
       </div>
     </>

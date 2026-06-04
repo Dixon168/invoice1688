@@ -55,6 +55,12 @@ export default function Dashboard() {
         <Link to="/invoices/new" className="btn-primary"><Plus size={18} /> {t('new_invoice')}</Link>
       </PageHeader>
 
+      {company?.paid_until && (
+        <div className="mb-5 inline-flex items-center gap-2 rounded-lg bg-moss-50 px-3 py-1.5 text-sm text-moss-800">
+          <Clock size={14} /> {t('plan_active_until')} <span className="font-semibold">{fmtDate(company.paid_until)}</span>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={Clock} label={t('stat_outstanding')} value={money(data.outstanding, cur)} tone="clay" onClick={() => navigate('/invoices?filter=outstanding')} />
         <Stat icon={TrendingUp} label={t('stat_paid_month')} value={money(data.paidThisMonth, cur)} tone="moss" onClick={() => navigate('/payments')} />
