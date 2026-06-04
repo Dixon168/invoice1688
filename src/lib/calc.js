@@ -96,3 +96,14 @@ export async function recalcVendor(vendorId) {
     balance: r(billed - paid),
   }).eq('id', vendorId)
 }
+
+// Adjust a customer's store-credit balance by delta (never below 0).
+export async function addCustomerCredit(customerId, delta) {
+  if (!customerId) return
+  const { data: c } = await supabase.from('customers').select('credit_balance').eq('id', customerId).maybeSingle()
+  if (!c) return
+  let nb = Math.round((Number(c.credit_balance || 0) + Number(delta)) * 100) / 100
+  if (nb < 0) nb = 0
+  await supabase.from('customers').update({ credit_balance: nb }).eq('id', customerId)
+  return nb
+}

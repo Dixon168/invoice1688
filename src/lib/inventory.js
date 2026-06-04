@@ -67,3 +67,28 @@ export async function receiveStock(companyId, billId, lines) {
   }
   if (movements.length) await supabase.from('inventory_movements').insert(movements)
 }
+
+// Add returned items back to stock (only when the return is marked restock).
+export async function restockReturn(companyId, creditId, items) {
+  const movements = []
+  for (const it of (items || [])) {
+    const qty = Number(it.quantity) || 0
+    if (!it.product_id || qty <= 0) continue
+    const { data: p } = await supabase.from('products').select('stock_quantity, track_inventory').eq('id', it.product_id).maybeSingle()
+    if (!p || !p.track_inventory) continue
+    await supabase.from('products').update({ stock_quantity: round(Number(p.stock_quantity) + qty) }).eq('id', it.product_id)
+    movements.push({ company_id: companyId, product_id: it.product_id, change: qty, reason: 'return', ref_type: 'credit', ref_id: creditId, note: 'Customer return' })
+  }
+  if (movements.length) await supabase.from('inventory_movements').insert(movements)
+}
+
+// Reverse a return's restock (when a credit is deleted/voided).
+export async function reverseReturnRestock(creditId) {
+  const { data: moves } = await supabase.from('inventory_movements')
+    .select('product_id, change').eq('ref_type', 'credit').eq('ref_id', creditId)
+  for (const m of (moves || [])) {
+    const { data: p } = await supabase.from('products').select('stock_quantity').eq('id', m.product_id).maybeSingle()
+    if (p) await supabase.from('products').update({ stock_quantity: round(Number(p.stock_quantity) - Number(m.change)) }).eq('id', m.product_id)
+  }
+  await supabase.from('inventory_movements').delete().eq('ref_type', 'credit').eq('ref_id', creditId)
+}

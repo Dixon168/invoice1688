@@ -636,3 +636,65 @@ end $$;
 alter table public.companies
   add column if not exists contact_name text,
   add column if not exists contact_phone text;
+
+
+-- ===== customer store credit (returns / manual credit) =====
+-- invoice168 — customer store credit (returns / overpayments / goodwill)
+
+-- 1) store-credit balance on each customer
+alter table public.customers add column if not exists credit_balance numeric(15,2) not null default 0;
+
+-- 2) credit memos
+create table if not exists public.credits (
+  id            uuid primary key default gen_random_uuid(),
+  company_id    uuid not null references public.companies(id) on delete cascade,
+  customer_id   uuid not null references public.customers(id) on delete cascade,
+  credit_number text,
+  credit_date   date not null default current_date,
+  reason        text not null default 'return'
+                check (reason in ('return','overpayment','goodwill','adjustment')),
+  amount        numeric(15,2) not null default 0,
+  restock       boolean not null default true,
+  notes         text,
+  created_at    timestamptz not null default now()
+);
+create index if not exists idx_credits_company on public.credits(company_id);
+create index if not exists idx_credits_customer on public.credits(customer_id);
+
+-- 3) credit line items (for returns)
+create table if not exists public.credit_items (
+  id          uuid primary key default gen_random_uuid(),
+  credit_id   uuid not null references public.credits(id) on delete cascade,
+  product_id  uuid references public.products(id) on delete set null,
+  description text,
+  quantity    numeric(15,3) not null default 1,
+  unit_price  numeric(15,2) not null default 0,
+  line_total  numeric(15,2) not null default 0
+);
+create index if not exists idx_credit_items_credit on public.credit_items(credit_id);
+
+-- 4) allow store-credit as a payment method
+alter table public.payments drop constraint if exists payments_method_check;
+alter table public.payments add constraint payments_method_check
+  check (method in ('cash','card','bank_transfer','check','other','credit'));
+
+-- 5) RLS
+alter table public.credits enable row level security;
+alter table public.credit_items enable row level security;
+do $$ begin
+  drop policy if exists credits_all on public.credits;
+  create policy credits_all on public.credits for all
+    using (company_id = public.current_company_id())
+    with check (company_id = public.current_company_id());
+  drop policy if exists credits_admin on public.credits;
+  create policy credits_admin on public.credits for all
+    using (public.is_super_admin()) with check (public.is_super_admin());
+
+  drop policy if exists credit_items_all on public.credit_items;
+  create policy credit_items_all on public.credit_items for all
+    using (exists (select 1 from public.credits c where c.id = credit_items.credit_id and c.company_id = public.current_company_id()))
+    with check (exists (select 1 from public.credits c where c.id = credit_items.credit_id and c.company_id = public.current_company_id()));
+  drop policy if exists credit_items_admin on public.credit_items;
+  create policy credit_items_admin on public.credit_items for all
+    using (public.is_super_admin()) with check (public.is_super_admin());
+end $$;

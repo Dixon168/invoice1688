@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Package, PackagePlus, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, Users, Package, PackagePlus, Percent, FileText, CreditCard, Settings, LogOut, Menu, X, Truck, ReceiptText, Tag, ClipboardList, Undo2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { fmtDate } from '../lib/format'
 import { useT } from '../i18n'
@@ -14,6 +14,7 @@ const nav = [
   { to: '/products', key: 'nav_products', icon: Package },
   { to: '/categories', key: 'nav_categories', icon: Tag },
   { to: '/payments', key: 'nav_payments', icon: CreditCard },
+  { to: '/credits', key: 'nav_credits', icon: Undo2 },
   { to: '/vendors', key: 'nav_vendors', icon: Truck },
   { to: '/bills', key: 'nav_bills', icon: ReceiptText },
   { to: '/receiving', key: 'nav_receiving', icon: PackagePlus },

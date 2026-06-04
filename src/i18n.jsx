@@ -576,6 +576,70 @@ const EXTRA11 = {
 }
 for (const l of Object.keys(EXTRA11)) Object.assign(T[l], EXTRA11[l])
 
+const EXTRA12 = {
+  en: {
+    nav_credits: 'Credits', credits_title: 'Credits & Returns', credits_sub: 'Returns and manual store credit',
+    cr_new: 'New credit', cr_new_return: 'Return', cr_new_manual: 'Manual credit',
+    cr_customer: 'Customer', cr_reason: 'Reason', cr_amount: 'Amount', cr_restock: 'Return items to stock',
+    reason_return: 'Return', reason_overpayment: 'Overpayment', reason_goodwill: 'Goodwill', reason_adjustment: 'Adjustment',
+    cr_balance: 'Store credit', cr_available: 'Available store credit',
+    cr_need_customer: 'Please choose a customer.', cr_need_amount: 'Please enter an amount.',
+    cr_void: 'Void credit', cr_void_confirm: 'Void this credit? The amount will be removed from the customer balance.',
+    cr_use: 'Use store credit', cr_use_auto: 'Apply credit to invoices', cr_use_none: 'No store credit available.',
+    cr_applied: 'Store credit applied.', cr_use_field: 'Use store credit', th_reason: 'Reason', es_no_credits: 'No credits yet', es_no_credits_h: 'Create a return or manual credit to get started.',
+    cr_add_line: 'Add item', cr_qty: 'Qty', cr_unit_price: 'Unit price',
+  },
+  zh: {
+    nav_credits: '退货/余额', credits_title: '退货与余额', credits_sub: '退货单与手动 credit',
+    cr_new: '新建', cr_new_return: '退货', cr_new_manual: '手动 credit',
+    cr_customer: '客户', cr_reason: '原因', cr_amount: '金额', cr_restock: '退回库存',
+    reason_return: '退货', reason_overpayment: '多付', reason_goodwill: '补偿', reason_adjustment: '调整',
+    cr_balance: '可用余额', cr_available: '可用余额',
+    cr_need_customer: '请选择客户。', cr_need_amount: '请输入金额。',
+    cr_void: '作废', cr_void_confirm: '作废这张 credit？金额会从客户余额中扣回。',
+    cr_use: '用余额抵扣', cr_use_auto: '用余额抵账（跨多张）', cr_use_none: '没有可用余额。',
+    cr_applied: '已用余额抵扣。', cr_use_field: '用余额', th_reason: '原因', es_no_credits: '还没有记录', es_no_credits_h: '新建一张退货单或手动 credit 开始。',
+    cr_add_line: '加一行', cr_qty: '数量', cr_unit_price: '单价',
+  },
+  es: {
+    nav_credits: 'Créditos', credits_title: 'Créditos y devoluciones', credits_sub: 'Devoluciones y crédito manual',
+    cr_new: 'Nuevo crédito', cr_new_return: 'Devolución', cr_new_manual: 'Crédito manual',
+    cr_customer: 'Cliente', cr_reason: 'Motivo', cr_amount: 'Monto', cr_restock: 'Devolver al stock',
+    reason_return: 'Devolución', reason_overpayment: 'Sobrepago', reason_goodwill: 'Cortesía', reason_adjustment: 'Ajuste',
+    cr_balance: 'Crédito', cr_available: 'Crédito disponible',
+    cr_need_customer: 'Elija un cliente.', cr_need_amount: 'Ingrese un monto.',
+    cr_void: 'Anular', cr_void_confirm: '¿Anular este crédito? El monto se restará del saldo del cliente.',
+    cr_use: 'Usar crédito', cr_use_auto: 'Aplicar crédito a facturas', cr_use_none: 'Sin crédito disponible.',
+    cr_applied: 'Crédito aplicado.', cr_use_field: 'Usar crédito', th_reason: 'Motivo', es_no_credits: 'Sin créditos', es_no_credits_h: 'Cree una devolución o crédito manual.',
+    cr_add_line: 'Agregar', cr_qty: 'Cant.', cr_unit_price: 'Precio',
+  },
+  vi: {
+    nav_credits: 'Trả hàng/Số dư', credits_title: 'Số dư & Trả hàng', credits_sub: 'Phiếu trả hàng và credit thủ công',
+    cr_new: 'Tạo mới', cr_new_return: 'Trả hàng', cr_new_manual: 'Credit thủ công',
+    cr_customer: 'Khách hàng', cr_reason: 'Lý do', cr_amount: 'Số tiền', cr_restock: 'Nhập lại kho',
+    reason_return: 'Trả hàng', reason_overpayment: 'Trả thừa', reason_goodwill: 'Thiện chí', reason_adjustment: 'Điều chỉnh',
+    cr_balance: 'Số dư', cr_available: 'Số dư khả dụng',
+    cr_need_customer: 'Hãy chọn khách hàng.', cr_need_amount: 'Hãy nhập số tiền.',
+    cr_void: 'Hủy', cr_void_confirm: 'Hủy credit này? Số tiền sẽ trừ khỏi số dư khách hàng.',
+    cr_use: 'Dùng số dư', cr_use_auto: 'Áp số dư vào hóa đơn', cr_use_none: 'Không có số dư.',
+    cr_applied: 'Đã áp số dư.', cr_use_field: 'Dùng số dư', th_reason: 'Lý do', es_no_credits: 'Chưa có', es_no_credits_h: 'Tạo phiếu trả hàng hoặc credit thủ công.',
+    cr_add_line: 'Thêm', cr_qty: 'SL', cr_unit_price: 'Đơn giá',
+  },
+  ko: {
+    nav_credits: '반품/잔액', credits_title: '잔액 & 반품', credits_sub: '반품 및 수동 크레딧',
+    cr_new: '새로 만들기', cr_new_return: '반품', cr_new_manual: '수동 크레딧',
+    cr_customer: '고객', cr_reason: '사유', cr_amount: '금액', cr_restock: '재고로 반환',
+    reason_return: '반품', reason_overpayment: '초과 지불', reason_goodwill: '호의', reason_adjustment: '조정',
+    cr_balance: '잔액', cr_available: '사용 가능 잔액',
+    cr_need_customer: '고객을 선택하세요.', cr_need_amount: '금액을 입력하세요.',
+    cr_void: '취소', cr_void_confirm: '이 크레딧을 취소할까요? 금액이 고객 잔액에서 차감됩니다.',
+    cr_use: '잔액 사용', cr_use_auto: '잔액을 청구서에 적용', cr_use_none: '사용 가능한 잔액 없음.',
+    cr_applied: '잔액이 적용되었습니다.', cr_use_field: '잔액 사용', th_reason: '사유', es_no_credits: '내역 없음', es_no_credits_h: '반품 또는 수동 크레딧을 만드세요.',
+    cr_add_line: '항목 추가', cr_qty: '수량', cr_unit_price: '단가',
+  },
+}
+for (const l of Object.keys(EXTRA12)) Object.assign(T[l], EXTRA12[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
