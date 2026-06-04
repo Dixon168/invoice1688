@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { sendPasswordChangeEmail } from '../lib/emailjs'
 import { useAuth } from '../context/AuthContext'
 import { subState, SUB_BADGE, fmtDate } from '../lib/format'
 import { PageHeader, Field } from '../components/ui'
@@ -25,7 +24,6 @@ export default function Settings() {
     setPwBusy(true)
     const { error } = await supabase.auth.updateUser({ password: pw.a })
     if (error) { setPwBusy(false); return setPwMsg(error.message) }
-    try { await sendPasswordChangeEmail(company, user?.email) } catch (e) { /* non-blocking */ }
     setPwBusy(false); setPw({ a: '', b: '' }); setPwMsg(t('pw_changed'))
     setTimeout(() => setPwMsg(''), 3000)
   }
