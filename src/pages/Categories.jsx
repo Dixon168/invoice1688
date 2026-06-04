@@ -23,13 +23,15 @@ export default function Categories() {
 
   const addCategory = async () => {
     if (!newCat.trim()) return
-    await supabase.from('categories').insert({ company_id: company.id, name: newCat.trim() })
+    const { error } = await supabase.from('categories').insert({ company_id: company.id, name: newCat.trim() })
+    if (error) { alert('Could not add category: ' + error.message); return }
     setNewCat(''); load()
   }
   const addSub = async (parentId) => {
     const name = (subInputs[parentId] || '').trim()
     if (!name) return
-    await supabase.from('categories').insert({ company_id: company.id, name, parent_id: parentId })
+    const { error } = await supabase.from('categories').insert({ company_id: company.id, name, parent_id: parentId })
+    if (error) { alert('Could not add sub-category: ' + error.message); return }
     setSubInputs({ ...subInputs, [parentId]: '' }); load()
   }
   const rename = async (c) => {

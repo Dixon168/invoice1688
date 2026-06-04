@@ -48,3 +48,22 @@ export async function adjustStock(companyId, productId, delta, note) {
     reason: 'adjustment', ref_type: 'manual', note: note || null,
   })
 }
+
+// Receiving: add stock for items received from a vendor, linked to a vendor bill.
+export async function receiveStock(companyId, billId, lines) {
+  const movements = []
+  for (const ln of (lines || [])) {
+    const qty = Number(ln.qty) || 0
+    if (!ln.product_id || qty <= 0) continue
+    const { data: p } = await supabase.from('products').select('stock_quantity').eq('id', ln.product_id).maybeSingle()
+    if (!p) continue
+    const upd = { stock_quantity: round(Number(p.stock_quantity || 0) + qty) }
+    if (ln.unit_cost !== '' && ln.unit_cost != null) upd.cost = Number(ln.unit_cost) || 0
+    await supabase.from('products').update(upd).eq('id', ln.product_id)
+    movements.push({
+      company_id: companyId, product_id: ln.product_id, change: qty,
+      reason: 'receiving', ref_type: 'bill', ref_id: billId, note: 'Received from vendor',
+    })
+  }
+  if (movements.length) await supabase.from('inventory_movements').insert(movements)
+}

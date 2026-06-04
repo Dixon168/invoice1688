@@ -24,6 +24,7 @@ import Payments from './pages/Payments'
 import Vendors from './pages/Vendors'
 import VendorDetail from './pages/VendorDetail'
 import Bills from './pages/Bills'
+import Receiving from './pages/Receiving'
 import Settings from './pages/Settings'
 
 function Protected({ children }) {
@@ -71,6 +72,7 @@ function Shell() {
       <Route path="/vendors" element={<Protected><Vendors /></Protected>} />
       <Route path="/vendors/:id" element={<Protected><VendorDetail /></Protected>} />
       <Route path="/bills" element={<Protected><Bills /></Protected>} />
+      <Route path="/receiving" element={<Protected><Receiving /></Protected>} />
       <Route path="/tax-rates" element={<Protected><TaxRates /></Protected>} />
       <Route path="/settings" element={<Protected><Settings /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />

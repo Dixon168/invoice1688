@@ -549,6 +549,15 @@ const EXTRA8 = {
 }
 for (const l of Object.keys(EXTRA8)) Object.assign(T[l], EXTRA8[l])
 
+const EXTRA9 = {
+  en: { nav_receiving: 'Receiving', rcv_title: 'Receive stock', rcv_sub: 'Add stock from a vendor. This creates a vendor bill you can pay later.', rcv_vendor: 'Vendor', rcv_pick_vendor: 'Select a vendor…', rcv_pick_product: 'Select a product…', rcv_add_line: 'Add item', rcv_unit_cost: 'Unit cost', rcv_ref: 'Bill / reference #', rcv_save: 'Receive & create bill', rcv_need_vendor: 'Please select a vendor.', rcv_need_lines: 'Add at least one item with a quantity.', rcv_done: 'Stock received and bill created.' },
+  zh: { nav_receiving: '收货', rcv_title: '收货入库', rcv_sub: '从供应商入库。会生成一张可稍后支付的供应商账单。', rcv_vendor: '供应商', rcv_pick_vendor: '选择供应商…', rcv_pick_product: '选择产品…', rcv_add_line: '添加货品', rcv_unit_cost: '进货成本', rcv_ref: '账单/单据号', rcv_save: '入库并生成账单', rcv_need_vendor: '请选择供应商。', rcv_need_lines: '请至少添加一项并填数量。', rcv_done: '已入库并生成账单。' },
+  es: { nav_receiving: 'Recepción', rcv_title: 'Recibir stock', rcv_sub: 'Añade stock de un proveedor. Crea un gasto que puedes pagar después.', rcv_vendor: 'Proveedor', rcv_pick_vendor: 'Selecciona un proveedor…', rcv_pick_product: 'Selecciona un producto…', rcv_add_line: 'Añadir artículo', rcv_unit_cost: 'Coste unitario', rcv_ref: 'N.º de gasto / ref.', rcv_save: 'Recibir y crear gasto', rcv_need_vendor: 'Selecciona un proveedor.', rcv_need_lines: 'Añade al menos un artículo con cantidad.', rcv_done: 'Stock recibido y gasto creado.' },
+  vi: { nav_receiving: 'Nhập hàng', rcv_title: 'Nhập kho', rcv_sub: 'Nhập hàng từ nhà cung cấp. Tạo một hóa đơn mua có thể trả sau.', rcv_vendor: 'Nhà cung cấp', rcv_pick_vendor: 'Chọn nhà cung cấp…', rcv_pick_product: 'Chọn sản phẩm…', rcv_add_line: 'Thêm mặt hàng', rcv_unit_cost: 'Giá vốn', rcv_ref: 'Số hóa đơn / tham chiếu', rcv_save: 'Nhập kho & tạo hóa đơn', rcv_need_vendor: 'Vui lòng chọn nhà cung cấp.', rcv_need_lines: 'Thêm ít nhất một mặt hàng có số lượng.', rcv_done: 'Đã nhập kho và tạo hóa đơn.' },
+  ko: { nav_receiving: '입고', rcv_title: '재고 입고', rcv_sub: '공급업체로부터 재고를 입고합니다. 나중에 결제할 매입 청구가 생성됩니다.', rcv_vendor: '공급업체', rcv_pick_vendor: '공급업체 선택…', rcv_pick_product: '제품 선택…', rcv_add_line: '품목 추가', rcv_unit_cost: '단가(원가)', rcv_ref: '청구/참조 번호', rcv_save: '입고 및 청구 생성', rcv_need_vendor: '공급업체를 선택하세요.', rcv_need_lines: '수량이 있는 품목을 하나 이상 추가하세요.', rcv_done: '입고 및 청구가 생성되었습니다.' },
+}
+for (const l of Object.keys(EXTRA9)) Object.assign(T[l], EXTRA9[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

@@ -81,17 +81,39 @@ export default function Products() {
     .filter(p => !catFilter || p.category === catFilter)
     .filter(p => !lowOnly || isLow(p))
   const lowCount = (rows || []).filter(isLow).length
-  const catSuggestions = [...new Set([
-    ...cats.filter(c => !c.parent_id).map(c => c.name),
-    ...(rows || []).map(r => r.category).filter(Boolean),
-  ])]
-  const subcatSuggestions = (() => {
-    const top = cats.find(c => !c.parent_id && c.name === form.category)
-    return [...new Set([
-      ...(top ? cats.filter(c => c.parent_id === top.id).map(c => c.name) : []),
-      ...(rows || []).filter(r => !form.category || r.category === form.category).map(r => r.subcategory).filter(Boolean),
-    ])]
-  })()
+
+  // category dropdowns sourced from the categories table (single source of truth)
+  const topCats = cats.filter(c => !c.parent_id)
+  const selectedTop = topCats.find(c => c.name === form.category)
+  const subCats = selectedTop ? cats.filter(c => c.parent_id === selectedTop.id) : []
+
+  const createCat = async (name, parentId) => {
+    const { data, error } = await supabase.from('categories')
+      .insert({ company_id: company.id, name, parent_id: parentId || null }).select('*').single()
+    if (error) { alert('Could not add category: ' + error.message); return null }
+    await load(); return data
+  }
+  const onCategory = async (val) => {
+    if (val === '__new__') {
+      const name = (prompt('New category name') || '').trim()
+      if (!name) return
+      const c = await createCat(name, null)
+      if (c) setForm(f => ({ ...f, category: name, subcategory: '' }))
+      return
+    }
+    setForm(f => ({ ...f, category: val, subcategory: '' }))
+  }
+  const onSubcategory = async (val) => {
+    if (val === '__new__') {
+      if (!selectedTop) { alert('Pick a category first.'); return }
+      const name = (prompt('New sub-category name') || '').trim()
+      if (!name) return
+      const s = await createCat(name, selectedTop.id)
+      if (s) setForm(f => ({ ...f, subcategory: name }))
+      return
+    }
+    setForm(f => ({ ...f, subcategory: val }))
+  }
 
   return (
     <>
@@ -158,8 +180,22 @@ export default function Products() {
         <div className="space-y-4">
           <Field label={t('f_name_req')}><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t('f_category')}><TextCombo value={form.category} onChange={v => setForm({ ...form, category: v })} suggestions={catSuggestions} placeholder="e.g. Beverages" /></Field>
-            <Field label={t('f_subcategory')}><TextCombo value={form.subcategory} onChange={v => setForm({ ...form, subcategory: v })} suggestions={subcatSuggestions} placeholder="e.g. Coffee" /></Field>
+            <Field label={t('f_category')}>
+              <select className="input" value={form.category || ''} onChange={e => onCategory(e.target.value)}>
+                <option value="">—</option>
+                {topCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                {form.category && !topCats.some(c => c.name === form.category) && <option value={form.category}>{form.category}</option>}
+                <option value="__new__">+ {t('add')}…</option>
+              </select>
+            </Field>
+            <Field label={t('f_subcategory')}>
+              <select className="input" value={form.subcategory || ''} onChange={e => onSubcategory(e.target.value)} disabled={!form.category}>
+                <option value="">—</option>
+                {subCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                {form.subcategory && !subCats.some(c => c.name === form.subcategory) && <option value={form.subcategory}>{form.subcategory}</option>}
+                <option value="__new__">+ {t('add')}…</option>
+              </select>
+            </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label={t('f_sku')}><input className="input" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} /></Field>
