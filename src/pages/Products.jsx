@@ -92,7 +92,7 @@ export default function Products() {
   const isLow = (p) => p.track_inventory && p.reorder_point != null && Number(p.stock_quantity) <= Number(p.reorder_point)
   const filtered = (rows || [])
     .filter(p => [p.name, p.sku, p.category, p.subcategory].join(' ').toLowerCase().includes(q.toLowerCase()))
-    .filter(p => !catFilter || p.category === catFilter)
+    .filter(matchCat)
     .filter(p => !lowOnly || isLow(p))
   const lowCount = (rows || []).filter(isLow).length
 
@@ -101,6 +101,21 @@ export default function Products() {
   const selectedTop = topCats.find(c => c.name === form.category)
   const subCats = selectedTop ? cats.filter(c => c.parent_id === selectedTop.id) : []
   const filterCatNames = [...new Set([...topCats.map(c => c.name), ...(rows || []).map(r => r.category).filter(Boolean)])]
+  // hierarchical filter options: each main category + its sub-categories
+  const filterOptions = []
+  topCats.forEach(tc => {
+    filterOptions.push({ value: `c|||${tc.name}`, label: tc.name })
+    cats.filter(c => c.parent_id === tc.id).forEach(s => filterOptions.push({ value: `s|||${tc.name}|||${s.name}`, label: `↳ ${s.name}` }))
+  })
+  const known = new Set(topCats.map(t => t.name))
+  ;[...new Set((rows || []).map(r => r.category).filter(Boolean))].forEach(name => { if (!known.has(name)) filterOptions.push({ value: `c|||${name}`, label: name }) })
+  const matchCat = (p) => {
+    if (!catFilter) return true
+    const parts = catFilter.split('|||')
+    if (parts[0] === 'c') return p.category === parts[1]
+    if (parts[0] === 's') return p.category === parts[1] && p.subcategory === parts[2]
+    return true
+  }
 
   const createCat = async (name, parentId) => {
     const { data, error } = await supabase.from('categories')
@@ -181,7 +196,7 @@ export default function Products() {
             </div>
             <select className="input max-w-[200px] py-1.5 text-sm" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
               <option value="">All categories</option>
-              {filterCatNames.map(c => <option key={c} value={c}>{c}</option>)}
+              {filterOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
             <button onClick={() => setLowOnly(v => !v)}
               className={`badge px-3 py-1.5 ${lowOnly ? 'bg-red-600 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
