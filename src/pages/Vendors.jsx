@@ -16,6 +16,7 @@ export default function Vendors() {
   const navigate = useNavigate()
   const [rows, setRows] = useState(null)
   const [q, setQ] = useState('')
+  const [filter, setFilter] = useState('all')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blank)
   const [editing, setEditing] = useState(null)
@@ -45,7 +46,9 @@ export default function Vendors() {
     await supabase.from('vendors').delete().eq('id', v.id); load()
   }
 
-  const filtered = (rows || []).filter(v => [v.name, v.email, v.phone].join(' ').toLowerCase().includes(q.toLowerCase()))
+  const filtered = (rows || [])
+    .filter(v => filter === 'all' ? true : Number(v.balance) > 0)
+    .filter(v => [v.name, v.email, v.phone].join(' ').toLowerCase().includes(q.toLowerCase()))
   const totalOwed = (rows || []).reduce((s, v) => s + Number(v.balance || 0), 0)
 
   return (
@@ -58,6 +61,15 @@ export default function Vendors() {
         <EmptyState icon={Truck} title="No vendors yet" hint="Add a supplier to start tracking bills and what you owe."
           action={<button className="btn-primary" onClick={openNew}><Plus size={18} /> New vendor</button>} />
       ) : (
+        <>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {['all', 'owing'].map(t => (
+            <button key={t} onClick={() => setFilter(t)}
+              className={`badge px-3 py-1.5 ${filter === t ? 'bg-moss-700 text-white' : 'bg-white text-ink/60 hover:bg-black/5'}`}>
+              {t === 'all' ? 'All' : 'Owing'}
+            </button>
+          ))}
+        </div>
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between border-b border-black/[.07] px-4 py-3">
             <div className="flex flex-1 items-center gap-2">
@@ -81,7 +93,7 @@ export default function Vendors() {
                   <tr key={v.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/vendors/${v.id}`)}>
                     <td className="px-4 py-3 font-semibold text-ink">{v.name}</td>
                     <td className="px-4 py-3 text-ink/70">{v.email || v.phone || '—'}</td>
-                    <td className="px-4 py-3 text-right font-medium tabular-nums text-clay">{money(v.balance, cur)}</td>
+                    <td className={`px-4 py-3 text-right font-medium tabular-nums ${Number(v.balance) > 0 ? 'text-clay' : 'text-ink/40'}`}>{money(v.balance, cur)}</td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
                         <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" onClick={() => openEdit(v)}><Pencil size={16} /></button>
@@ -94,6 +106,7 @@ export default function Vendors() {
             </table>
           </div>
         </div>
+        </>
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit vendor' : 'New vendor'} wide>

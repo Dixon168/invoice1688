@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ClipboardList, Plus, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, fmtDate } from '../lib/format'
+import { money, fmtDate, isExpired } from '../lib/format'
 import { PageHeader, Spinner, EmptyState } from '../components/ui'
 
 export const EST_STATUS = {
@@ -28,9 +28,9 @@ export default function Estimates() {
       .then(({ data }) => setRows(data || []))
   }, [])
 
-  const tabs = ['all', 'draft', 'sent', 'accepted', 'declined', 'converted']
+  const tabs = ['all', 'draft', 'sent', 'accepted', 'declined', 'expired', 'converted']
   const filtered = (rows || [])
-    .filter(e => filter === 'all' ? true : e.status === filter)
+    .filter(e => filter === 'all' ? true : filter === 'expired' ? isExpired(e.expiry_date, e.status) : e.status === filter)
     .filter(e => [e.estimate_number, e.customer?.name].join(' ').toLowerCase().includes(q.toLowerCase()))
 
   return (
@@ -69,7 +69,8 @@ export default function Estimates() {
                 </thead>
                 <tbody className="divide-y divide-black/[.05]">
                   {filtered.map(e => {
-                    const s = EST_STATUS[e.status] || EST_STATUS.draft
+                    const exp = isExpired(e.expiry_date, e.status)
+                    const s = exp ? EST_STATUS.expired : (EST_STATUS[e.status] || EST_STATUS.draft)
                     return (
                       <tr key={e.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/estimates/${e.id}`)}>
                         <td className="px-4 py-3 font-semibold text-ink">{e.estimate_number}</td>

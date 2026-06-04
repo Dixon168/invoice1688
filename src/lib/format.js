@@ -9,6 +9,9 @@ export const todayISO = () => new Date().toISOString().slice(0, 10)
 export const isOverdue = (due, status) =>
   !!due && due < todayISO() && !['paid', 'cancelled', 'draft'].includes(status)
 
+export const isExpired = (expiry, status) =>
+  !!expiry && expiry < todayISO() && ['draft', 'sent'].includes(status)
+
 export const STATUS = {
   draft:     { label: 'Draft',     cls: 'bg-black/8 text-ink/70' },
   sent:      { label: 'Sent',      cls: 'bg-blue-100 text-blue-700' },

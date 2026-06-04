@@ -107,9 +107,9 @@ export default function Bills() {
     setDetail(null); load()
   }
 
-  const tabs = ['all', 'unpaid', 'partial', 'paid']
+  const tabs = ['all', 'unpaid', 'partial', 'overdue', 'paid']
   const filtered = (bills || [])
-    .filter(b => filter === 'all' ? true : b.status === filter)
+    .filter(b => filter === 'all' ? true : filter === 'overdue' ? isOverdue(b.due_date, b.status) : b.status === filter)
     .filter(b => [b.bill_number, b.vendor?.name].join(' ').toLowerCase().includes(q.toLowerCase()))
   const totalOwed = (bills || []).filter(b => b.status !== 'cancelled').reduce((s, b) => s + Number(b.amount_due || 0), 0)
 

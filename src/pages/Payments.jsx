@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CreditCard } from 'lucide-react'
+import { CreditCard, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate } from '../lib/format'
@@ -10,6 +10,7 @@ export default function Payments() {
   const { company } = useAuth()
   const navigate = useNavigate()
   const [rows, setRows] = useState(null)
+  const [q, setQ] = useState('')
   const cur = company?.default_currency || 'USD'
 
   useEffect(() => {
@@ -19,7 +20,9 @@ export default function Payments() {
       .then(({ data }) => setRows(data || []))
   }, [])
 
-  const total = (rows || []).reduce((s, p) => s + Number(p.amount || 0), 0)
+  const filtered = (rows || []).filter(p =>
+    [p.customer?.name, p.invoice?.invoice_number, p.method].join(' ').toLowerCase().includes(q.toLowerCase()))
+  const total = filtered.reduce((s, p) => s + Number(p.amount || 0), 0)
 
   return (
     <>
@@ -28,9 +31,12 @@ export default function Payments() {
         <EmptyState icon={CreditCard} title="No payments yet" hint="Payments you record on invoices show up here." />
       ) : (
         <div className="card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-black/[.07] px-5 py-4">
-            <span className="text-sm text-ink/55">{rows.length} payment{rows.length !== 1 ? 's' : ''}</span>
-            <span className="font-display text-xl text-moss-700">{money(total, cur)} total</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/[.07] px-5 py-3">
+            <div className="flex min-w-[180px] flex-1 items-center gap-2">
+              <Search size={18} className="text-ink/40" />
+              <input className="w-full bg-transparent text-sm outline-none placeholder:text-black/30" placeholder="Search customer, invoice, method…" value={q} onChange={e => setQ(e.target.value)} />
+            </div>
+            <span className="text-sm text-ink/55">{filtered.length} · <span className="font-display text-lg text-moss-700">{money(total, cur)}</span></span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -44,7 +50,7 @@ export default function Payments() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/[.05]">
-                {rows.map(p => (
+                {filtered.map(p => (
                   <tr key={p.id} className="cursor-pointer hover:bg-sand/40"
                     onClick={() => p.invoice_id && navigate(`/invoices/${p.invoice_id}`)}>
                     <td className="px-5 py-3 text-ink/70">{fmtDate(p.payment_date)}</td>

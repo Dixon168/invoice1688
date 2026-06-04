@@ -123,7 +123,7 @@ export default function Products() {
               </thead>
               <tbody className="divide-y divide-black/[.05]">
                 {filtered.map(p => (
-                  <tr key={p.id} className="hover:bg-sand/40">
+                  <tr key={p.id} className="cursor-pointer hover:bg-sand/40" onClick={() => openEdit(p)}>
                     <td className="px-4 py-3"><div className="font-semibold text-ink">{p.name}</div>{p.sku && <div className="text-xs text-ink/45">{p.sku}</div>}</td>
                     <td className="px-4 py-3 text-ink/70">{p.category || '—'}{p.subcategory ? <span className="text-ink/40"> › {p.subcategory}</span> : null}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-ink/60">{p.cost ? money(p.cost, cur) : '—'}</td>
@@ -137,7 +137,7 @@ export default function Products() {
                         </span>
                       ) : '—'}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
                         {p.track_inventory && <button className="rounded-md p-2 text-ink/50 hover:bg-moss-50 hover:text-moss-700" title="Adjust stock" onClick={() => openAdjust(p)}><Package size={16} /></button>}
                         <button className="rounded-md p-2 text-ink/50 hover:bg-black/5 hover:text-ink" onClick={() => openEdit(p)}><Pencil size={16} /></button>
