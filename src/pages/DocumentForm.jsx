@@ -49,6 +49,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const [endDate, setEndDate] = useState('')
   const [status, setStatus] = useState('draft')
   const [isExempt, setIsExempt] = useState(false)
+  const [taxId, setTaxId] = useState('')
+  const [taxRate, setTaxRate] = useState(0)
   const [notes, setNotes] = useState('')
   const [terms, setTerms] = useState('')
   const [items, setItems] = useState([emptyItem()])
@@ -61,6 +63,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
         supabase.from('tax_rates').select('*').order('name'),
       ])
       setCustomers(c || []); setProducts(p || []); setTaxes(t || [])
+      const taxList = t || []
+      const defTax = taxList.find(x => x.is_default)
 
       if (editing) {
         const { data: d } = await supabase.from(cfg.table).select('*').eq('id', id).maybeSingle()
@@ -70,7 +74,11 @@ export default function DocumentForm({ kind = 'invoice' }) {
           setCustomerQuery((c || []).find(x => x.id === d.customer_id)?.name || '')
           setIssueDate(d.issue_date); setEndDate(d[cfg.dateField] || ''); setStatus(d.status)
           setIsExempt(d.is_exempt); setNotes(d.notes || ''); setTerms(d.terms || '')
-          setItems((its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) })))
+          const loaded = (its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) }))
+          setItems(loaded)
+          const firstRate = loaded.length ? Number(loaded[0].tax_rate) || 0 : 0
+          setTaxRate(firstRate)
+          setTaxId(taxList.find(x => Number(x.rate) === firstRate)?.id || '')
         }
         setLoading(false)
       } else {
@@ -78,6 +86,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
         setNumber(`${company?.[cfg.prefixField] || cfg.prefixDefault}${String(seq).padStart(4, '0')}`)
         setNotes(company?.default_notes || '')
         setTerms(company?.default_terms || '')
+        if (defTax) { setTaxId(defTax.id); setTaxRate(Number(defTax.rate) || 0) }
         const cidParam = searchParams.get('customer')
         const cust = cidParam ? (c || []).find(x => x.id === cidParam) : null
         if (cust) {
@@ -104,8 +113,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
     setCustomers(prev => [...prev, data]); pickCustomer(data)
   }
   const applyProduct = (idx, p) => {
-    const tax = p?.tax_rate_id ? (taxes.find(t => t.id === p.tax_rate_id)?.rate || 0) : 0
-    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, unit_price: Number(p.unit_price) || 0, tax_rate: Number(tax) } : it))
+    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, unit_price: Number(p.unit_price) || 0 } : it))
   }
   const createAndPick = async (idx, name) => {
     const { data, error } = await supabase.from('products').insert({ company_id: company.id, name, unit_price: Number(items[idx]?.unit_price) || 0 }).select('*').single()
@@ -116,7 +124,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const addItem = () => setItems([...items, emptyItem()])
   const delItem = (idx) => setItems(items.length === 1 ? items : items.filter((_, i) => i !== idx))
 
-  const totals = useMemo(() => computeTotals(items, isExempt), [items, isExempt])
+  const calcItems = useMemo(() => items.map(it => ({ ...it, tax_rate: taxRate })), [items, taxRate])
+  const totals = useMemo(() => computeTotals(calcItems, isExempt), [calcItems, isExempt])
 
   const save = async (newStatus) => {
     if (!customerId) return alert('Please choose a customer.')
@@ -147,7 +156,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
     const rows = items.map((it, idx) => ({
       [cfg.itemFK]: docId, product_id: it.product_id || null, description: it.description || '(item)',
       quantity: Number(it.quantity) || 0, unit_price: Number(it.unit_price) || 0,
-      tax_rate: isExempt ? 0 : (Number(it.tax_rate) || 0),
+      tax_rate: isExempt ? 0 : (Number(taxRate) || 0),
       line_total: Math.round((Number(it.quantity) || 0) * (Number(it.unit_price) || 0) * 100) / 100,
       sort_order: idx,
     }))
@@ -192,7 +201,6 @@ export default function DocumentForm({ kind = 'invoice' }) {
                 <th className="px-3 py-3 font-semibold">{t('th_item_desc')}</th>
                 <th className="w-20 px-3 py-3 text-right font-semibold">{t('th_qty')}</th>
                 <th className="w-28 px-3 py-3 text-right font-semibold">{t('th_price')}</th>
-                <th className="w-24 px-3 py-3 text-right font-semibold">{t('th_tax_pct')}</th>
                 <th className="w-28 px-3 py-3 text-right font-semibold">{t('th_amount')}</th>
                 <th className="w-10"></th>
               </tr>
@@ -207,7 +215,6 @@ export default function DocumentForm({ kind = 'invoice' }) {
                   </td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value })} /></td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} /></td>
-                  <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.0001" value={it.tax_rate} disabled={isExempt} onChange={e => setItem(idx, { tax_rate: e.target.value })} /></td>
                   <td className="px-3 py-2 text-right font-medium tabular-nums">{money((Number(it.quantity) || 0) * (Number(it.unit_price) || 0), cur)}</td>
                   <td className="px-2 py-2"><button onClick={() => delItem(idx)} className="rounded-md p-1.5 text-ink/40 hover:bg-clay/10 hover:text-clay"><Trash2 size={16} /></button></td>
                 </tr>
@@ -231,6 +238,19 @@ export default function DocumentForm({ kind = 'invoice' }) {
         <div className="card p-5">
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-ink/60">{t('m_subtotal')}</span><span className="tabular-nums">{money(totals.subtotal, cur)}</span></div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-ink/60">{t('m_tax')}</span>
+              <div className="flex items-center gap-1.5">
+                <select className="input w-auto py-1 text-xs" value={taxId} disabled={isExempt}
+                  onChange={e => { const id = e.target.value; setTaxId(id); const tr = taxes.find(x => x.id === id); if (tr) setTaxRate(Number(tr.rate) || 0) }}>
+                  <option value="">{t('tax_custom') || 'Custom'}</option>
+                  {taxes.map(tr => <option key={tr.id} value={tr.id}>{tr.name} ({Number(tr.rate)}%)</option>)}
+                </select>
+                <input className="input w-16 py-1 text-right text-xs" type="number" step="0.0001" value={taxRate} disabled={isExempt}
+                  onChange={e => { setTaxRate(e.target.value); setTaxId('') }} />
+                <span className="text-ink/40">%</span>
+              </div>
+            </div>
             <div className="flex justify-between"><span className="text-ink/60">{t('m_tax')}</span><span className="tabular-nums">{money(totals.taxTotal, cur)}</span></div>
             <div className="mt-2 flex justify-between border-t border-black/10 pt-3 font-display text-2xl text-ink"><span>{t('m_total')}</span><span className="tabular-nums">{money(totals.total, cur)}</span></div>
           </div>

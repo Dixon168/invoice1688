@@ -921,6 +921,11 @@ const EXTRA18 = {
 }
 for (const l of Object.keys(EXTRA18)) Object.assign(T[l], EXTRA18[l])
 
+const EXTRA19 = {
+  en: { tax_custom: 'Custom' }, zh: { tax_custom: '自定义' }, es: { tax_custom: 'Personalizado' }, vi: { tax_custom: 'Tùy chỉnh' }, ko: { tax_custom: '직접 입력' },
+}
+for (const l of Object.keys(EXTRA19)) Object.assign(T[l], EXTRA19[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
