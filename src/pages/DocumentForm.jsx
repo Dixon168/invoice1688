@@ -43,6 +43,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const [taxes, setTaxes] = useState([])
 
   const [customerId, setCustomerId] = useState('')
+  const [delivery, setDelivery] = useState({ address: '', city: '', state: '', postal_code: '', country: '' })
   const [customerQuery, setCustomerQuery] = useState('')
   const [number, setNumber] = useState('')
   const [issueDate, setIssueDate] = useState(todayISO())
@@ -75,6 +76,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
           setCustomerQuery((c || []).find(x => x.id === d.customer_id)?.name || '')
           setIssueDate(d.issue_date); setEndDate(d[cfg.dateField] || ''); setStatus(d.status)
           setIsExempt(d.is_exempt); setNotes(d.notes || ''); setTerms(d.terms || '')
+          setDelivery({ address: d.delivery_address || '', city: d.delivery_city || '', state: d.delivery_state || '', postal_code: d.delivery_postal_code || '', country: d.delivery_country || '' })
           const loaded = (its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, detail: i.detail || '', quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) }))
           setItems(loaded)
           const firstRate = loaded.length ? Number(loaded[0].tax_rate) || 0 : 0
@@ -106,6 +108,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
 
   const pickCustomer = (cust) => {
     setCustomerId(cust.id); setCustomerQuery(cust.name)
+    setDelivery({ address: cust.delivery_address || cust.billing_address || '', city: cust.delivery_city || cust.billing_city || '', state: cust.delivery_state || cust.billing_state || '', postal_code: cust.delivery_postal_code || cust.billing_postal_code || '', country: cust.delivery_country || cust.billing_country || '' })
     if (!editing) {
       const days = Number(cust.payment_terms) || 0
       const d = new Date(issueDate); d.setDate(d.getDate() + days)
@@ -118,13 +121,19 @@ export default function DocumentForm({ kind = 'invoice' }) {
     setCustomers(prev => [...prev, data]); pickCustomer(data)
   }
   const [custOpen, setCustOpen] = useState(false)
-  const [newCust, setNewCust] = useState({ name: '', phone: '', email: '' })
-  const openNewCust = () => { setNewCust({ name: customerQuery || '', phone: '', email: '' }); setCustOpen(true) }
+  const custBlank = { name: '', email: '', phone: '', payment_terms: 30, notes: '', billing_address: '', billing_city: '', billing_state: '', billing_postal_code: '', billing_country: '', delivery_address: '', delivery_city: '', delivery_state: '', delivery_postal_code: '', delivery_country: '' }
+  const [newCust, setNewCust] = useState(custBlank)
+  const [newCustSame, setNewCustSame] = useState(true)
+  const openNewCust = () => { setNewCust({ ...custBlank, name: customerQuery || '' }); setNewCustSame(true); setCustOpen(true) }
   const saveNewCust = async () => {
-    if (!newCust.name.trim()) { alert(t('cr_need_customer') || 'Name required'); return }
-    const { data, error } = await supabase.from('customers').insert({
-      company_id: company.id, name: newCust.name.trim(), phone: newCust.phone || null, email: newCust.email || null,
-    }).select('*').single()
+    if (!newCust.name.trim()) { alert(t('c_name') + '?'); return }
+    const payload = { ...newCust, company_id: company.id, payment_terms: Number(newCust.payment_terms) || 0 }
+    if (newCustSame) {
+      payload.delivery_address = newCust.billing_address; payload.delivery_city = newCust.billing_city
+      payload.delivery_state = newCust.billing_state; payload.delivery_postal_code = newCust.billing_postal_code
+      payload.delivery_country = newCust.billing_country
+    }
+    const { data, error } = await supabase.from('customers').insert(payload).select('*').single()
     if (error) { alert(error.message); return }
     setCustomers(prev => [...prev, data]); pickCustomer(data); setCustOpen(false)
   }
@@ -164,8 +173,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
       currency: cur, is_exempt: isExempt, notes, terms,
       billing_address: c?.billing_address, billing_city: c?.billing_city, billing_state: c?.billing_state,
       billing_country: c?.billing_country, billing_postal_code: c?.billing_postal_code,
-      delivery_address: c?.delivery_address, delivery_city: c?.delivery_city, delivery_state: c?.delivery_state,
-      delivery_country: c?.delivery_country, delivery_postal_code: c?.delivery_postal_code,
+      delivery_address: delivery.address || null, delivery_city: delivery.city || null, delivery_state: delivery.state || null,
+      delivery_country: delivery.country || null, delivery_postal_code: delivery.postal_code || null,
     }
     if (kind === 'invoice') head.amount_due = totals.total
 
@@ -261,6 +270,16 @@ export default function DocumentForm({ kind = 'invoice' }) {
         <div className="card space-y-4 p-5">
           <Field label={t('f_notes')}><textarea className="input min-h-[70px]" value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('ph_visible_customer')} /></Field>
           <Field label={t('f_terms')}><textarea className="input min-h-[60px]" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
+          <div className="border-t border-black/10 pt-3">
+            <div className="label mb-2">{t('ship_to') || 'Ship to (delivery address)'}</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="col-span-2"><input className="input py-1.5 text-sm" placeholder={t('f_delivery_address') || 'Delivery address'} value={delivery.address} onChange={e => setDelivery({ ...delivery, address: e.target.value })} /></div>
+              <input className="input py-1.5 text-sm" placeholder={t('f_city')} value={delivery.city} onChange={e => setDelivery({ ...delivery, city: e.target.value })} />
+              <input className="input py-1.5 text-sm" placeholder={t('f_state')} value={delivery.state} onChange={e => setDelivery({ ...delivery, state: e.target.value })} />
+              <input className="input py-1.5 text-sm" placeholder={t('f_postal_code')} value={delivery.postal_code} onChange={e => setDelivery({ ...delivery, postal_code: e.target.value })} />
+              <input className="input py-1.5 text-sm" placeholder={t('f_country')} value={delivery.country} onChange={e => setDelivery({ ...delivery, country: e.target.value })} />
+            </div>
+          </div>
           <label className="flex items-center gap-2 text-sm text-ink/80">
             <input type="checkbox" checked={isExempt} onChange={e => setIsExempt(e.target.checked)} /> {t('tax_exempt')}
           </label>
@@ -297,13 +316,30 @@ export default function DocumentForm({ kind = 'invoice' }) {
         </div>
       </div>
 
-      <Modal open={custOpen} onClose={() => setCustOpen(false)} title={t('create_customer')}>
-        <div className="space-y-4">
+      <Modal open={custOpen} onClose={() => setCustOpen(false)} title={t('create_customer')} wide>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('c_name')}><input className="input" value={newCust.name} onChange={e => setNewCust({ ...newCust, name: e.target.value })} autoFocus /></Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label={t('c_phone') || 'Phone'}><input className="input" value={newCust.phone} onChange={e => setNewCust({ ...newCust, phone: e.target.value })} /></Field>
-            <Field label={t('c_email') || 'Email'}><input className="input" type="email" value={newCust.email} onChange={e => setNewCust({ ...newCust, email: e.target.value })} /></Field>
+          <Field label={t('f_payment_terms')}><input className="input" type="number" value={newCust.payment_terms} onChange={e => setNewCust({ ...newCust, payment_terms: e.target.value })} /></Field>
+          <Field label={t('email')}><input className="input" type="email" value={newCust.email} onChange={e => setNewCust({ ...newCust, email: e.target.value })} /></Field>
+          <Field label={t('f_phone')}><input className="input" value={newCust.phone} onChange={e => setNewCust({ ...newCust, phone: e.target.value })} /></Field>
+          <div className="sm:col-span-2"><Field label={t('f_billing_address')}><input className="input" value={newCust.billing_address} onChange={e => setNewCust({ ...newCust, billing_address: e.target.value })} /></Field></div>
+          <Field label={t('f_city')}><input className="input" value={newCust.billing_city} onChange={e => setNewCust({ ...newCust, billing_city: e.target.value })} /></Field>
+          <Field label={t('f_state')}><input className="input" value={newCust.billing_state} onChange={e => setNewCust({ ...newCust, billing_state: e.target.value })} /></Field>
+          <Field label={t('f_postal_code')}><input className="input" value={newCust.billing_postal_code} onChange={e => setNewCust({ ...newCust, billing_postal_code: e.target.value })} /></Field>
+          <Field label={t('f_country')}><input className="input" value={newCust.billing_country} onChange={e => setNewCust({ ...newCust, billing_country: e.target.value })} /></Field>
+          <div className="sm:col-span-2 border-t border-black/10 pt-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-ink/80">
+              <input type="checkbox" checked={newCustSame} onChange={e => setNewCustSame(e.target.checked)} /> {t('f_delivery_same')}
+            </label>
           </div>
+          {!newCustSame && <>
+            <div className="sm:col-span-2"><Field label={t('f_delivery_address')}><input className="input" value={newCust.delivery_address} onChange={e => setNewCust({ ...newCust, delivery_address: e.target.value })} /></Field></div>
+            <Field label={t('f_city')}><input className="input" value={newCust.delivery_city} onChange={e => setNewCust({ ...newCust, delivery_city: e.target.value })} /></Field>
+            <Field label={t('f_state')}><input className="input" value={newCust.delivery_state} onChange={e => setNewCust({ ...newCust, delivery_state: e.target.value })} /></Field>
+            <Field label={t('f_postal_code')}><input className="input" value={newCust.delivery_postal_code} onChange={e => setNewCust({ ...newCust, delivery_postal_code: e.target.value })} /></Field>
+            <Field label={t('f_country')}><input className="input" value={newCust.delivery_country} onChange={e => setNewCust({ ...newCust, delivery_country: e.target.value })} /></Field>
+          </>}
+          <div className="sm:col-span-2"><Field label={t('f_notes')}><textarea className="input min-h-[60px]" value={newCust.notes} onChange={e => setNewCust({ ...newCust, notes: e.target.value })} /></Field></div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setCustOpen(false)}>{t('cancel')}</button>
