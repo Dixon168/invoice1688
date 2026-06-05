@@ -703,3 +703,16 @@ end $$;
 -- ===== line item detail (product description on invoices/estimates) =====
 alter table public.invoice_items  add column if not exists detail text;
 alter table public.estimate_items add column if not exists detail text;
+
+
+-- ===== ensure delivery address columns exist on estimates & invoices =====
+alter table public.estimates add column if not exists delivery_address     text;
+alter table public.estimates add column if not exists delivery_city        text;
+alter table public.estimates add column if not exists delivery_state       text;
+alter table public.estimates add column if not exists delivery_country     text;
+alter table public.estimates add column if not exists delivery_postal_code text;
+alter table public.invoices  add column if not exists delivery_address     text;
+alter table public.invoices  add column if not exists delivery_city        text;
+alter table public.invoices  add column if not exists delivery_state       text;
+alter table public.invoices  add column if not exists delivery_country     text;
+alter table public.invoices  add column if not exists delivery_postal_code text;
