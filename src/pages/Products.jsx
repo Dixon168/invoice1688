@@ -22,8 +22,9 @@ const productFields = [
   { key: 'track_inventory', label: 'Track inventory (yes/no)', type: 'bool' },
   { key: 'stock_quantity', label: 'Stock qty', type: 'number' },
   { key: 'reorder_point', label: 'Reorder point', type: 'number' },
+  { key: 'tax_rate_name', label: 'Tax rate (optional)', type: 'text' },
 ]
-const productExample = ['Widget A', 'SKU-001', 'Sample item', 'Beverages', 'Coffee', 5, 9.99, 'yes', 100, 10]
+const productExample = ['Widget A', 'SKU-001', 'Sample item', 'Beverages', 'Coffee', 5, 9.99, 'yes', 100, 10, '(leave blank = default tax)']
 
 export default function Products() {
   const { company } = useAuth()
@@ -46,7 +47,7 @@ export default function Products() {
   const load = async () => {
     const [{ data: p }, { data: t }, { data: v }, { data: cats }] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
-      supabase.from('tax_rates').select('id, name, rate').order('name'),
+      supabase.from('tax_rates').select('id, name, rate, is_default').order('name'),
       supabase.from('vendors').select('id, name').order('name'),
       supabase.from('categories').select('*').order('name'),
     ])
@@ -55,6 +56,39 @@ export default function Products() {
   useEffect(() => { load() }, [])
 
   const refreshCats = async () => { const { data } = await supabase.from('categories').select('*').order('name'); setCats(data || []) }
+
+  // --- batch import helpers ---
+  const defaultTaxId = taxes.find(t => t.is_default)?.id || null
+  const importTransform = (rec) => {
+    let taxId = defaultTaxId
+    if (rec.tax_rate_name) {
+      const found = taxes.find(t => (t.name || '').toLowerCase() === String(rec.tax_rate_name).toLowerCase())
+      if (found) taxId = found.id
+    }
+    delete rec.tax_rate_name
+    rec.tax_rate_id = taxId
+    return rec
+  }
+  const importCategories = async (records) => {
+    const { data: existing } = await supabase.from('categories').select('id, name, parent_id')
+    const all = existing || []
+    const findTop = (name) => all.find(c => !c.parent_id && c.name.toLowerCase() === String(name).toLowerCase())
+    const findSub = (pid, name) => all.find(c => c.parent_id === pid && c.name.toLowerCase() === String(name).toLowerCase())
+    for (const r of records) {
+      if (!r.category) continue
+      let top = findTop(r.category)
+      if (!top) {
+        const { data } = await supabase.from('categories').insert({ company_id: company.id, name: r.category }).select().single()
+        if (data) { top = data; all.push(data) }
+      }
+      if (r.subcategory && top && !findSub(top.id, r.subcategory)) {
+        const { data } = await supabase.from('categories').insert({ company_id: company.id, name: r.subcategory, parent_id: top.id }).select().single()
+        if (data) all.push(data)
+      }
+    }
+    refreshCats()
+    return records
+  }
   const openNew = () => { setEditing(null); setForm(blank); refreshCats(); setOpen(true) }
   const openEdit = (p) => { setEditing(p); setForm({ ...blank, ...p, tax_rate_id: p.tax_rate_id || '' }); refreshCats(); setOpen(true) }
 
@@ -197,7 +231,7 @@ export default function Products() {
     <>
       <PageHeader title={t('products_title')} subtitle={t('products_sub')}>
         <TemplateButton filename="products_template.xlsx" fields={productFields} example={productExample} />
-        <ImportButton table="products" fields={productFields} companyId={company.id} onDone={load} />
+        <ImportButton table="products" fields={productFields} companyId={company.id} transform={importTransform} beforeInsert={importCategories} onDone={load} />
         <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_item')}</button>
       </PageHeader>
 

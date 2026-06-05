@@ -38,7 +38,7 @@ export function TemplateButton({ filename, fields, example, label }) {
   )
 }
 
-export function ImportButton({ table, fields, companyId, transform, onDone, label }) {
+export function ImportButton({ table, fields, companyId, transform, beforeInsert, onDone, label }) {
   const { t } = useT()
   const inputRef = useRef()
   const [busy, setBusy] = useState(false)
@@ -84,12 +84,15 @@ export function ImportButton({ table, fields, companyId, transform, onDone, labe
       const msg = `${t('ie_confirm')} ${records.length}` + (errors.length ? `\n(${errors.length} ${t('ie_skipped')})` : '')
       if (!confirm(msg)) return
 
+      let finalRecords = records
+      if (beforeInsert) finalRecords = await beforeInsert(records)
+
       const chunk = 200
       let done = 0
-      for (let j = 0; j < records.length; j += chunk) {
-        const { error } = await supabase.from(table).insert(records.slice(j, j + chunk))
+      for (let j = 0; j < finalRecords.length; j += chunk) {
+        const { error } = await supabase.from(table).insert(finalRecords.slice(j, j + chunk))
         if (error) { alert('Import error: ' + error.message); break }
-        done += Math.min(chunk, records.length - j)
+        done += Math.min(chunk, finalRecords.length - j)
       }
       alert(`${t('ie_imported')} ${done}`)
       onDone && onDone()
