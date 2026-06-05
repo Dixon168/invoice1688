@@ -85,9 +85,9 @@ export default function InvoiceDetail() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Invoices</button>
         <div className="flex flex-wrap gap-2">
+          <Link className="btn-primary" to={`/invoices/${id}/edit`}><Pencil size={16} /> {t('edit')} {t('th_invoice')}</Link>
           <button className="btn-outline" onClick={() => documentPDF({ kind: 'invoice', doc: inv, items, customer, company })}><FileDown size={16} /> {t('pdf')}</button>
           <button className="btn-outline" onClick={() => packingSlipPDF({ doc: inv, items, customer, company })}><Package size={16} /> {t('packing_slip')}</button>
-          <Link className="btn-outline" to={`/invoices/${id}/edit`}><Pencil size={16} /> Edit</Link>
           <button className="btn-danger" onClick={removeInvoice}><Trash2 size={16} /> {t('delete')}</button>
         </div>
       </div>

@@ -79,7 +79,7 @@ export default function EstimateDetail() {
         <button onClick={() => navigate('/estimates')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Estimates</button>
         <div className="flex flex-wrap gap-2">
           <button className="btn-outline" onClick={() => documentPDF({ kind: 'estimate', doc: est, items, customer, company })}><FileDown size={16} /> {t('pdf')}</button>
-          {est.status !== 'converted' && <Link className="btn-outline" to={`/estimates/${id}/edit`}><Pencil size={16} /> Edit</Link>}
+          {est.status !== 'converted' && <Link className="btn-primary" to={`/estimates/${id}/edit`}><Pencil size={16} /> {t('edit')} {t('th_estimate')}</Link>}
           {est.status !== 'converted' && <button className="btn-primary" onClick={convertToInvoice} disabled={busy}><ArrowRightLeft size={16} /> {t('convert_invoice')}</button>}
           <button className="btn-danger" onClick={remove}><Trash2 size={16} /></button>
         </div>
