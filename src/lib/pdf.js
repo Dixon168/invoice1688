@@ -7,7 +7,9 @@ const MUTED = [110, 120, 115]
 const MOSS = [47, 95, 73]
 
 // --- CJK / Unicode font (loaded on demand, cached for the session) ---
-const CJK_URL = 'https://cdn.jsdelivr.net/gh/StellarCN/scp_zh/fonts/SourceHanSansSC-Normal.ttf'
+// SimHei = full Simplified-Chinese TrueType font (jsPDF-compatible), unlike subset fonts that miss characters.
+const CJK_URL = 'https://cdn.jsdelivr.net/gh/StellarCN/scp_zh@master/fonts/SimHei.ttf'
+const CJK_NAME = 'SimHei'
 let _cjkB64 = null
 async function loadCjk() {
   if (_cjkB64) return _cjkB64
@@ -25,10 +27,10 @@ async function ensureFont(pdf, text) {
   if (!/[^\u0000-\u00FF]/.test(text || '')) return 'helvetica'
   try {
     const b64 = await loadCjk()
-    pdf.addFileToVFS('SourceHanSansSC.ttf', b64)
-    pdf.addFont('SourceHanSansSC.ttf', 'SourceHanSansSC', 'normal')
-    pdf.addFont('SourceHanSansSC.ttf', 'SourceHanSansSC', 'bold')
-    return 'SourceHanSansSC'
+    pdf.addFileToVFS(CJK_NAME + '.ttf', b64)
+    pdf.addFont(CJK_NAME + '.ttf', CJK_NAME, 'normal')
+    pdf.addFont(CJK_NAME + '.ttf', CJK_NAME, 'bold')
+    return CJK_NAME
   } catch (e) {
     return 'helvetica'
   }
