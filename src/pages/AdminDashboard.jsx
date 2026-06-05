@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, Building2, Plus, Trash2, LogOut, Users, FileText, CreditCard } from 'lucide-react'
+import { ShieldCheck, Building2, Plus, Trash2, LogOut, Users, FileText, CreditCard, Search } from 'lucide-react'
 import { supabase, makeTempClient } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, todayISO, subState, SUB_BADGE } from '../lib/format'
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const { t } = useT()
   const navigate = useNavigate()
   const [companies, setCompanies] = useState(null)
+  const [adminQ, setAdminQ] = useState('')
   const [signups, setSignups] = useState([])
   const [newOpen, setNewOpen] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', ownerName: '', paid_until: '', companyPhone: '', address: '', city: '', state: '', postal_code: '', country: '', contactName: '', contactPhone: '' })
@@ -196,10 +197,28 @@ export default function AdminDashboard() {
           <div className="card p-12 text-center text-ink/55">No companies yet.</div>
         ) : (
           <>
-            <div className="mb-4 grid gap-4 sm:grid-cols-3">
-              <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Companies</div><div className="mt-1 font-display text-3xl text-ink">{companies.length}</div></div>
-              <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Total invoiced</div><div className="mt-1 font-display text-3xl text-ink tabular-nums">{money(companies.reduce((s, c) => s + c.invoiced, 0))}</div></div>
-              <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">{t('m_outstanding')}</div><div className="mt-1 font-display text-3xl text-clay tabular-nums">{money(companies.reduce((s, c) => s + c.outstanding, 0))}</div></div>
+            {(() => {
+              const PLAN_PRICE = 19.99
+              const active = companies.filter(c => subState(c).active)
+              const expired = companies.filter(c => subState(c).state === 'expired')
+              const suspended = companies.filter(c => subState(c).state === 'suspended')
+              const expiringSoon = active.filter(c => { if (!c.paid_until) return false; const d = new Date(); d.setDate(d.getDate() + 7); return c.paid_until <= d.toISOString().slice(0, 10) })
+              return (
+                <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Accounts</div><div className="mt-1 font-display text-3xl text-ink">{companies.length}</div><div className="mt-0.5 text-xs text-ink/45">{active.length} active · {expired.length} expired{suspended.length ? ` · ${suspended.length} suspended` : ''}</div></div>
+                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Paying now</div><div className="mt-1 font-display text-3xl text-moss-700">{active.length}</div><div className="mt-0.5 text-xs text-ink/45">subscription active</div></div>
+                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">My monthly income</div><div className="mt-1 font-display text-3xl text-ink tabular-nums">{money(active.length * PLAN_PRICE)}</div><div className="mt-0.5 text-xs text-ink/45">{active.length} × {money(PLAN_PRICE)}</div></div>
+                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Needs attention</div><div className="mt-1 font-display text-3xl text-clay">{expired.length + suspended.length}</div><div className="mt-0.5 text-xs text-ink/45">{expiringSoon.length} expiring in 7 days</div></div>
+                </div>
+              )
+            })()}
+
+            <div className="mb-3 flex items-center gap-2">
+              <div className="relative flex-1 max-w-sm">
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" />
+                <input className="input pl-9" placeholder={t('search') + ' ' + t('th_company').toLowerCase()} value={adminQ} onChange={e => setAdminQ(e.target.value)} />
+              </div>
+              {adminQ && <span className="text-sm text-ink/50">{companies.filter(c => `${c.name} ${c.email || ''}`.toLowerCase().includes(adminQ.toLowerCase())).length} / {companies.length}</span>}
             </div>
 
             <div className="card overflow-hidden">
@@ -213,13 +232,11 @@ export default function AdminDashboard() {
                       <th className="px-5 py-3 text-center font-semibold">{t('th_users')}</th>
                       <th className="px-5 py-3 text-center font-semibold">{t('nav_customers')}</th>
                       <th className="px-5 py-3 text-center font-semibold">{t('nav_invoices')}</th>
-                      <th className="px-5 py-3 text-right font-semibold">{t('th_invoiced')}</th>
-                      <th className="px-5 py-3 text-right font-semibold">{t('th_outstanding')}</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/[.05]">
-                    {companies.map(c => (
+                    {companies.filter(c => `${c.name} ${c.email || ''}`.toLowerCase().includes(adminQ.toLowerCase())).map(c => (
                       <tr key={c.id} className="hover:bg-sand/50">
                         <td className="px-5 py-3">
                           <button onClick={() => openManage(c)} className="text-left">
@@ -245,8 +262,6 @@ export default function AdminDashboard() {
                         <td className="px-5 py-3 text-center tabular-nums">{c.users}</td>
                         <td className="px-5 py-3 text-center tabular-nums">{c.customers}</td>
                         <td className="px-5 py-3 text-center tabular-nums">{c.invoices}</td>
-                        <td className="px-5 py-3 text-right tabular-nums">{money(c.invoiced, c.default_currency)}</td>
-                        <td className="px-5 py-3 text-right tabular-nums text-clay">{money(c.outstanding, c.default_currency)}</td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex justify-end gap-1">
                             <button onClick={() => openManage(c)} className="rounded-md p-2 text-ink/40 hover:bg-black/5 hover:text-ink" title="Manage company"><CreditCard size={16} /></button>
