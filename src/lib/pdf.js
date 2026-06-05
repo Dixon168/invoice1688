@@ -69,7 +69,7 @@ function header(pdf, company, title, accentNumber, font) {
 }
 
 // kind: 'invoice' | 'estimate'  | opts: { preview: true } returns a blob URL instead of saving
-export async function documentPDF({ kind, doc: d, items, customer, company }, opts = {}) {
+export async function documentPDF({ kind, doc: d, items, customer, company, employeeName }, opts = {}) {
   const pdf = new jsPDF()
   const cur = d.currency || company?.default_currency || 'USD'
   const numberLabel = kind === 'estimate' ? d.estimate_number : d.invoice_number
@@ -89,6 +89,7 @@ export async function documentPDF({ kind, doc: d, items, customer, company }, op
   const dateLabel = kind === 'estimate' ? 'Expiry' : 'Due'
   pdf.text(`Date: ${fmtDate(d.issue_date)}`, 196, 33, { align: 'right' })
   pdf.text(`${dateLabel}: ${fmtDate(d.expiry_date || d.due_date)}`, 196, 37.5, { align: 'right' })
+  if (employeeName) pdf.text(`By: ${employeeName}`, 196, 42, { align: 'right' })
 
   // bill to
   y += 8

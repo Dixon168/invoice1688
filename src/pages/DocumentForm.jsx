@@ -41,6 +41,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const [customers, setCustomers] = useState([])
   const [products, setProducts] = useState([])
   const [taxes, setTaxes] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [employeeId, setEmployeeId] = useState('')
 
   const [customerId, setCustomerId] = useState('')
   const [delivery, setDelivery] = useState({ address: '', city: '', state: '', postal_code: '', country: '' })
@@ -64,6 +66,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
         supabase.from('products').select('*').order('name'),
         supabase.from('tax_rates').select('*').order('name'),
       ])
+      const { data: emps } = await supabase.from('employees').select('*').eq('is_active', true).order('name')
+      setEmployees(emps || [])
       setCustomers(c || []); setProducts(p || []); setTaxes(t || [])
       const taxList = t || []
       const defTax = taxList.find(x => x.is_default)
@@ -77,6 +81,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
           setIssueDate(d.issue_date); setEndDate(d[cfg.dateField] || ''); setStatus(d.status)
           setIsExempt(d.is_exempt); setNotes(d.notes || ''); setTerms(d.terms || '')
           setDelivery({ address: d.delivery_address || '', city: d.delivery_city || '', state: d.delivery_state || '', postal_code: d.delivery_postal_code || '', country: d.delivery_country || '' })
+          setEmployeeId(d.employee_id || '')
           const loaded = (its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, detail: i.detail || '', quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) }))
           setItems(loaded)
           const firstRate = loaded.length ? Number(loaded[0].tax_rate) || 0 : 0
@@ -179,7 +184,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
       company_id: company.id, [cfg.numField]: number.trim(), customer_id: customerId,
       issue_date: issueDate, [cfg.dateField]: endDate || null, status: newStatus || status,
       subtotal: totals.subtotal, tax_total: totals.taxTotal, total: totals.total,
-      currency: cur, is_exempt: isExempt, notes, terms,
+      currency: cur, is_exempt: isExempt, notes, terms, employee_id: employeeId || null,
       billing_address: c?.billing_address, billing_city: c?.billing_city, billing_state: c?.billing_state,
       billing_country: c?.billing_country, billing_postal_code: c?.billing_postal_code,
       delivery_address: dlv.address || null, delivery_city: dlv.city || null, delivery_state: dlv.state || null,
@@ -289,9 +294,12 @@ export default function DocumentForm({ kind = 'invoice' }) {
               <input className="input py-1.5 text-sm" placeholder={t('f_country')} value={delivery.country} onChange={e => setDelivery({ ...delivery, country: e.target.value })} />
             </div>
           </div>
-          <label className="flex items-center gap-2 text-sm text-ink/80">
-            <input type="checkbox" checked={isExempt} onChange={e => setIsExempt(e.target.checked)} /> {t('tax_exempt')}
-          </label>
+          <Field label={t('emp_made_by')}>
+            <select className="input" value={employeeId} onChange={e => setEmployeeId(e.target.value)}>
+              <option value="">{t('emp_unassigned') || '—'}</option>
+              {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+            </select>
+          </Field>
         </div>
         <div className="card p-5">
           <div className="space-y-2 text-sm">

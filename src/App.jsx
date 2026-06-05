@@ -30,6 +30,7 @@ import Contact from './pages/Contact'
 import Features from './pages/Features'
 import WhyUs from './pages/WhyUs'
 import Settings from './pages/Settings'
+import Employees from './pages/Employees'
 
 function Protected({ children }) {
   const { session, loading, needsCompany, isSuperAdmin, company } = useAuth()
@@ -83,6 +84,7 @@ function Shell() {
       <Route path="/contact" element={<Protected><Contact /></Protected>} />
       <Route path="/tax-rates" element={<Protected><TaxRates /></Protected>} />
       <Route path="/settings" element={<Protected><Settings /></Protected>} />
+      <Route path="/employees" element={<Protected><Employees /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

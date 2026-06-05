@@ -20,6 +20,7 @@ export default function InvoiceDetail() {
   const cur = company?.default_currency || 'USD'
 
   const [inv, setInv] = useState(null)
+  const [employeeName, setEmployeeName] = useState('')
   const [items, setItems] = useState([])
   const [customer, setCustomer] = useState(null)
   const [payments, setPayments] = useState([])
@@ -37,6 +38,7 @@ export default function InvoiceDetail() {
       supabase.from('payments').select('*').eq('invoice_id', id).order('payment_date', { ascending: false }),
     ])
     setItems(its || []); setCustomer(cu || null); setPayments(ps || [])
+    if (i.employee_id) { const { data: emp } = await supabase.from('employees').select('name').eq('id', i.employee_id).maybeSingle(); setEmployeeName(emp?.name || '') } else setEmployeeName('')
   }
   useEffect(() => { load() }, [id])
 
@@ -88,8 +90,8 @@ export default function InvoiceDetail() {
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Invoices</button>
         <div className="flex flex-wrap gap-2">
           <Link className="btn-primary" to={`/invoices/${id}/edit`}><Pencil size={16} /> {t('edit')} {t('th_invoice')}</Link>
-          <button className="btn-outline" onClick={() => preview.open(() => documentPDF({ kind: 'invoice', doc: inv, items, customer, company }, { preview: true }))}><FileDown size={16} /> {t('pdf')}</button>
-          <button className="btn-outline" onClick={() => preview.open(() => packingSlipPDF({ doc: inv, items, customer, company }, { preview: true }))}><Package size={16} /> {t('packing_slip')}</button>
+          <button className="btn-outline" onClick={() => preview.open(() => documentPDF({ kind: 'invoice', doc: inv, items, customer, company, employeeName }, { preview: true }))}><FileDown size={16} /> {t('pdf')}</button>
+          <button className="btn-outline" onClick={() => preview.open(() => packingSlipPDF({ doc: inv, items, customer, company, employeeName }, { preview: true }))}><Package size={16} /> {t('packing_slip')}</button>
           <button className="btn-danger" onClick={removeInvoice}><Trash2 size={16} /> {t('delete')}</button>
         </div>
       </div>
@@ -98,7 +100,7 @@ export default function InvoiceDetail() {
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-black/[.07] bg-sand/50 p-6">
           <div>
             <div className="font-display text-3xl text-ink">{inv.invoice_number}</div>
-            <div className="mt-1 text-sm text-ink/55">Issued {fmtDate(inv.issue_date)} · Due {fmtDate(inv.due_date)}</div>
+            <div className="mt-1 text-sm text-ink/55">Issued {fmtDate(inv.issue_date)} · Due {fmtDate(inv.due_date)}{employeeName ? ` · ${t('emp_made_by')}: ${employeeName}` : ''}</div>
           </div>
           <div className="text-right">
             <span className={`badge ${s.cls} text-sm`}>{t(s.key)}</span>

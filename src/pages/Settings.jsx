@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Users, ChevronRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { subState, SUB_BADGE, fmtDate } from '../lib/format'
@@ -85,6 +87,16 @@ export default function Settings() {
           </div>
         </div>
       )})()}
+      <Link to="/employees" className="card mb-4 flex max-w-2xl items-center justify-between gap-3 p-5 transition hover:border-moss-600/40 hover:shadow-md">
+        <div className="flex items-center gap-3">
+          <span className="rounded-lg bg-moss-50 p-2 text-moss-700"><Users size={20} /></span>
+          <div>
+            <div className="font-medium text-ink">{t('emp_title')}</div>
+            <div className="text-sm text-ink/55">{t('emp_sub')}</div>
+          </div>
+        </div>
+        <ChevronRight size={20} className="text-ink/40" />
+      </Link>
       <div className="card max-w-2xl p-6">
         <div className="mb-5">
           <span className="label">{t('logo')}</span>

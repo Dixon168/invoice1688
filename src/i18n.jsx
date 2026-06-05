@@ -962,6 +962,24 @@ const EXTRA23 = {
 }
 for (const l of Object.keys(EXTRA23)) Object.assign(T[l], EXTRA23[l])
 
+const EXTRA24 = {
+  en: { emp_title: 'Employees', emp_sub: 'Staff who create invoices & estimates', emp_new: 'New employee', emp_none: 'No employees yet', emp_none_h: 'Add staff so you can tag who made each invoice.', emp_role: 'Role', emp_role_ph: 'e.g. Sales, Cashier', emp_active: 'Active', emp_inactive: 'Inactive', emp_edit: 'Edit employee', emp_made_by: 'Made by (employee)', emp_unassigned: '— None —' },
+  zh: { emp_title: '员工', emp_sub: '开发票/报价的员工', emp_new: '新增员工', emp_none: '还没有员工', emp_none_h: '添加员工后，可以标记每张发票是谁开的。', emp_role: '职位', emp_role_ph: '如：销售、收银', emp_active: '在职', emp_inactive: '离职', emp_edit: '编辑员工', emp_made_by: '开单人（员工）', emp_unassigned: '— 无 —' },
+  es: { emp_title: 'Empleados', emp_sub: 'Personal que crea facturas y presupuestos', emp_new: 'Nuevo empleado', emp_none: 'Aún no hay empleados', emp_none_h: 'Agregue personal para marcar quién hizo cada factura.', emp_role: 'Cargo', emp_role_ph: 'p. ej. Ventas, Cajero', emp_active: 'Activo', emp_inactive: 'Inactivo', emp_edit: 'Editar empleado', emp_made_by: 'Hecho por (empleado)', emp_unassigned: '— Ninguno —' },
+  vi: { emp_title: 'Nhân viên', emp_sub: 'Nhân viên tạo hóa đơn & báo giá', emp_new: 'Nhân viên mới', emp_none: 'Chưa có nhân viên', emp_none_h: 'Thêm nhân viên để đánh dấu ai đã tạo hóa đơn.', emp_role: 'Vai trò', emp_role_ph: 'vd: Bán hàng, Thu ngân', emp_active: 'Đang làm', emp_inactive: 'Nghỉ', emp_edit: 'Sửa nhân viên', emp_made_by: 'Người lập (nhân viên)', emp_unassigned: '— Không —' },
+  ko: { emp_title: '직원', emp_sub: '청구서·견적서를 작성하는 직원', emp_new: '직원 추가', emp_none: '아직 직원이 없습니다', emp_none_h: '직원을 추가하면 각 청구서를 누가 만들었는지 표시할 수 있습니다.', emp_role: '직책', emp_role_ph: '예: 영업, 계산원', emp_active: '재직', emp_inactive: '비활성', emp_edit: '직원 편집', emp_made_by: '작성자 (직원)', emp_unassigned: '— 없음 —' },
+}
+for (const l of Object.keys(EXTRA24)) Object.assign(T[l], EXTRA24[l])
+
+const EXTRA25 = {
+  en: { c_photos: 'Photos', c_optional: 'optional', c_add_photo: 'Add' },
+  zh: { c_photos: '照片', c_optional: '可选', c_add_photo: '添加' },
+  es: { c_photos: 'Fotos', c_optional: 'opcional', c_add_photo: 'Agregar' },
+  vi: { c_photos: 'Ảnh', c_optional: 'tùy chọn', c_add_photo: 'Thêm' },
+  ko: { c_photos: '사진', c_optional: '선택', c_add_photo: '추가' },
+}
+for (const l of Object.keys(EXTRA25)) Object.assign(T[l], EXTRA25[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

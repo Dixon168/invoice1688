@@ -19,6 +19,7 @@ export default function EstimateDetail() {
   const { company, refreshCompany } = useAuth()
   const cur = company?.default_currency || 'USD'
   const [est, setEst] = useState(null)
+  const [employeeName, setEmployeeName] = useState('')
   const [items, setItems] = useState([])
   const [customer, setCustomer] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -32,6 +33,7 @@ export default function EstimateDetail() {
       supabase.from('customers').select('*').eq('id', e.customer_id).maybeSingle(),
     ])
     setItems(its || []); setCustomer(cu || null)
+    if (e.employee_id) { const { data: emp } = await supabase.from('employees').select('name').eq('id', e.employee_id).maybeSingle(); setEmployeeName(emp?.name || '') } else setEmployeeName('')
   }
   useEffect(() => { load() }, [id])
 
@@ -80,7 +82,7 @@ export default function EstimateDetail() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate('/estimates')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Estimates</button>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-outline" onClick={() => preview.open(() => documentPDF({ kind: 'estimate', doc: est, items, customer, company }, { preview: true }))}><FileDown size={16} /> {t('pdf')}</button>
+          <button className="btn-outline" onClick={() => preview.open(() => documentPDF({ kind: 'estimate', doc: est, items, customer, company, employeeName }, { preview: true }))}><FileDown size={16} /> {t('pdf')}</button>
           {est.status !== 'converted' && <Link className="btn-primary" to={`/estimates/${id}/edit`}><Pencil size={16} /> {t('edit')} {t('th_estimate')}</Link>}
           {est.status !== 'converted' && <button className="btn-primary" onClick={convertToInvoice} disabled={busy}><ArrowRightLeft size={16} /> {t('convert_invoice')}</button>}
           <button className="btn-danger" onClick={remove}><Trash2 size={16} /></button>
@@ -91,7 +93,7 @@ export default function EstimateDetail() {
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-black/[.07] bg-sand/50 p-6">
           <div>
             <div className="font-display text-3xl text-ink">{est.estimate_number}</div>
-            <div className="mt-1 text-sm text-ink/55">Issued {fmtDate(est.issue_date)} · Expires {fmtDate(est.expiry_date)}</div>
+            <div className="mt-1 text-sm text-ink/55">Issued {fmtDate(est.issue_date)} · Expires {fmtDate(est.expiry_date)}{employeeName ? ` · ${t('emp_made_by')}: ${employeeName}` : ''}</div>
           </div>
           <div className="text-right">
             <span className={`badge ${s.cls} text-sm`}>{s.label}</span>
