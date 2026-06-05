@@ -26,7 +26,7 @@ function AuthShell({ children }) {
       {/* marketing panel */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-moss-800 p-12 text-white lg:flex">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5"><Logo size={34} circle="#ffffff" mark="#2f5f49" /><div className="font-display text-3xl font-700">Bill<span className="text-clay">&</span>Pays</div></div>
+          <div className="flex items-center gap-2.5"><Logo size={34} /><div className="font-display text-3xl font-700">Bill<span className="text-clay">&</span>Pays</div></div>
           <div className="flex items-center gap-2">
             <Link to="/features" className="hidden rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10 sm:block">{t('nav_features')}</Link>
             <Link to="/why-us" className="hidden rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10 sm:block">{t('nav_whyus')}</Link>
