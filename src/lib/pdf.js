@@ -66,8 +66,8 @@ function header(pdf, company, title, accentNumber, font) {
   return Math.max(y, 32)
 }
 
-// kind: 'invoice' | 'estimate'
-export async function documentPDF({ kind, doc: d, items, customer, company }) {
+// kind: 'invoice' | 'estimate'  | opts: { preview: true } returns a blob URL instead of saving
+export async function documentPDF({ kind, doc: d, items, customer, company }, opts = {}) {
   const pdf = new jsPDF()
   const cur = d.currency || company?.default_currency || 'USD'
   const numberLabel = kind === 'estimate' ? d.estimate_number : d.invoice_number
@@ -146,10 +146,11 @@ export async function documentPDF({ kind, doc: d, items, customer, company }) {
     pdf.text(pdf.splitTextToSize(company.payment_instructions, 120), 14, ty + 5)
   }
 
+  if (opts.preview) return { url: pdf.output('bloburl'), filename: `${kind}-${numberLabel}.pdf` }
   pdf.save(`${kind}-${numberLabel}.pdf`)
 }
 
-export async function packingSlipPDF({ doc: d, items, customer, company }) {
+export async function packingSlipPDF({ doc: d, items, customer, company }, opts = {}) {
   const pdf = new jsPDF()
   const numberLabel = d.invoice_number || d.estimate_number
 
@@ -193,5 +194,6 @@ export async function packingSlipPDF({ doc: d, items, customer, company }) {
   pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
   pdf.text('Received in good condition:', 14, ty)
   pdf.line(60, ty, 130, ty)
+  if (opts.preview) return { url: pdf.output('bloburl'), filename: `packing-slip-${numberLabel}.pdf` }
   pdf.save(`packing-slip-${numberLabel}.pdf`)
 }

@@ -7,6 +7,7 @@ import { money, fmtDate, todayISO, STATUS } from '../lib/format'
 import { recalcInvoice, recalcCustomer, applyStoreCredit } from '../lib/calc'
 import { reverseInvoiceInventory } from '../lib/inventory'
 import { documentPDF, packingSlipPDF } from '../lib/pdf'
+import { usePdfPreview, PdfPreview } from '../components/PdfPreview'
 import { Spinner, Modal, Field } from '../components/ui'
 import { useT } from '../i18n'
 
@@ -14,6 +15,7 @@ export default function InvoiceDetail() {
   const { id } = useParams()
   const { t } = useT()
   const navigate = useNavigate()
+  const preview = usePdfPreview()
   const { company } = useAuth()
   const cur = company?.default_currency || 'USD'
 
@@ -86,8 +88,8 @@ export default function InvoiceDetail() {
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Invoices</button>
         <div className="flex flex-wrap gap-2">
           <Link className="btn-primary" to={`/invoices/${id}/edit`}><Pencil size={16} /> {t('edit')} {t('th_invoice')}</Link>
-          <button className="btn-outline" onClick={() => documentPDF({ kind: 'invoice', doc: inv, items, customer, company })}><FileDown size={16} /> {t('pdf')}</button>
-          <button className="btn-outline" onClick={() => packingSlipPDF({ doc: inv, items, customer, company })}><Package size={16} /> {t('packing_slip')}</button>
+          <button className="btn-outline" onClick={() => preview.open(() => documentPDF({ kind: 'invoice', doc: inv, items, customer, company }, { preview: true }))}><FileDown size={16} /> {t('pdf')}</button>
+          <button className="btn-outline" onClick={() => preview.open(() => packingSlipPDF({ doc: inv, items, customer, company }, { preview: true }))}><Package size={16} /> {t('packing_slip')}</button>
           <button className="btn-danger" onClick={removeInvoice}><Trash2 size={16} /> {t('delete')}</button>
         </div>
       </div>
@@ -210,6 +212,7 @@ export default function InvoiceDetail() {
           <button className="btn-primary" onClick={recordPayment} disabled={busy}>{busy ? 'Saving…' : 'Record payment'}</button>
         </div>
       </Modal>
+      <PdfPreview preview={preview} />
     </div>
   )
 }

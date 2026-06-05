@@ -944,6 +944,15 @@ const EXTRA21 = {
 }
 for (const l of Object.keys(EXTRA21)) Object.assign(T[l], EXTRA21[l])
 
+const EXTRA22 = {
+  en: { pdf_preview: 'Preview', pdf_generating: 'Generating PDF…', print: 'Print', download: 'Download' },
+  zh: { pdf_preview: '预览', pdf_generating: '正在生成 PDF…', print: '打印', download: '下载' },
+  es: { pdf_preview: 'Vista previa', pdf_generating: 'Generando PDF…', print: 'Imprimir', download: 'Descargar' },
+  vi: { pdf_preview: 'Xem trước', pdf_generating: 'Đang tạo PDF…', print: 'In', download: 'Tải về' },
+  ko: { pdf_preview: '미리보기', pdf_generating: 'PDF 생성 중…', print: '인쇄', download: '다운로드' },
+}
+for (const l of Object.keys(EXTRA22)) Object.assign(T[l], EXTRA22[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

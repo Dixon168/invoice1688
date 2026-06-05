@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { money, fmtDate } from '../lib/format'
 import { recalcCustomer } from '../lib/calc'
 import { documentPDF } from '../lib/pdf'
+import { usePdfPreview, PdfPreview } from '../components/PdfPreview'
 import { Spinner } from '../components/ui'
 import { EST_STATUS } from './Estimates'
 import { useT } from '../i18n'
@@ -14,6 +15,7 @@ export default function EstimateDetail() {
   const { id } = useParams()
   const { t } = useT()
   const navigate = useNavigate()
+  const preview = usePdfPreview()
   const { company, refreshCompany } = useAuth()
   const cur = company?.default_currency || 'USD'
   const [est, setEst] = useState(null)
@@ -78,7 +80,7 @@ export default function EstimateDetail() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate('/estimates')} className="flex items-center gap-1 text-sm text-ink/60 hover:text-ink"><ArrowLeft size={16} /> Estimates</button>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-outline" onClick={() => documentPDF({ kind: 'estimate', doc: est, items, customer, company })}><FileDown size={16} /> {t('pdf')}</button>
+          <button className="btn-outline" onClick={() => preview.open(() => documentPDF({ kind: 'estimate', doc: est, items, customer, company }, { preview: true }))}><FileDown size={16} /> {t('pdf')}</button>
           {est.status !== 'converted' && <Link className="btn-primary" to={`/estimates/${id}/edit`}><Pencil size={16} /> {t('edit')} {t('th_estimate')}</Link>}
           {est.status !== 'converted' && <button className="btn-primary" onClick={convertToInvoice} disabled={busy}><ArrowRightLeft size={16} /> {t('convert_invoice')}</button>}
           <button className="btn-danger" onClick={remove}><Trash2 size={16} /></button>
@@ -150,6 +152,7 @@ export default function EstimateDetail() {
           <button className="btn-ghost" onClick={() => setStatus('declined')}><X size={16} /> {t('st_declined')}</button>
         </div>
       )}
+      <PdfPreview preview={preview} />
     </div>
   )
 }
