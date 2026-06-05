@@ -135,7 +135,6 @@ export default function InvoiceDetail() {
                 <th className="py-2 font-semibold">{t('f_description')}</th>
                 <th className="py-2 text-right font-semibold">{t('th_qty')}</th>
                 <th className="py-2 text-right font-semibold">{t('th_price')}</th>
-                <th className="py-2 text-right font-semibold">{t('th_tax')}</th>
                 <th className="py-2 text-right font-semibold">{t('th_amount')}</th>
               </tr>
             </thead>
@@ -145,7 +144,6 @@ export default function InvoiceDetail() {
                   <td className="py-2.5 text-ink">{it.description}{it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}</td>
                   <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}</td>
                   <td className="py-2.5 text-right tabular-nums">{money(it.unit_price, cur)}</td>
-                  <td className="py-2.5 text-right tabular-nums text-ink/60">{Number(it.tax_rate)}%</td>
                   <td className="py-2.5 text-right font-medium tabular-nums">{money(it.line_total, cur)}</td>
                 </tr>
               ))}

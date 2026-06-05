@@ -138,19 +138,18 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   // items
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
-    head: [['Description', 'Qty', 'Unit price', 'Tax', 'Amount']],
+    head: [['Product / Description', 'Qty', 'Unit price', 'Amount']],
     body: (items || []).map(it => [
       it.detail ? `${it.description}\n${it.detail}` : it.description,
       String(Number(it.quantity)),
       money(it.unit_price, cur),
-      `${Number(it.tax_rate)}%`,
       money(it.line_total, cur),
     ]),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     bodyStyles: { fontSize: 9, textColor: INK, font },
-    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
     margin: { left: 14, right: 14 },
   })
 
