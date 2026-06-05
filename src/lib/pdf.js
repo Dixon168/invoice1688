@@ -139,12 +139,12 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
     head: [['Product / Description', 'Qty', 'Unit price', 'Amount']],
-    body: (items || []).map(it => [
-      it.detail ? `${it.description}\n${it.detail}` : it.description,
-      String(Number(it.quantity)),
-      money(it.unit_price, cur),
-      money(it.line_total, cur),
-    ]),
+    body: (items || []).map(it => {
+      const name = it.product_name || it.description || ''
+      const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
+      const sub = [extra, it.detail].filter(Boolean).join('\n')
+      return [sub ? `${name}\n${sub}` : name, String(Number(it.quantity)), money(it.unit_price, cur), money(it.line_total, cur)]
+    }),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
@@ -231,7 +231,12 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
     head: [['Description', 'Qty packed']],
-    body: (items || []).map(it => [it.detail ? `${it.description}\n${it.detail}` : it.description, String(Number(it.quantity))]),
+    body: (items || []).map(it => {
+      const name = it.product_name || it.description || ''
+      const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
+      const sub = [extra, it.detail].filter(Boolean).join('\n')
+      return [sub ? `${name}\n${sub}` : name, String(Number(it.quantity))]
+    }),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     headStyles: { fillColor: INK, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },

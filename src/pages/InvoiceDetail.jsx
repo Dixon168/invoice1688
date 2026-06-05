@@ -37,7 +37,11 @@ export default function InvoiceDetail() {
       supabase.from('customers').select('*').eq('id', i.customer_id).maybeSingle(),
       supabase.from('payments').select('*').eq('invoice_id', id).order('payment_date', { ascending: false }),
     ])
-    setItems(its || []); setCustomer(cu || null); setPayments(ps || [])
+    const pids = [...new Set((its || []).map(x => x.product_id).filter(Boolean))]
+    let pmap = {}
+    if (pids.length) { const { data: prods } = await supabase.from('products').select('id,name').in('id', pids); for (const p of (prods || [])) pmap[p.id] = p.name }
+    setItems((its || []).map(x => ({ ...x, product_name: pmap[x.product_id] || '' })))
+    setCustomer(cu || null); setPayments(ps || [])
     if (i.employee_id) { const { data: emp } = await supabase.from('employees').select('name').eq('id', i.employee_id).maybeSingle(); setEmployeeName(emp?.name || '') } else setEmployeeName('')
   }
   useEffect(() => { load() }, [id])
@@ -141,7 +145,11 @@ export default function InvoiceDetail() {
             <tbody className="divide-y divide-black/[.05]">
               {items.map(it => (
                 <tr key={it.id}>
-                  <td className="py-2.5 text-ink">{it.description}{it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}</td>
+                  <td className="py-2.5 text-ink">
+                    <div className="font-medium">{it.product_name || it.description}</div>
+                    {it.product_name && it.description && it.description !== it.product_name && <div className="text-xs text-ink/55">{it.description}</div>}
+                    {it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}
+                  </td>
                   <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}</td>
                   <td className="py-2.5 text-right tabular-nums">{money(it.unit_price, cur)}</td>
                   <td className="py-2.5 text-right font-medium tabular-nums">{money(it.line_total, cur)}</td>
