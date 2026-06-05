@@ -19,20 +19,28 @@ function coerce(v, type) {
   return String(v).trim()
 }
 
-export function downloadTemplate(filename, fields, example) {
+export function downloadTemplate(filename, fields, example, sheets) {
   const headers = fields.map(f => f.label || f.key)
   const exampleRow = example || fields.map(f => f.note ? `(${f.note})` : '')
   const ws = XLSX.utils.aoa_to_sheet([headers, exampleRow])
   ws['!cols'] = headers.map(h => ({ wch: Math.max(14, String(h).length + 2) }))
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Template')
+  // optional reference sheets: [{ name, headers:[], rows:[[]] }]
+  for (const s of (sheets || [])) {
+    if (!s || !s.rows || s.rows.length === 0) continue
+    const data = s.headers ? [s.headers, ...s.rows] : s.rows
+    const ref = XLSX.utils.aoa_to_sheet(data)
+    ref['!cols'] = (s.headers || data[0] || []).map(h => ({ wch: Math.max(16, String(h || '').length + 2) }))
+    XLSX.utils.book_append_sheet(wb, ref, (s.name || 'Reference').slice(0, 28))
+  }
   XLSX.writeFile(wb, filename)
 }
 
-export function TemplateButton({ filename, fields, example, label }) {
+export function TemplateButton({ filename, fields, example, label, sheets }) {
   const { t } = useT()
   return (
-    <button className="btn-outline" onClick={() => downloadTemplate(filename, fields, example)}>
+    <button className="btn-outline" onClick={() => downloadTemplate(filename, fields, example, sheets)}>
       <Download size={16} /> {label || t('ie_template')}
     </button>
   )

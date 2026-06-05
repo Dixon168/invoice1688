@@ -57,6 +57,18 @@ export default function Products() {
 
   const refreshCats = async () => { const { data } = await supabase.from('categories').select('*').order('name'); setCats(data || []) }
 
+  // categories reference sheet for the export template (so you can see existing categories while filling)
+  const catSheet = (() => {
+    const tops = cats.filter(c => !c.parent_id)
+    const rows = []
+    tops.forEach(tc => {
+      const subs = cats.filter(c => c.parent_id === tc.id)
+      if (subs.length === 0) rows.push([tc.name, ''])
+      else subs.forEach(s => rows.push([tc.name, s.name]))
+    })
+    return rows.length ? [{ name: 'Categories', headers: ['Category', 'Sub-category'], rows }] : []
+  })()
+
   // --- batch import helpers ---
   const defaultTaxId = taxes.find(t => t.is_default)?.id || null
   const importTransform = (rec) => {
@@ -230,7 +242,7 @@ export default function Products() {
   return (
     <>
       <PageHeader title={t('products_title')} subtitle={t('products_sub')}>
-        <TemplateButton filename="products_template.xlsx" fields={productFields} example={productExample} />
+        <TemplateButton filename="products_template.xlsx" fields={productFields} example={productExample} sheets={catSheet} />
         <ImportButton table="products" fields={productFields} companyId={company.id} transform={importTransform} beforeInsert={importCategories} onDone={load} />
         <button className="btn-primary" onClick={openNew}><Plus size={18} /> {t('new_item')}</button>
       </PageHeader>
