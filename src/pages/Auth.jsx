@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Wallet, Package, Globe } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../i18n'
+import Logo from '../components/Logo'
 import { Field } from '../components/ui'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 
@@ -25,7 +26,7 @@ function AuthShell({ children }) {
       {/* marketing panel */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-moss-800 p-12 text-white lg:flex">
         <div className="flex items-center justify-between">
-          <div className="font-display text-3xl font-700">Bill<span className="text-clay">&</span>Pays</div>
+          <div className="flex items-center gap-2.5"><Logo size={34} circle="#ffffff" mark="#2f5f49" /><div className="font-display text-3xl font-700">Bill<span className="text-clay">&</span>Pays</div></div>
           <div className="flex items-center gap-2">
             <Link to="/features" className="hidden rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10 sm:block">{t('nav_features')}</Link>
             <Link to="/why-us" className="hidden rounded-lg px-3 py-1.5 text-sm text-white/80 hover:bg-white/10 sm:block">{t('nav_whyus')}</Link>
@@ -75,7 +76,7 @@ export function Login() {
 
   return (
     <AuthShell>
-      <div className="mb-8 font-display text-2xl text-ink lg:hidden">Bill<span className="text-clay">&</span>Pays</div>
+      <div className="mb-8 flex items-center gap-2 lg:hidden"><Logo size={28} /><div className="font-display text-2xl text-ink">Bill<span className="text-clay">&</span>Pays</div></div>
       <h2 className="font-display text-3xl text-ink">{t('signin_welcome')}</h2>
       <p className="mt-1 text-sm text-ink/55">{t('signin_sub')}</p>
       <div className="mt-7 space-y-4">

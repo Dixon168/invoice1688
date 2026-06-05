@@ -4,6 +4,7 @@ import { LayoutDashboard, Users, Package, PackagePlus, Percent, FileText, Credit
 import { useAuth } from '../context/AuthContext'
 import { fmtDate } from '../lib/format'
 import { useT } from '../i18n'
+import Logo from './Logo'
 import LanguageSwitcher from './LanguageSwitcher'
 
 const nav = [
@@ -32,8 +33,11 @@ export default function Layout({ children }) {
   const SidebarInner = () => (
     <>
       <div className="px-5 pb-6 pt-6">
-        <div className="font-display text-2xl font-700 tracking-tight text-white">invoice<span className="text-clay">168</span></div>
-        <div className="mt-1 truncate text-sm text-white/55">{company?.name || '—'}</div>
+        <div className="flex items-center gap-2.5">
+          <Logo size={36} circle="#ffffff" mark="#2f5f49" />
+          <div className="font-display text-2xl font-700 tracking-tight text-white">invoice<span className="text-clay">168</span></div>
+        </div>
+        <div className="mt-2 truncate text-sm text-white/55">{company?.name || '—'}</div>
         {company?.paid_until && <div className="mt-0.5 text-xs text-white/35">{t('th_expires')}: {fmtDate(company.paid_until)}</div>}
       </div>
       <nav className="flex-1 space-y-1 px-3">
@@ -65,7 +69,10 @@ export default function Layout({ children }) {
     <div className="min-h-screen lg:flex">
       {/* mobile top bar */}
       <div className="flex items-center justify-between bg-moss-800 px-4 py-3 lg:hidden">
-        <div className="font-display text-xl font-700 text-white">invoice<span className="text-clay">168</span></div>
+        <div className="flex items-center gap-2">
+          <Logo size={28} circle="#ffffff" mark="#2f5f49" />
+          <div className="font-display text-xl font-700 text-white">invoice<span className="text-clay">168</span></div>
+        </div>
         <div className="flex items-center gap-1">
           <LanguageSwitcher dark />
           <button onClick={() => setOpen(true)} className="text-white"><Menu /></button>

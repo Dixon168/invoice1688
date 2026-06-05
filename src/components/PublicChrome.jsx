@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useT } from '../i18n'
+import Logo from './Logo'
 import LanguageSwitcher from './LanguageSwitcher'
 
-export function Brand({ className = '' }) {
-  return <span className={`font-display font-700 ${className}`}>Bill<span className="text-clay">&</span>Pays</span>
+export function Brand({ className = '', logoSize = 30 }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Logo size={logoSize} />
+      <span className={`font-display font-700 ${className}`}>Bill<span className="text-clay">&</span>Pays</span>
+    </span>
+  )
 }
 
 export function PublicHeader() {
