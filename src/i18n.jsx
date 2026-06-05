@@ -912,6 +912,15 @@ const EXTRA17 = {
 }
 for (const l of Object.keys(EXTRA17)) Object.assign(T[l], EXTRA17[l])
 
+const EXTRA18 = {
+  en: { all_categories: 'All categories', all_sub: 'All sub' },
+  zh: { all_categories: '全部大类', all_sub: '全部子类' },
+  es: { all_categories: 'Todas las categorías', all_sub: 'Todas las sub' },
+  vi: { all_categories: 'Tất cả danh mục', all_sub: 'Tất cả danh mục con' },
+  ko: { all_categories: '전체 분류', all_sub: '전체 하위' },
+}
+for (const l of Object.keys(EXTRA18)) Object.assign(T[l], EXTRA18[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

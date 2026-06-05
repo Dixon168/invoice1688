@@ -75,6 +75,8 @@ export function ItemCombo({ value, onText, products = [], onPick, onCreate, curr
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [pos, setPos] = useState(null)
+  const [catF, setCatF] = useState('')
+  const [subF, setSubF] = useState('')
   const ref = useRef()
   const inputRef = useRef()
   useOutside(ref, () => setOpen(false))
@@ -95,18 +97,34 @@ export function ItemCombo({ value, onText, products = [], onPick, onCreate, curr
   }, [open])
 
   const q = (value || '').toLowerCase().trim()
+  const cats = [...new Set(products.map(p => p.category).filter(Boolean))].sort()
+  const subs = catF ? [...new Set(products.filter(p => p.category === catF).map(p => p.subcategory).filter(Boolean))].sort() : []
   const matches = products
     .filter(p => `${p.name} ${p.sku || ''}`.toLowerCase().includes(q))
-    .slice(0, 8)
+    .filter(p => !catF || p.category === catF)
+    .filter(p => !subF || p.subcategory === subF)
+    .slice(0, 12)
   const exact = products.some(p => (p.name || '').toLowerCase() === q)
 
   return (
     <div className="relative" ref={ref}>
       <input ref={inputRef} className="input py-1.5" value={value || ''} placeholder={t('ph_type_search_item')} autoComplete="off"
         onChange={e => { onText(e.target.value); setOpen(true) }} onFocus={() => setOpen(true)} />
-      {open && pos && (matches.length > 0 || (q && !exact)) && (
-        <div className="fixed z-50 max-h-60 overflow-auto rounded-lg border border-black/10 bg-white py-1 text-sm shadow-xl"
+      {open && pos && (matches.length > 0 || (q && !exact) || catF) && (
+        <div className="fixed z-50 max-h-72 overflow-auto rounded-lg border border-black/10 bg-white py-1 text-sm shadow-xl"
           style={{ top: pos.top, left: pos.left, width: pos.width }}>
+          {cats.length > 0 && (
+            <div className="sticky top-0 z-10 flex gap-1 border-b border-black/5 bg-white px-1.5 py-1.5">
+              <select className="input py-1 text-xs" value={catF} onChange={e => { setCatF(e.target.value); setSubF('') }}>
+                <option value="">{t('all_categories') || 'All categories'}</option>
+                {cats.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select className="input py-1 text-xs" value={subF} onChange={e => setSubF(e.target.value)} disabled={!catF || subs.length === 0}>
+                <option value="">{t('all_sub') || 'All sub'}</option>
+                {subs.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          )}
           {matches.map(p => (
             <button type="button" key={p.id} className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-sand"
               onMouseDown={() => { onPick(p); setOpen(false) }}>
