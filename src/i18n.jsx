@@ -953,6 +953,15 @@ const EXTRA22 = {
 }
 for (const l of Object.keys(EXTRA22)) Object.assign(T[l], EXTRA22[l])
 
+const EXTRA23 = {
+  en: { f_delivery_same: 'Delivery address same as billing', f_delivery_address: 'Delivery address' },
+  zh: { f_delivery_same: '送货地址与账单地址相同', f_delivery_address: '送货地址' },
+  es: { f_delivery_same: 'Dirección de entrega igual a la de facturación', f_delivery_address: 'Dirección de entrega' },
+  vi: { f_delivery_same: 'Địa chỉ giao hàng giống địa chỉ thanh toán', f_delivery_address: 'Địa chỉ giao hàng' },
+  ko: { f_delivery_same: '배송 주소가 청구 주소와 동일', f_delivery_address: '배송 주소' },
+}
+for (const l of Object.keys(EXTRA23)) Object.assign(T[l], EXTRA23[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

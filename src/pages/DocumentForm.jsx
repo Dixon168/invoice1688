@@ -164,6 +164,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
       currency: cur, is_exempt: isExempt, notes, terms,
       billing_address: c?.billing_address, billing_city: c?.billing_city, billing_state: c?.billing_state,
       billing_country: c?.billing_country, billing_postal_code: c?.billing_postal_code,
+      delivery_address: c?.delivery_address, delivery_city: c?.delivery_city, delivery_state: c?.delivery_state,
+      delivery_country: c?.delivery_country, delivery_postal_code: c?.delivery_postal_code,
     }
     if (kind === 'invoice') head.amount_due = totals.total
 

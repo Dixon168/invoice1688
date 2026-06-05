@@ -100,6 +100,21 @@ export async function documentPDF({ kind, doc: d, items, customer, company }, op
   let yy = y + 11
   for (const line of [customer?.email, ...addressLines(d)].filter(Boolean)) { pdf.text(String(line), 14, yy); yy += 4.5 }
 
+  // ship to (only if a delivery address exists and differs from billing)
+  const shipLines = addressLines(d, 'delivery_')
+  const billLines = addressLines(d, 'billing_')
+  if (shipLines.length > 0 && shipLines.join('|') !== billLines.join('|')) {
+    const sx = 110
+    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    pdf.text('SHIP TO', sx, y)
+    pdf.setFont(font, 'bold'); pdf.setFontSize(11); pdf.setTextColor(...INK)
+    pdf.text(customer?.name || '', sx, y + 6)
+    pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    let sy = y + 11
+    for (const line of shipLines) { pdf.text(String(line), sx, sy); sy += 4.5 }
+    yy = Math.max(yy, sy)
+  }
+
   // items
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),

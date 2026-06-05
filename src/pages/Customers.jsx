@@ -11,6 +11,7 @@ import { useT } from '../i18n'
 const blank = {
   name: '', email: '', phone: '', payment_terms: 30, notes: '',
   billing_address: '', billing_city: '', billing_state: '', billing_postal_code: '', billing_country: '',
+  delivery_address: '', delivery_city: '', delivery_state: '', delivery_postal_code: '', delivery_country: '',
 }
 
 const customerFields = [
@@ -42,6 +43,7 @@ export default function Customers() {
   const [filter, setFilter] = useState('all')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blank)
+  const [sameDelivery, setSameDelivery] = useState(true)
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
   const cur = company?.default_currency || 'USD'
@@ -58,13 +60,23 @@ export default function Customers() {
   }
   useEffect(() => { load() }, [])
 
-  const openNew = () => { setEditing(null); setForm(blank); setOpen(true) }
-  const openEdit = (c) => { setEditing(c); setForm({ ...blank, ...c }); setOpen(true) }
+  const openNew = () => { setEditing(null); setForm(blank); setSameDelivery(true); setOpen(true) }
+  const openEdit = (c) => {
+    setEditing(c); setForm({ ...blank, ...c })
+    const hasDelivery = c.delivery_address || c.delivery_city || c.delivery_state || c.delivery_postal_code || c.delivery_country
+    const same = !hasDelivery || (c.delivery_address === c.billing_address && c.delivery_city === c.billing_city && c.delivery_state === c.billing_state && c.delivery_postal_code === c.billing_postal_code && c.delivery_country === c.billing_country)
+    setSameDelivery(same); setOpen(true)
+  }
 
   const save = async () => {
     if (!form.name.trim()) return
     setBusy(true)
     const payload = { ...form, payment_terms: Number(form.payment_terms) || 0, company_id: company.id }
+    if (sameDelivery) {
+      payload.delivery_address = form.billing_address; payload.delivery_city = form.billing_city
+      payload.delivery_state = form.billing_state; payload.delivery_postal_code = form.billing_postal_code
+      payload.delivery_country = form.billing_country
+    }
     if (editing) await supabase.from('customers').update(payload).eq('id', editing.id)
     else await supabase.from('customers').insert(payload)
     setBusy(false); setOpen(false); load()
@@ -189,6 +201,18 @@ export default function Customers() {
           <Field label={t('f_state')}><input className="input" value={form.billing_state || ''} onChange={e => setForm({ ...form, billing_state: e.target.value })} /></Field>
           <Field label={t('f_postal_code')}><input className="input" value={form.billing_postal_code || ''} onChange={e => setForm({ ...form, billing_postal_code: e.target.value })} /></Field>
           <Field label={t('f_country')}><input className="input" value={form.billing_country || ''} onChange={e => setForm({ ...form, billing_country: e.target.value })} /></Field>
+          <div className="sm:col-span-2 border-t border-black/10 pt-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-ink/80">
+              <input type="checkbox" checked={sameDelivery} onChange={e => setSameDelivery(e.target.checked)} /> {t('f_delivery_same') || 'Delivery address same as billing'}
+            </label>
+          </div>
+          {!sameDelivery && <>
+            <div className="sm:col-span-2"><Field label={t('f_delivery_address') || 'Delivery address'}><input className="input" value={form.delivery_address || ''} onChange={e => setForm({ ...form, delivery_address: e.target.value })} /></Field></div>
+            <Field label={t('f_city')}><input className="input" value={form.delivery_city || ''} onChange={e => setForm({ ...form, delivery_city: e.target.value })} /></Field>
+            <Field label={t('f_state')}><input className="input" value={form.delivery_state || ''} onChange={e => setForm({ ...form, delivery_state: e.target.value })} /></Field>
+            <Field label={t('f_postal_code')}><input className="input" value={form.delivery_postal_code || ''} onChange={e => setForm({ ...form, delivery_postal_code: e.target.value })} /></Field>
+            <Field label={t('f_country')}><input className="input" value={form.delivery_country || ''} onChange={e => setForm({ ...form, delivery_country: e.target.value })} /></Field>
+          </>}
           <div className="sm:col-span-2"><Field label={t('f_notes')}><textarea className="input min-h-[70px]" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></Field></div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
