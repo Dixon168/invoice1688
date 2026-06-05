@@ -98,6 +98,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
         const cust = cidParam ? (c || []).find(x => x.id === cidParam) : null
         if (cust) {
           setCustomerId(cust.id); setCustomerQuery(cust.name)
+          setDelivery({ address: cust.delivery_address || cust.billing_address || '', city: cust.delivery_city || cust.billing_city || '', state: cust.delivery_state || cust.billing_state || '', postal_code: cust.delivery_postal_code || cust.billing_postal_code || '', country: cust.delivery_country || cust.billing_country || '' })
           const days = Number(cust.payment_terms) || 0
           const d = new Date(); d.setDate(d.getDate() + days)
           setEndDate(d.toISOString().slice(0, 10))
@@ -166,6 +167,14 @@ export default function DocumentForm({ kind = 'invoice' }) {
       }
     }
     const c = customers.find(x => x.id === customerId)
+    const hasDelivery = delivery.address || delivery.city || delivery.state || delivery.postal_code || delivery.country
+    const dlv = hasDelivery ? delivery : {
+      address: c?.delivery_address || c?.billing_address || '',
+      city: c?.delivery_city || c?.billing_city || '',
+      state: c?.delivery_state || c?.billing_state || '',
+      postal_code: c?.delivery_postal_code || c?.billing_postal_code || '',
+      country: c?.delivery_country || c?.billing_country || '',
+    }
     const head = {
       company_id: company.id, [cfg.numField]: number.trim(), customer_id: customerId,
       issue_date: issueDate, [cfg.dateField]: endDate || null, status: newStatus || status,
@@ -173,8 +182,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
       currency: cur, is_exempt: isExempt, notes, terms,
       billing_address: c?.billing_address, billing_city: c?.billing_city, billing_state: c?.billing_state,
       billing_country: c?.billing_country, billing_postal_code: c?.billing_postal_code,
-      delivery_address: delivery.address || null, delivery_city: delivery.city || null, delivery_state: delivery.state || null,
-      delivery_country: delivery.country || null, delivery_postal_code: delivery.postal_code || null,
+      delivery_address: dlv.address || null, delivery_city: dlv.city || null, delivery_state: dlv.state || null,
+      delivery_country: dlv.country || null, delivery_postal_code: dlv.postal_code || null,
     }
     if (kind === 'invoice') head.amount_due = totals.total
 
