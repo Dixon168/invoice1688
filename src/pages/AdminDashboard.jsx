@@ -145,7 +145,7 @@ export default function AdminDashboard() {
       <header className="flex items-center justify-between bg-ink px-6 py-4 text-white">
         <div className="flex items-center gap-2">
           <ShieldCheck className="text-clay" />
-          <span className="font-display text-xl">invoice168 · Admin</span>
+          <span className="font-display text-xl">Bill&Pays · Admin</span>
         </div>
         <div className="flex items-center gap-4">
           <span className="hidden text-sm text-white/50 sm:inline">{user?.email}</span>

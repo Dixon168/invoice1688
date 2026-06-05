@@ -18,7 +18,7 @@ export default function GetStarted() {
   const { t } = useT()
   const [params] = useSearchParams()
   const [plan, setPlan] = useState(params.get('plan') === 'annual' ? 'annual' : 'monthly')
-  const planLabel = plan === 'annual' ? 'Invoice168 $199.99/12 months' : 'Invoice168 $19.99/month'
+  const planLabel = plan === 'annual' ? 'Bill&Pays $199.99/12 months' : 'Bill&Pays $19.99/month'
   const [form, setForm] = useState(blank)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
