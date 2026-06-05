@@ -55,6 +55,14 @@ function companyLines(c) {
   ].filter(Boolean)
 }
 
+// outer frame for a professional printed look
+function drawPageBorder(pdf) {
+  const w = pdf.internal.pageSize.getWidth()
+  const h = pdf.internal.pageSize.getHeight()
+  pdf.setDrawColor(200, 202, 198); pdf.setLineWidth(0.4)
+  pdf.roundedRect(8, 8, w - 16, h - 16, 2, 2)
+}
+
 function header(pdf, company, title, accentNumber, font) {
   let textX = 14
   if (company?.logo_url) {
@@ -138,9 +146,9 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
       `${Number(it.tax_rate)}%`,
       money(it.line_total, cur),
     ]),
-    theme: 'striped',
-    styles: { font },
-    headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font },
+    theme: 'grid',
+    styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+    headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     bodyStyles: { fontSize: 9, textColor: INK, font },
     columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
     margin: { left: 14, right: 14 },
@@ -154,6 +162,7 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   let ty = Math.max(tableEnd + 12, pageH - 60, 230)
   if (ty + totalsHeight > pageH - 16) ty = tableEnd + 12 // very long invoice: fall back to right after the table
   const right = 196, labelX = 150
+  const tTop = ty
   const row = (label, val, bold) => {
     pdf.setFont(font, bold ? 'bold' : 'normal'); pdf.setFontSize(bold ? 11 : 9)
     pdf.setTextColor(...INK)
@@ -161,11 +170,16 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   }
   row('Subtotal', money(d.subtotal, cur))
   row('Tax', money(d.tax_total, cur))
+  // divider before the grand total
+  pdf.setDrawColor(200, 202, 198); pdf.setLineWidth(0.2); pdf.line(labelX - 4, ty - 4, right, ty - 4)
   row('Total', money(d.total, cur), true)
   if (kind === 'invoice') {
     row('Paid', money(d.amount_paid, cur))
     row('Amount due', money(d.amount_due, cur), true)
   }
+  // light box around the totals block
+  pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3)
+  pdf.roundedRect(labelX - 8, tTop - 6, right - (labelX - 8) + 2, (ty - tTop) + 6, 1.5, 1.5)
 
   // notes / terms / payment instructions — start just under the table (left side, independent of totals)
   let ny = tableEnd + 12
@@ -182,6 +196,7 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
     pdf.text(pdf.splitTextToSize(company.payment_instructions, 120), 14, ty + 5)
   }
 
+  drawPageBorder(pdf)
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `${kind}-${numberLabel}.pdf` }
   pdf.save(`${kind}-${numberLabel}.pdf`)
 }
@@ -218,9 +233,9 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
     startY: Math.max(yy + 4, y + 20),
     head: [['Description', 'Qty packed']],
     body: (items || []).map(it => [it.detail ? `${it.description}\n${it.detail}` : it.description, String(Number(it.quantity))]),
-    theme: 'striped',
-    styles: { font },
-    headStyles: { fillColor: INK, textColor: 255, fontSize: 9, font },
+    theme: 'grid',
+    styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+    headStyles: { fillColor: INK, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     bodyStyles: { fontSize: 9, textColor: INK, font },
     columnStyles: { 1: { halign: 'right', cellWidth: 40 } },
     margin: { left: 14, right: 14 },
@@ -230,6 +245,7 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
   pdf.text('Received in good condition:', 14, ty)
   pdf.line(60, ty, 130, ty)
+  drawPageBorder(pdf)
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `packing-slip-${numberLabel}.pdf` }
   pdf.save(`packing-slip-${numberLabel}.pdf`)
 }

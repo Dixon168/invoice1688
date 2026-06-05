@@ -154,7 +154,7 @@ export default function InvoiceDetail() {
         </div>
 
         <div className="flex justify-end p-6">
-          <div className="w-full max-w-xs space-y-2 text-sm">
+          <div className="w-full max-w-xs space-y-2 rounded-xl border border-black/10 bg-sand/30 p-4 text-sm">
             <div className="flex justify-between"><span className="text-ink/60">{t('m_subtotal')}</span><span className="tabular-nums">{money(inv.subtotal, cur)}</span></div>
             <div className="flex justify-between"><span className="text-ink/60">{t('m_tax')}</span><span className="tabular-nums">{money(inv.tax_total, cur)}</span></div>
             <div className="flex justify-between border-t border-black/10 pt-2 font-semibold text-ink"><span>{t('m_total')}</span><span className="tabular-nums">{money(inv.total, cur)}</span></div>
