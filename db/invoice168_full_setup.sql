@@ -746,3 +746,8 @@ do $$ begin
   drop policy if exists "support_read" on storage.objects;
   create policy "support_read" on storage.objects for select to public using (bucket_id = 'support');
 end $$;
+
+
+-- ===== company plan & fee (admin billing) =====
+alter table public.companies add column if not exists plan text not null default 'month';   -- 'month' | 'year' | 'free'
+alter table public.companies add column if not exists fee  numeric(10,2) not null default 19.99;

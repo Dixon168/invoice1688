@@ -107,7 +107,7 @@ export default function AdminDashboard() {
     name: c.name || '', email: c.email || '', phone: c.phone || '', address: c.address || '',
     city: c.city || '', state: c.state || '', postal_code: c.postal_code || '', country: c.country || '',
     contact_name: c.contact_name || '', contact_phone: c.contact_phone || '',
-    subscription_status: c.subscription_status || 'active', paid_until: c.paid_until || '', newPassword: '' }) }
+    subscription_status: c.subscription_status || 'active', paid_until: c.paid_until || '', plan: c.plan || 'month', fee: c.fee ?? 19.99, newPassword: '' }) }
   const saveManage = async () => {
     setErr(''); setBusy(true)
     await supabase.from('companies')
@@ -116,6 +116,7 @@ export default function AdminDashboard() {
         city: mForm.city, state: mForm.state, postal_code: mForm.postal_code, country: mForm.country,
         contact_name: mForm.contact_name, contact_phone: mForm.contact_phone,
         subscription_status: mForm.subscription_status, paid_until: mForm.paid_until || null,
+        plan: mForm.plan, fee: Number(mForm.fee) || 0,
       })
       .eq('id', manage.id)
     // optional password change for the company's login
@@ -198,16 +199,19 @@ export default function AdminDashboard() {
         ) : (
           <>
             {(() => {
-              const PLAN_PRICE = 19.99
               const active = companies.filter(c => subState(c).active)
+              const monthlyFee = (c) => { const f = Number(c.fee) || 0; if (c.plan === 'free' || f === 0) return 0; return c.plan === 'year' ? f / 12 : f }
+              const paying = active.filter(c => monthlyFee(c) > 0)
+              const mrr = active.reduce((s, c) => s + monthlyFee(c), 0)
+              const freeCount = companies.filter(c => c.plan === 'free' || Number(c.fee) === 0).length
               const expired = companies.filter(c => subState(c).state === 'expired')
               const suspended = companies.filter(c => subState(c).state === 'suspended')
               const expiringSoon = active.filter(c => { if (!c.paid_until) return false; const d = new Date(); d.setDate(d.getDate() + 7); return c.paid_until <= d.toISOString().slice(0, 10) })
               return (
                 <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Accounts</div><div className="mt-1 font-display text-3xl text-ink">{companies.length}</div><div className="mt-0.5 text-xs text-ink/45">{active.length} active · {expired.length} expired{suspended.length ? ` · ${suspended.length} suspended` : ''}</div></div>
-                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Paying now</div><div className="mt-1 font-display text-3xl text-moss-700">{active.length}</div><div className="mt-0.5 text-xs text-ink/45">subscription active</div></div>
-                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">My monthly income</div><div className="mt-1 font-display text-3xl text-ink tabular-nums">{money(active.length * PLAN_PRICE)}</div><div className="mt-0.5 text-xs text-ink/45">{active.length} × {money(PLAN_PRICE)}</div></div>
+                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Paying now</div><div className="mt-1 font-display text-3xl text-moss-700">{paying.length}</div><div className="mt-0.5 text-xs text-ink/45">{freeCount} free / testing</div></div>
+                  <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">My monthly income</div><div className="mt-1 font-display text-3xl text-ink tabular-nums">{money(mrr)}</div><div className="mt-0.5 text-xs text-ink/45">recurring (yearly ÷ 12)</div></div>
                   <div className="card p-5"><div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Needs attention</div><div className="mt-1 font-display text-3xl text-clay">{expired.length + suspended.length}</div><div className="mt-0.5 text-xs text-ink/45">{expiringSoon.length} expiring in 7 days</div></div>
                 </div>
               )
@@ -228,6 +232,7 @@ export default function AdminDashboard() {
                     <tr>
                       <th className="px-5 py-3 font-semibold">{t('th_company')}</th>
                       <th className="px-5 py-3 font-semibold">{t('th_subscription')}</th>
+                      <th className="px-5 py-3 font-semibold">Plan / Fee</th>
                       <th className="px-5 py-3 font-semibold">{t('th_expires')}</th>
                       <th className="px-5 py-3 text-center font-semibold">{t('th_users')}</th>
                       <th className="px-5 py-3 text-center font-semibold">{t('nav_customers')}</th>
@@ -253,6 +258,11 @@ export default function AdminDashboard() {
                               </span>
                             </button>
                           )})()}
+                        </td>
+                        <td className="px-5 py-3">
+                          {(c.plan === 'free' || Number(c.fee) === 0)
+                            ? <span className="badge bg-black/5 text-ink/60">Free</span>
+                            : <span className="tabular-nums text-ink/80">{money(Number(c.fee) || 0, c.default_currency)}<span className="text-ink/45">{c.plan === 'year' ? ' /yr' : ' /mo'}</span></span>}
                         </td>
                         <td className="px-5 py-3">
                           {c.paid_until
@@ -327,6 +337,22 @@ export default function AdminDashboard() {
             <Field label={t('f_contact_name')}><input className="input" value={mForm.contact_name} onChange={e => setMForm({ ...mForm, contact_name: e.target.value })} /></Field>
             <Field label={t('f_contact_phone')}><input className="input" value={mForm.contact_phone} onChange={e => setMForm({ ...mForm, contact_phone: e.target.value })} /></Field>
           </div>
+
+          <div className="label border-t border-black/[.07] pt-4">Plan &amp; fee</div>
+          <div className="flex gap-2">
+            {[['month', 'Monthly'], ['year', 'Yearly'], ['free', 'Free']].map(([val, lbl]) => (
+              <button key={val} type="button"
+                onClick={() => setMForm({ ...mForm, plan: val, fee: val === 'free' ? 0 : (val === 'year' ? 199.99 : 19.99) })}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold ${mForm.plan === val ? 'border-moss-600 bg-moss-50 text-moss-700' : 'border-black/15 text-ink/60'}`}>{lbl}</button>
+            ))}
+          </div>
+          <Field label={`Fee (${mForm.plan === 'year' ? 'per year' : mForm.plan === 'free' ? 'free account' : 'per month'})`}>
+            <div className="flex items-center gap-2">
+              <span className="text-ink/50">$</span>
+              <input className="input" type="number" step="0.01" min="0" value={mForm.fee} onChange={e => setMForm({ ...mForm, fee: e.target.value })} />
+            </div>
+          </Field>
+          <p className="text-xs text-ink/50">Set the fee you actually charge this account. Use <b>Free</b> (or $0) for friends / testers — they won't count toward your income.</p>
 
           <div className="label border-t border-black/[.07] pt-4">Subscription</div>
           <div className="flex gap-2">
