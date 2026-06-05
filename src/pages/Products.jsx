@@ -101,7 +101,7 @@ export default function Products() {
     refreshCats()
     return records
   }
-  const openNew = () => { setEditing(null); setForm(blank); refreshCats(); setOpen(true) }
+  const openNew = () => { setEditing(null); setForm({ ...blank, tax_rate_id: defaultTaxId || '' }); refreshCats(); setOpen(true) }
   const openEdit = (p) => { setEditing(p); setForm({ ...blank, ...p, tax_rate_id: p.tax_rate_id || '' }); refreshCats(); setOpen(true) }
 
   const save = async () => {
