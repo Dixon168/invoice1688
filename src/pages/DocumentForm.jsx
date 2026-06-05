@@ -51,6 +51,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const [isExempt, setIsExempt] = useState(false)
   const [taxId, setTaxId] = useState('')
   const [taxRate, setTaxRate] = useState(0)
+  const [paidAmount, setPaidAmount] = useState(0)
   const [notes, setNotes] = useState('')
   const [terms, setTerms] = useState('')
   const [items, setItems] = useState([emptyItem()])
@@ -79,6 +80,10 @@ export default function DocumentForm({ kind = 'invoice' }) {
           const firstRate = loaded.length ? Number(loaded[0].tax_rate) || 0 : 0
           setTaxRate(firstRate)
           setTaxId(taxList.find(x => Number(x.rate) === firstRate)?.id || '')
+          if (kind === 'invoice') {
+            const { data: pays } = await supabase.from('payments').select('amount').eq('invoice_id', id)
+            setPaidAmount(Math.round(((pays || []).reduce((s, p) => s + Number(p.amount || 0), 0)) * 100) / 100)
+          }
         }
         setLoading(false)
       } else {
@@ -276,6 +281,12 @@ export default function DocumentForm({ kind = 'invoice' }) {
             </div>
             <div className="flex justify-between"><span className="text-ink/60">{t('m_tax')}</span><span className="tabular-nums">{money(totals.taxTotal, cur)}</span></div>
             <div className="mt-2 flex justify-between border-t border-black/10 pt-3 font-display text-2xl text-ink"><span>{t('m_total')}</span><span className="tabular-nums">{money(totals.total, cur)}</span></div>
+            {editing && kind === 'invoice' && paidAmount > 0 && (
+              <>
+                <div className="flex justify-between pt-1 text-moss-700"><span>{t('m_paid') || 'Paid'}</span><span className="tabular-nums">−{money(paidAmount, cur)}</span></div>
+                <div className="flex justify-between font-semibold text-clay"><span>{t('m_balance_due') || 'Amount due'}</span><span className="tabular-nums">{money(Math.max(0, Math.round((totals.total - paidAmount) * 100) / 100), cur)}</span></div>
+              </>
+            )}
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <button className="btn-outline" onClick={() => save('draft')} disabled={busy}>{t('save_draft')}</button>

@@ -935,6 +935,15 @@ const EXTRA20 = {
 }
 for (const l of Object.keys(EXTRA20)) Object.assign(T[l], EXTRA20[l])
 
+const EXTRA21 = {
+  en: { m_paid: 'Paid', m_balance_due: 'Amount due' },
+  zh: { m_paid: '已收', m_balance_due: '应付' },
+  es: { m_paid: 'Pagado', m_balance_due: 'Por cobrar' },
+  vi: { m_paid: 'Đã trả', m_balance_due: 'Còn phải trả' },
+  ko: { m_paid: '결제됨', m_balance_due: '미수금' },
+}
+for (const l of Object.keys(EXTRA21)) Object.assign(T[l], EXTRA21[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
