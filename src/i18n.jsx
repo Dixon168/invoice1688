@@ -926,6 +926,15 @@ const EXTRA19 = {
 }
 for (const l of Object.keys(EXTRA19)) Object.assign(T[l], EXTRA19[l])
 
+const EXTRA20 = {
+  en: { edit_paid_warn: 'This invoice already has payments of', edit_paid_warn2: 'The new total', edit_paid_warn3: 'is lower and would create an overpayment. Please raise the total, or remove/refund payments first.' },
+  zh: { edit_paid_warn: '这张发票已收款', edit_paid_warn2: '新的总额', edit_paid_warn3: '低于已收金额，会造成多付。请提高总额，或先删除/退回已收款。' },
+  es: { edit_paid_warn: 'Esta factura ya tiene pagos de', edit_paid_warn2: 'El nuevo total', edit_paid_warn3: 'es menor y crearía un sobrepago. Aumente el total o elimine/reembolse pagos primero.' },
+  vi: { edit_paid_warn: 'Hóa đơn này đã có thanh toán', edit_paid_warn2: 'Tổng mới', edit_paid_warn3: 'thấp hơn và sẽ gây trả thừa. Hãy tăng tổng hoặc xóa/hoàn tiền trước.' },
+  ko: { edit_paid_warn: '이 청구서에는 이미 결제 금액이 있습니다:', edit_paid_warn2: '새 합계', edit_paid_warn3: '가 더 낮아 초과 지불이 발생합니다. 합계를 올리거나 결제를 먼저 삭제/환불하세요.' },
+}
+for (const l of Object.keys(EXTRA20)) Object.assign(T[l], EXTRA20[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

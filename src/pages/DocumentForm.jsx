@@ -142,6 +142,15 @@ export default function DocumentForm({ kind = 'invoice' }) {
     if (!customerId) return alert('Please choose a customer.')
     if (!number.trim()) return alert(`${cfg.title} number is required.`)
     setBusy(true)
+    // protect paid invoices: don't let the new total drop below what's already been paid
+    if (editing && kind === 'invoice') {
+      const { data: pays } = await supabase.from('payments').select('amount').eq('invoice_id', id)
+      const paid = Math.round(((pays || []).reduce((s, p) => s + Number(p.amount || 0), 0)) * 100) / 100
+      if (paid > 0 && totals.total < paid - 0.001) {
+        setBusy(false)
+        return alert(`${t('edit_paid_warn') || 'This invoice already has payments of'} ${money(paid, cur)}. ${t('edit_paid_warn2') || 'The new total'} ${money(totals.total, cur)} ${t('edit_paid_warn3') || 'is lower and would create an overpayment. Please raise the total, or remove/refund payments first.'}`)
+      }
+    }
     const c = customers.find(x => x.id === customerId)
     const head = {
       company_id: company.id, [cfg.numField]: number.trim(), customer_id: customerId,
