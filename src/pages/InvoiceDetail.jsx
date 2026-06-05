@@ -136,7 +136,7 @@ export default function InvoiceDetail() {
             <tbody className="divide-y divide-black/[.05]">
               {items.map(it => (
                 <tr key={it.id}>
-                  <td className="py-2.5 text-ink">{it.description}</td>
+                  <td className="py-2.5 text-ink">{it.description}{it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}</td>
                   <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}</td>
                   <td className="py-2.5 text-right tabular-nums">{money(it.unit_price, cur)}</td>
                   <td className="py-2.5 text-right tabular-nums text-ink/60">{Number(it.tax_rate)}%</td>

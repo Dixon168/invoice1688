@@ -51,7 +51,7 @@ export default function EstimateDetail() {
     const { data: inv, error } = await supabase.from('invoices').insert(head).select('id').single()
     if (error) { setBusy(false); return alert(error.message) }
     const rows = items.map((it, idx) => ({
-      invoice_id: inv.id, product_id: it.product_id || null, description: it.description,
+      invoice_id: inv.id, product_id: it.product_id || null, description: it.description, detail: it.detail || null,
       quantity: it.quantity, unit_price: it.unit_price, tax_rate: it.tax_rate, line_total: it.line_total, sort_order: idx,
     }))
     await supabase.from('invoice_items').insert(rows)
@@ -123,7 +123,7 @@ export default function EstimateDetail() {
             <tbody className="divide-y divide-black/[.05]">
               {items.map(it => (
                 <tr key={it.id}>
-                  <td className="py-2.5 text-ink">{it.description}</td>
+                  <td className="py-2.5 text-ink">{it.description}{it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}</td>
                   <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}</td>
                   <td className="py-2.5 text-right tabular-nums">{money(it.unit_price, cur)}</td>
                   <td className="py-2.5 text-right font-medium tabular-nums">{money(it.line_total, cur)}</td>

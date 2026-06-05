@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { money, todayISO } from '../lib/format'
 import { computeTotals, recalcCustomer, recalcInvoice } from '../lib/calc'
 import { applyInvoiceInventory } from '../lib/inventory'
-import { Spinner, Field } from '../components/ui'
+import { Spinner, Field, Modal } from '../components/ui'
 import { ItemCombo, NameCombo } from '../components/Combo'
 import { useT } from '../i18n'
 
@@ -24,7 +24,7 @@ const CFG = {
     primaryLabel: 'Save & send',
   },
 }
-const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', quantity: 1, unit_price: 0, tax_rate: 0 })
+const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', detail: '', quantity: 1, unit_price: 0, tax_rate: 0 })
 
 export default function DocumentForm({ kind = 'invoice' }) {
   const cfg = CFG[kind]
@@ -74,7 +74,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
           setCustomerQuery((c || []).find(x => x.id === d.customer_id)?.name || '')
           setIssueDate(d.issue_date); setEndDate(d[cfg.dateField] || ''); setStatus(d.status)
           setIsExempt(d.is_exempt); setNotes(d.notes || ''); setTerms(d.terms || '')
-          const loaded = (its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) }))
+          const loaded = (its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, detail: i.detail || '', quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) }))
           setItems(loaded)
           const firstRate = loaded.length ? Number(loaded[0].tax_rate) || 0 : 0
           setTaxRate(firstRate)
@@ -112,8 +112,19 @@ export default function DocumentForm({ kind = 'invoice' }) {
     if (error) { alert(error.message); return }
     setCustomers(prev => [...prev, data]); pickCustomer(data)
   }
+  const [custOpen, setCustOpen] = useState(false)
+  const [newCust, setNewCust] = useState({ name: '', phone: '', email: '' })
+  const openNewCust = () => { setNewCust({ name: customerQuery || '', phone: '', email: '' }); setCustOpen(true) }
+  const saveNewCust = async () => {
+    if (!newCust.name.trim()) { alert(t('cr_need_customer') || 'Name required'); return }
+    const { data, error } = await supabase.from('customers').insert({
+      company_id: company.id, name: newCust.name.trim(), phone: newCust.phone || null, email: newCust.email || null,
+    }).select('*').single()
+    if (error) { alert(error.message); return }
+    setCustomers(prev => [...prev, data]); pickCustomer(data); setCustOpen(false)
+  }
   const applyProduct = (idx, p) => {
-    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, unit_price: Number(p.unit_price) || 0 } : it))
+    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, detail: p.description || '', unit_price: Number(p.unit_price) || 0 } : it))
   }
   const createAndPick = async (idx, name) => {
     const { data, error } = await supabase.from('products').insert({ company_id: company.id, name, unit_price: Number(items[idx]?.unit_price) || 0 }).select('*').single()
@@ -154,7 +165,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
       refreshCompany()
     }
     const rows = items.map((it, idx) => ({
-      [cfg.itemFK]: docId, product_id: it.product_id || null, description: it.description || '(item)',
+      [cfg.itemFK]: docId, product_id: it.product_id || null, description: it.description || '(item)', detail: it.detail || null,
       quantity: Number(it.quantity) || 0, unit_price: Number(it.unit_price) || 0,
       tax_rate: isExempt ? 0 : (Number(taxRate) || 0),
       line_total: Math.round((Number(it.quantity) || 0) * (Number(it.unit_price) || 0) * 100) / 100,
@@ -182,6 +193,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
             onText={t => { setCustomerQuery(t); setCustomerId('') }}
             onPick={pickCustomer} onCreate={createCustomer}
             placeholder={t('ph_search_or_add_customer')} createLabel={t('create_customer')} />
+          <button type="button" onClick={openNewCust} className="mt-1.5 text-sm font-medium text-moss-700 hover:underline">＋ {t('create_customer')}</button>
           {!customerId && customerQuery && <p className="mt-1 text-xs text-clay">Pick a match or create the customer.</p>}
         </Field></div>
         <div className="card p-5"><Field label={`${cfg.title} number`}>
@@ -212,6 +224,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
                     <ItemCombo value={it.description} products={products} currency={cur}
                       onText={t => setItem(idx, { description: t, product_id: '' })}
                       onPick={p => applyProduct(idx, p)} onCreate={name => createAndPick(idx, name)} />
+                    <input className="input mt-1 py-1 text-xs text-ink/60" value={it.detail || ''} placeholder={t('ph_line_detail') || 'Description (optional)'}
+                      onChange={e => setItem(idx, { detail: e.target.value })} />
                   </td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value })} /></td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} /></td>
@@ -260,6 +274,20 @@ export default function DocumentForm({ kind = 'invoice' }) {
           </div>
         </div>
       </div>
+
+      <Modal open={custOpen} onClose={() => setCustOpen(false)} title={t('create_customer')}>
+        <div className="space-y-4">
+          <Field label={t('c_name')}><input className="input" value={newCust.name} onChange={e => setNewCust({ ...newCust, name: e.target.value })} autoFocus /></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={t('c_phone') || 'Phone'}><input className="input" value={newCust.phone} onChange={e => setNewCust({ ...newCust, phone: e.target.value })} /></Field>
+            <Field label={t('c_email') || 'Email'}><input className="input" type="email" value={newCust.email} onChange={e => setNewCust({ ...newCust, email: e.target.value })} /></Field>
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button className="btn-outline" onClick={() => setCustOpen(false)}>{t('cancel')}</button>
+          <button className="btn-primary" onClick={saveNewCust}>{t('save')}</button>
+        </div>
+      </Modal>
     </div>
   )
 }

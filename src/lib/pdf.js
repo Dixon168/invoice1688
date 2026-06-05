@@ -66,7 +66,7 @@ export function documentPDF({ kind, doc: d, items, customer, company }) {
     startY: Math.max(yy + 4, y + 20),
     head: [['Description', 'Qty', 'Unit price', 'Tax', 'Amount']],
     body: (items || []).map(it => [
-      it.description,
+      it.detail ? `${it.description}\n${it.detail}` : it.description,
       String(Number(it.quantity)),
       money(it.unit_price, cur),
       `${Number(it.tax_rate)}%`,
@@ -134,7 +134,7 @@ export function packingSlipPDF({ doc: d, items, customer, company }) {
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
     head: [['Description', 'Qty packed']],
-    body: (items || []).map(it => [it.description, String(Number(it.quantity))]),
+    body: (items || []).map(it => [it.detail ? `${it.description}\n${it.detail}` : it.description, String(Number(it.quantity))]),
     theme: 'striped',
     headStyles: { fillColor: INK, textColor: 255, fontSize: 9 },
     bodyStyles: { fontSize: 9, textColor: INK },

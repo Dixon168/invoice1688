@@ -698,3 +698,8 @@ do $$ begin
   create policy credit_items_admin on public.credit_items for all
     using (public.is_super_admin()) with check (public.is_super_admin());
 end $$;
+
+
+-- ===== line item detail (product description on invoices/estimates) =====
+alter table public.invoice_items  add column if not exists detail text;
+alter table public.estimate_items add column if not exists detail text;
