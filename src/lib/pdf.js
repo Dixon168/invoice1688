@@ -44,6 +44,17 @@ function addressLines(o, prefix = 'billing_') {
   ].filter(Boolean)
 }
 
+// company contact block (company stores plain address/city/... not billing_*)
+function companyLines(c) {
+  return [
+    c?.email,
+    c?.phone,
+    c?.address,
+    [c?.city, c?.state, c?.postal_code].filter(Boolean).join(', '),
+    c?.country,
+  ].filter(Boolean)
+}
+
 function header(pdf, company, title, accentNumber, font) {
   let textX = 14
   if (company?.logo_url) {
@@ -58,7 +69,7 @@ function header(pdf, company, title, accentNumber, font) {
   pdf.text(company?.name || 'Company', textX, 20)
   pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
   let y = 26
-  for (const line of [company?.email, company?.phone, ...addressLines(company)].filter(Boolean)) {
+  for (const line of companyLines(company)) {
     pdf.text(String(line), textX, y); y += 4.5
   }
   pdf.setFont(font, 'bold'); pdf.setFontSize(22); pdf.setTextColor(...MOSS)
@@ -135,8 +146,13 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
     margin: { left: 14, right: 14 },
   })
 
-  // totals
-  let ty = pdf.lastAutoTable.finalY + 8
+  // totals — anchored toward the bottom-right so the layout stays consistent even with one line item
+  const tableEnd = pdf.lastAutoTable.finalY
+  const totalRowCount = 3 + (kind === 'invoice' ? 2 : 0)
+  const totalsHeight = totalRowCount * 6 + 6
+  const pageH = pdf.internal.pageSize.getHeight()
+  let ty = Math.max(tableEnd + 12, pageH - 60, 230)
+  if (ty + totalsHeight > pageH - 16) ty = tableEnd + 12 // very long invoice: fall back to right after the table
   const right = 196, labelX = 150
   const row = (label, val, bold) => {
     pdf.setFont(font, bold ? 'bold' : 'normal'); pdf.setFontSize(bold ? 11 : 9)
@@ -151,12 +167,14 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
     row('Amount due', money(d.amount_due, cur), true)
   }
 
-  // notes / terms / payment instructions
+  // notes / terms / payment instructions — start just under the table (left side, independent of totals)
+  let ny = tableEnd + 12
   if (d.notes || d.terms) {
-    ty += 6; pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-    if (d.notes) { pdf.text('Notes', 14, ty); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.notes, 120), 14, ty + 5); ty += 5 + pdf.splitTextToSize(d.notes, 120).length * 4.5 }
-    if (d.terms) { pdf.setFont(font, 'bold'); pdf.setTextColor(...MUTED); pdf.text('Terms', 14, ty + 4); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.terms, 120), 14, ty + 9); ty += 9 + pdf.splitTextToSize(d.terms, 120).length * 4.5 }
+    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    if (d.notes) { pdf.text('Notes', 14, ny); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.notes, 120), 14, ny + 5); ny += 5 + pdf.splitTextToSize(d.notes, 120).length * 4.5 }
+    if (d.terms) { pdf.setFont(font, 'bold'); pdf.setTextColor(...MUTED); pdf.text('Terms', 14, ny + 4); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.terms, 120), 14, ny + 9); ny += 9 + pdf.splitTextToSize(d.terms, 120).length * 4.5 }
   }
+  ty = Math.max(ty, ny)
   if (kind === 'invoice' && company?.payment_instructions) {
     ty += 8; pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
     pdf.text('Payment instructions', 14, ty)

@@ -110,7 +110,11 @@ export default function EstimateDetail() {
           </div>
           <div className="sm:text-right">
             <div className="label">{t('m_from')}</div>
+            {company?.logo_url && <img src={company.logo_url} alt="" className="mb-1 h-12 object-contain sm:ml-auto" />}
             <div className="font-semibold text-ink">{company?.name}</div>
+            {company?.email && <div className="text-sm text-ink/60">{company.email}</div>}
+            {company?.phone && <div className="text-sm text-ink/60">{company.phone}</div>}
+            <div className="text-sm text-ink/60">{[company?.address, company?.city, company?.state, company?.postal_code, company?.country].filter(Boolean).join(', ')}</div>
           </div>
         </div>
 

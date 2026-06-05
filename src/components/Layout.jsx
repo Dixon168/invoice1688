@@ -89,7 +89,10 @@ export default function Layout({ children }) {
       )}
 
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8">
-        <div className="mx-auto max-w-6xl">{children}</div>
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-2 hidden justify-end lg:flex"><LanguageSwitcher /></div>
+          {children}
+        </div>
       </main>
     </div>
   )
