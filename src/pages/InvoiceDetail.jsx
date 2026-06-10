@@ -25,7 +25,7 @@ export default function InvoiceDetail() {
   const [customer, setCustomer] = useState(null)
   const [payments, setPayments] = useState([])
   const [payOpen, setPayOpen] = useState(false)
-  const [pay, setPay] = useState({ amount: '', method: 'cash', payment_date: todayISO(), reference: '' })
+  const [pay, setPay] = useState({ amount: '', method: 'cash', payment_date: todayISO(), reference: '', note: '' })
   const [busy, setBusy] = useState(false)
 
   const load = async () => {
@@ -54,12 +54,12 @@ export default function InvoiceDetail() {
     setBusy(true)
     await supabase.from('payments').insert({
       company_id: company.id, invoice_id: id, customer_id: inv.customer_id,
-      amount: amt, method: pay.method, payment_date: pay.payment_date, reference: pay.reference,
+      amount: amt, method: pay.method, payment_date: pay.payment_date, reference: pay.reference, note: pay.note || null,
     })
     await recalcInvoice(id)
     await recalcCustomer(inv.customer_id)
     setBusy(false); setPayOpen(false)
-    setPay({ amount: '', method: 'cash', payment_date: todayISO(), reference: '' })
+    setPay({ amount: '', method: 'cash', payment_date: todayISO(), reference: '', note: '' })
     load()
   }
 
@@ -194,7 +194,7 @@ export default function InvoiceDetail() {
                 <tr key={p.id}>
                   <td className="py-2.5 text-ink/70">{fmtDate(p.payment_date)}</td>
                   <td className="py-2.5 capitalize text-ink/60">{p.method.replace('_', ' ')}</td>
-                  <td className="py-2.5 text-ink/50">{p.reference}</td>
+                  <td className="py-2.5 text-ink/60">{[p.note, p.reference].filter(Boolean).join(' · ')}</td>
                   <td className="py-2.5 text-right font-medium tabular-nums">{money(p.amount, cur)}</td>
                 </tr>
               ))}
@@ -215,7 +215,8 @@ export default function InvoiceDetail() {
               </select>
             </Field>
           </div>
-          <Field label={t('f_reference')}><input className="input" value={pay.reference} onChange={e => setPay({ ...pay, reference: e.target.value })} placeholder="Optional" /></Field>
+          <Field label={t('f_note') || 'Note'}><input className="input" value={pay.note} onChange={e => setPay({ ...pay, note: e.target.value })} placeholder={t('pay_note_ph') || 'e.g. Deposit'} /></Field>
+          <Field label={t('f_reference')}><input className="input" value={pay.reference} onChange={e => setPay({ ...pay, reference: e.target.value })} placeholder={t('pay_ref_ph') || 'Optional (check #, txn id)'} /></Field>
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setPayOpen(false)}>{t('cancel')}</button>

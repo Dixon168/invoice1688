@@ -700,54 +700,5 @@ do $$ begin
 end $$;
 
 
--- ===== line item detail (product description on invoices/estimates) =====
-alter table public.invoice_items  add column if not exists detail text;
-alter table public.estimate_items add column if not exists detail text;
-
-
--- ===== ensure delivery address columns exist on estimates & invoices =====
-alter table public.estimates add column if not exists delivery_address     text;
-alter table public.estimates add column if not exists delivery_city        text;
-alter table public.estimates add column if not exists delivery_state       text;
-alter table public.estimates add column if not exists delivery_country     text;
-alter table public.estimates add column if not exists delivery_postal_code text;
-alter table public.invoices  add column if not exists delivery_address     text;
-alter table public.invoices  add column if not exists delivery_city        text;
-alter table public.invoices  add column if not exists delivery_state       text;
-alter table public.invoices  add column if not exists delivery_country     text;
-alter table public.invoices  add column if not exists delivery_postal_code text;
-
-
--- ===== employees =====
-create table if not exists public.employees (
-  id uuid primary key default gen_random_uuid(),
-  company_id uuid not null references public.companies(id) on delete cascade,
-  name text not null,
-  email text, phone text, role text,
-  is_active boolean not null default true,
-  created_at timestamptz not null default now()
-);
-create index if not exists idx_employees_company on public.employees(company_id);
-alter table public.employees enable row level security;
-do $$ begin
-  drop policy if exists employees_all on public.employees;
-  create policy employees_all on public.employees for all using (company_id = public.current_company_id()) with check (company_id = public.current_company_id());
-  drop policy if exists employees_admin on public.employees;
-  create policy employees_admin on public.employees for all using (public.is_super_admin()) with check (public.is_super_admin());
-end $$;
-alter table public.invoices  add column if not exists employee_id uuid references public.employees(id) on delete set null;
-alter table public.estimates add column if not exists employee_id uuid references public.employees(id) on delete set null;
-
--- ===== support photo uploads (storage bucket) =====
-insert into storage.buckets (id, name, public) values ('support', 'support', true) on conflict (id) do nothing;
-do $$ begin
-  drop policy if exists "support_insert" on storage.objects;
-  create policy "support_insert" on storage.objects for insert to authenticated with check (bucket_id = 'support');
-  drop policy if exists "support_read" on storage.objects;
-  create policy "support_read" on storage.objects for select to public using (bucket_id = 'support');
-end $$;
-
-
--- ===== company plan & fee (admin billing) =====
-alter table public.companies add column if not exists plan text not null default 'month';   -- 'month' | 'year' | 'free'
-alter table public.companies add column if not exists fee  numeric(10,2) not null default 19.99;
+-- ===== payment note (e.g. Deposit) =====
+alter table public.payments add column if not exists note text;

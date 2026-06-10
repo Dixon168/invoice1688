@@ -980,6 +980,15 @@ const EXTRA25 = {
 }
 for (const l of Object.keys(EXTRA25)) Object.assign(T[l], EXTRA25[l])
 
+const EXTRA26 = {
+  en: { f_note: 'Note', pay_note_ph: 'e.g. Deposit', pay_ref_ph: 'Optional (check #, txn id)' },
+  zh: { f_note: '备注', pay_note_ph: '如：定金 / 押金', pay_ref_ph: '可选（支票号、交易号）' },
+  es: { f_note: 'Nota', pay_note_ph: 'p. ej. Depósito', pay_ref_ph: 'Opcional (n.º cheque, id)' },
+  vi: { f_note: 'Ghi chú', pay_note_ph: 'vd: Đặt cọc', pay_ref_ph: 'Tùy chọn (số séc, mã GD)' },
+  ko: { f_note: '메모', pay_note_ph: '예: 보증금', pay_ref_ph: '선택 (수표번호, 거래ID)' },
+}
+for (const l of Object.keys(EXTRA26)) Object.assign(T[l], EXTRA26[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
