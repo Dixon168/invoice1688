@@ -88,7 +88,7 @@ function header(pdf, company, title, accentNumber, font) {
 }
 
 // kind: 'invoice' | 'estimate'  | opts: { preview: true } returns a blob URL instead of saving
-export async function documentPDF({ kind, doc: d, items, customer, company, employeeName }, opts = {}) {
+export async function documentPDF({ kind, doc: d, items, customer, company, employeeName, payments }, opts = {}) {
   const pdf = new jsPDF()
   const cur = d.currency || company?.default_currency || 'USD'
   const numberLabel = kind === 'estimate' ? d.estimate_number : d.invoice_number
@@ -196,6 +196,36 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   }
 
   drawPageBorder(pdf)
+
+  // payment history (invoice only) — list each payment with date, method, note, amount
+  if (kind === 'invoice' && (payments || []).length > 0) {
+    let py = ty + 10
+    if (py > pdf.internal.pageSize.getHeight() - 50) { pdf.addPage(); py = 20 }
+    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    pdf.text('Payments received', 14, py)
+    autoTable(pdf, {
+      startY: py + 3,
+      head: [['Date', 'Method', 'Note', 'Amount']],
+      body: [...payments]
+        .sort((a, b) => String(a.payment_date).localeCompare(String(b.payment_date)))
+        .map(p => [
+          fmtDate(p.payment_date),
+          String(p.method || '').replace('_', ' '),
+          [p.note, p.reference].filter(Boolean).join(' · '),
+          money(p.amount, cur),
+        ]),
+      foot: [['', '', 'Paid', money(d.amount_paid, cur)], ['', '', 'Amount due', money(d.amount_due, cur)]],
+      theme: 'grid',
+      styles: { font, fontSize: 8.5, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      headStyles: { fillColor: [240, 240, 236], textColor: INK, fontSize: 8.5, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      footStyles: { fillColor: [248, 248, 245], textColor: INK, fontStyle: 'bold', font, halign: 'right' },
+      columnStyles: { 3: { halign: 'right' } },
+      margin: { left: 14, right: 14 },
+      tableWidth: 150,
+    })
+    drawPageBorder(pdf)
+  }
+
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `${kind}-${numberLabel}.pdf` }
   pdf.save(`${kind}-${numberLabel}.pdf`)
 }
