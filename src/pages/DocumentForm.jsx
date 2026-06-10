@@ -24,7 +24,7 @@ const CFG = {
     primaryLabel: 'Save & send',
   },
 }
-const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', detail: '', quantity: 1, unit_price: 0, tax_rate: 0 })
+const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', detail: '', quantity: 1, unit_price: 0, tax_rate: 0, taxable: true })
 
 export default function DocumentForm({ kind = 'invoice' }) {
   const cfg = CFG[kind]
@@ -82,9 +82,14 @@ export default function DocumentForm({ kind = 'invoice' }) {
           setIsExempt(d.is_exempt); setNotes(d.notes || ''); setTerms(d.terms || '')
           setDelivery({ address: d.delivery_address || '', city: d.delivery_city || '', state: d.delivery_state || '', postal_code: d.delivery_postal_code || '', country: d.delivery_country || '' })
           setEmployeeId(d.employee_id || '')
-          const loaded = (its || []).map(i => ({ key: i.id, product_id: i.product_id || '', description: i.description, detail: i.detail || '', quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate) }))
+          const prodMap = {}; for (const pr of (p || [])) prodMap[pr.id] = pr
+          const loaded = (its || []).map(i => {
+            const prod = i.product_id ? prodMap[i.product_id] : null
+            const taxable = prod ? !!prod.tax_rate_id : (Number(i.tax_rate) > 0)
+            return { key: i.id, product_id: i.product_id || '', description: i.description, detail: i.detail || '', quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate), taxable }
+          })
           setItems(loaded)
-          const firstRate = loaded.length ? Number(loaded[0].tax_rate) || 0 : 0
+          const firstRate = loaded.find(l => Number(l.tax_rate) > 0)?.tax_rate || (defTax ? Number(defTax.rate) || 0 : 0)
           setTaxRate(firstRate)
           setTaxId(taxList.find(x => Number(x.rate) === firstRate)?.id || '')
           if (kind === 'invoice') {
@@ -144,7 +149,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
     setCustomers(prev => [...prev, data]); pickCustomer(data); setCustOpen(false)
   }
   const applyProduct = (idx, p) => {
-    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, detail: p.description || '', unit_price: Number(p.unit_price) || 0 } : it))
+    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, detail: p.description || '', unit_price: Number(p.unit_price) || 0, taxable: !!p.tax_rate_id } : it))
   }
   const createAndPick = async (idx, name) => {
     const { data, error } = await supabase.from('products').insert({ company_id: company.id, name, unit_price: Number(items[idx]?.unit_price) || 0 }).select('*').single()
@@ -155,7 +160,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const addItem = () => setItems([...items, emptyItem()])
   const delItem = (idx) => setItems(items.length === 1 ? items : items.filter((_, i) => i !== idx))
 
-  const calcItems = useMemo(() => items.map(it => ({ ...it, tax_rate: taxRate })), [items, taxRate])
+  const calcItems = useMemo(() => items.map(it => ({ ...it, tax_rate: it.taxable === false ? 0 : taxRate })), [items, taxRate])
   const totals = useMemo(() => computeTotals(calcItems, isExempt), [calcItems, isExempt])
 
   const save = async (newStatus) => {
@@ -206,7 +211,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
     const rows = items.map((it, idx) => ({
       [cfg.itemFK]: docId, product_id: it.product_id || null, description: it.description || '(item)', detail: it.detail || null,
       quantity: Number(it.quantity) || 0, unit_price: Number(it.unit_price) || 0,
-      tax_rate: isExempt ? 0 : (Number(taxRate) || 0),
+      tax_rate: (isExempt || it.taxable === false) ? 0 : (Number(taxRate) || 0),
       line_total: Math.round((Number(it.quantity) || 0) * (Number(it.unit_price) || 0) * 100) / 100,
       sort_order: idx,
     }))
