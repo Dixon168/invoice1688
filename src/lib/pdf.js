@@ -143,13 +143,13 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
       const name = it.product_name || it.description || ''
       const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
       const sub = [extra, it.detail].filter(Boolean).join('\n')
-      return [sub ? `${name}\n${sub}` : name, it.units_per_ctn ? `${Number(it.quantity)}\n(${ctnLabel(it.quantity, it.units_per_ctn)})` : String(Number(it.quantity)), money(it.unit_price, cur), money(it.line_total, cur)]
+      return [sub ? `${name}\n${sub}` : name, it.units_per_ctn ? `${Number(it.quantity)} (${ctnLabel(it.quantity, it.units_per_ctn)})` : String(Number(it.quantity)), money(it.unit_price, cur), money(it.line_total, cur)]
     }),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     bodyStyles: { fontSize: 9, textColor: INK, font },
-    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    columnStyles: { 1: { halign: 'right', cellWidth: 32 }, 2: { halign: 'right' }, 3: { halign: 'right' } },
     margin: { left: 14, right: 14 },
   })
 
