@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Printer } from 'lucide-react'
+import { vendorBillPDF } from '../lib/pdf'
+import { usePdfPreview, PdfPreview } from '../components/PdfPreview'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, isOverdue } from '../lib/format'
@@ -28,6 +30,7 @@ export default function VendorDetail() {
   const [payments, setPayments] = useState([])
   const [payOpen, setPayOpen] = useState(false)
   const [openBill, setOpenBill] = useState(null)
+  const preview = usePdfPreview()
 
   const load = async () => {
     const { data: vend } = await supabase.from('vendors').select('*').eq('id', id).maybeSingle()
@@ -111,6 +114,9 @@ export default function VendorDetail() {
                                 <pre className="whitespace-pre-wrap rounded-lg border border-black/10 bg-white p-3 text-xs leading-relaxed text-ink/80">{b.notes}</pre>
                               </div>
                             ) : <div className="mt-3 text-sm text-ink/45">No line details recorded for this bill.</div>}
+                            <div className="mt-3">
+                              <button className="btn-outline" onClick={(e) => { e.stopPropagation(); preview.open(() => vendorBillPDF({ bill: b, vendor: v, company }, { preview: true })) }}><Printer size={15} /> {t('print') || 'Print'} / PDF</button>
+                            </div>
                           </td>
                         </tr>
                       )}
@@ -144,6 +150,7 @@ export default function VendorDetail() {
       <AllocatePayment open={payOpen} onClose={() => setPayOpen(false)} title={`${t('pay_bills')} · ${v.name}`}
         items={items} currency={cur} methods={['bank_transfer', 'card', 'cash', 'check', 'other']} defaultMethod="bank_transfer"
         onSubmit={payBills} />
+      <PdfPreview preview={preview} />
     </div>
   )
 }

@@ -283,3 +283,57 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `packing-slip-${numberLabel}.pdf` }
   pdf.save(`packing-slip-${numberLabel}.pdf`)
 }
+
+// Vendor / receiving bill PDF (purchase side). opts.preview returns a blob url.
+export async function vendorBillPDF({ bill, vendor, company }, opts = {}) {
+  const pdf = new jsPDF()
+  const cur = bill.currency || company?.default_currency || 'USD'
+  const numberLabel = bill.bill_number || 'Bill'
+  const allText = [company?.name, company?.email, company?.phone, vendor?.name, vendor?.email, bill?.notes].filter(Boolean).join(' ')
+  const font = await ensureFont(pdf, allText)
+
+  let y = header(pdf, company, 'Purchase Bill', numberLabel, font)
+  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+  pdf.text(`Date: ${fmtDate(bill.bill_date)}`, 196, 33, { align: 'right' })
+  if (bill.due_date) pdf.text(`Due: ${fmtDate(bill.due_date)}`, 196, 37.5, { align: 'right' })
+
+  // vendor block
+  y += 8
+  pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+  pdf.text('VENDOR', 14, y)
+  pdf.setFont(font, 'bold'); pdf.setFontSize(11); pdf.setTextColor(...INK)
+  pdf.text(vendor?.name || '', 14, y + 6)
+  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+  let yy = y + 11
+  for (const line of [vendor?.email, vendor?.phone].filter(Boolean)) { pdf.text(String(line), 14, yy); yy += 4.5 }
+
+  // received / details (from bill notes)
+  let ny = Math.max(yy + 4, y + 20)
+  if (bill.notes) {
+    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    pdf.text('Received / details', 14, ny)
+    pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK)
+    const lines = pdf.splitTextToSize(bill.notes, 182)
+    pdf.text(lines, 14, ny + 6)
+    ny += 6 + lines.length * 4.6
+  }
+
+  // totals box (bottom-right)
+  const pageH = pdf.internal.pageSize.getHeight()
+  let ty = Math.max(ny + 10, pageH - 60, 210)
+  const right = 196, labelX = 150
+  const tTop = ty
+  const row = (label, val, bold) => {
+    pdf.setFont(font, bold ? 'bold' : 'normal'); pdf.setFontSize(bold ? 11 : 9); pdf.setTextColor(...INK)
+    pdf.text(label, labelX, ty); pdf.text(val, right, ty, { align: 'right' }); ty += bold ? 7 : 5.5
+  }
+  row('Total', money(bill.total, cur), true)
+  row('Paid', money(bill.amount_paid, cur))
+  row('Amount due', money(bill.amount_due, cur), true)
+  pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3)
+  pdf.roundedRect(labelX - 8, tTop - 6, right - (labelX - 8) + 2, (ty - tTop) + 6, 1.5, 1.5)
+
+  drawPageBorder(pdf)
+  if (opts.preview) return { url: pdf.output('bloburl'), filename: `bill-${numberLabel}.pdf` }
+  pdf.save(`bill-${numberLabel}.pdf`)
+}
