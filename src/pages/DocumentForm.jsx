@@ -281,7 +281,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
                     ) : <span className="block text-center text-xs text-ink/25">—</span>}
                   </td>
                   <td className="px-3 py-2">
-                    <input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value, ctn: '' })} />
+                    <input className="input py-1.5 text-right" type="number" step="1" min="0" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value, ctn: '' })} />
                     {it.units_per_ctn ? <div className="mt-0.5 text-right text-[10px] text-ink/40">1 box = {it.units_per_ctn}{Number(it.quantity) > 0 ? ` · ${ctnLabel(it.quantity, it.units_per_ctn)}` : ''}</div> : null}
                   </td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} /></td>

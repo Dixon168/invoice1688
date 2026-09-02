@@ -285,10 +285,14 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
 }
 
 // Vendor / receiving bill PDF (purchase side), styled like an invoice with boxed sections.
-export async function vendorBillPDF({ bill, vendor, company }, opts = {}) {
+export async function vendorBillPDF({ bill, vendor, company, products }, opts = {}) {
   const pdf = new jsPDF()
   const cur = bill.currency || company?.default_currency || 'USD'
   const numberLabel = bill.bill_number || 'Bill'
+
+  // product name -> units per box (to show CTN even on older bills)
+  const upcByName = {}
+  for (const p of (products || [])) { if (p.units_per_ctn) upcByName[String(p.name).trim().toLowerCase()] = Number(p.units_per_ctn) }
 
   // split notes into free text + received lines
   const raw = bill.notes || ''
@@ -299,9 +303,15 @@ export async function vendorBillPDF({ bill, vendor, company }, opts = {}) {
   const rows = received.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
     const m = l.match(/^(.+?)\s*\u00d7\s*(.+?)\s*@\s*(.+)$/)
     if (!m) return [l, '', '', '']
-    const qty = m[1].trim(), name = m[2].trim(), costStr = m[3].trim()
+    let qty = m[1].trim(); const name = m[2].trim(); const costStr = m[3].trim()
     const q = parseFloat(qty) || 0
     const c = parseFloat(String(costStr).replace(/[^0-9.]/g, '')) || 0
+    // if the qty text doesn't already carry a CTN breakdown, derive it from the product's box size
+    if (!/CTN/i.test(qty)) {
+      const upc = upcByName[name.toLowerCase()]
+      const lbl = upc ? ctnLabel(q, upc) : ''
+      if (lbl) qty = `${q} (${lbl})`
+    }
     return [name, qty, costStr, money(q * c, cur)]
   })
 

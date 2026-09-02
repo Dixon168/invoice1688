@@ -29,17 +29,19 @@ export default function VendorDetail() {
   const [bills, setBills] = useState([])
   const [payments, setPayments] = useState([])
   const [payOpen, setPayOpen] = useState(false)
+  const [prods, setProds] = useState([])
   const preview = usePdfPreview()
 
   const load = async () => {
     const { data: vend } = await supabase.from('vendors').select('*').eq('id', id).maybeSingle()
     if (!vend) { setV(false); return }
     setV(vend)
-    const [{ data: b }, { data: p }] = await Promise.all([
+    const [{ data: b }, { data: p }, { data: prods }] = await Promise.all([
       supabase.from('vendor_bills').select('*').eq('vendor_id', id).order('bill_date', { ascending: false }),
       supabase.from('vendor_payments').select('*, bill:vendor_bills(bill_number)').eq('vendor_id', id).order('payment_date', { ascending: false }),
+      supabase.from('products').select('name, units_per_ctn'),
     ])
-    setBills(b || []); setPayments(p || [])
+    setBills(b || []); setPayments(p || []); setProds(prods || [])
   }
   useEffect(() => { load() }, [id])
 
@@ -91,7 +93,7 @@ export default function VendorDetail() {
                   const s = od ? BILL_STATUS.overdue : (BILL_STATUS[b.status] || BILL_STATUS.unpaid)
                   return (
                     <tr key={b.id} className="cursor-pointer hover:bg-sand/40" title="Open PDF"
-                      onClick={() => preview.open(() => vendorBillPDF({ bill: b, vendor: v, company }, { preview: true }))}>
+                      onClick={() => preview.open(() => vendorBillPDF({ bill: b, vendor: v, company, products: prods }, { preview: true }))}>
                       <td className="px-5 py-2.5 font-semibold text-ink">{b.bill_number || '—'}</td>
                       <td className="px-5 py-2.5 text-ink/55">{fmtDate(b.bill_date)}</td>
                       <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
