@@ -35,3 +35,15 @@ export const SUB_BADGE = {
   suspended: 'bg-black/10 text-ink/50',
   expired:   'bg-red-100 text-red-700',
 }
+
+// packaging: show a quantity as boxes + remainder, e.g. 9 with 2/box -> "4 CTN + 1"
+export function ctnLabel(qty, upc) {
+  qty = Number(qty) || 0
+  upc = Number(upc) || 0
+  if (!upc || upc <= 0) return ''
+  const boxes = Math.floor(qty / upc)
+  const rem = Math.round((qty - boxes * upc) * 100) / 100
+  if (boxes === 0) return `${rem}`
+  if (rem === 0) return `${boxes} CTN`
+  return `${boxes} CTN + ${rem}`
+}

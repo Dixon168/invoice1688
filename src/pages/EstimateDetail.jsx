@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Pencil, Trash2, FileDown, ArrowRightLeft, Check, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, fmtDate } from '../lib/format'
+import { money, fmtDate, ctnLabel } from '../lib/format'
 import { recalcCustomer } from '../lib/calc'
 import { documentPDF } from '../lib/pdf'
 import { usePdfPreview, PdfPreview } from '../components/PdfPreview'
@@ -135,7 +135,7 @@ export default function EstimateDetail() {
               {items.map(it => (
                 <tr key={it.id}>
                   <td className="py-2.5 text-ink"><div className="font-medium">{it.product_name || it.description}</div>{it.product_name && it.description && it.description !== it.product_name && <div className="text-xs text-ink/55">{it.description}</div>}{it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}</td>
-                  <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}{it.ctn_qty && it.units_per_ctn ? <div className="text-[10px] text-ink/45">{Number(it.ctn_qty)} CTN × {it.units_per_ctn}</div> : null}</td>
+                  <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}{it.units_per_ctn ? <div className="text-[10px] text-ink/45">{ctnLabel(it.quantity, it.units_per_ctn)}</div> : null}</td>
                   <td className="py-2.5 text-right tabular-nums">{money(it.unit_price, cur)}</td>
                   <td className="py-2.5 text-right font-medium tabular-nums">{money(it.line_total, cur)}</td>
                 </tr>

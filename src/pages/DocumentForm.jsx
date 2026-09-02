@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Plus, Trash2, ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, todayISO } from '../lib/format'
+import { money, todayISO, ctnLabel } from '../lib/format'
 import { computeTotals, recalcCustomer, recalcInvoice } from '../lib/calc'
 import { applyInvoiceInventory } from '../lib/inventory'
 import { Spinner, Field, Modal } from '../components/ui'
@@ -282,7 +282,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
                   </td>
                   <td className="px-3 py-2">
                     <input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value, ctn: '' })} />
-                    {it.units_per_ctn ? <div className="mt-0.5 text-right text-[10px] text-ink/40">1 box = {it.units_per_ctn}{it.ctn ? ` · ${it.ctn}×${it.units_per_ctn}=${Math.round(Number(it.ctn) * Number(it.units_per_ctn))}` : ''}</div> : null}
+                    {it.units_per_ctn ? <div className="mt-0.5 text-right text-[10px] text-ink/40">1 box = {it.units_per_ctn}{Number(it.quantity) > 0 ? ` · ${ctnLabel(it.quantity, it.units_per_ctn)}` : ''}</div> : null}
                   </td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} /></td>
                   <td className="px-3 py-2 text-right font-medium tabular-nums">{money((Number(it.quantity) || 0) * (Number(it.unit_price) || 0), cur)}</td>

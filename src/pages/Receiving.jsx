@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PackagePlus, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, todayISO } from '../lib/format'
+import { money, todayISO, ctnLabel } from '../lib/format'
 import { receiveStock } from '../lib/inventory'
 import { recalcVendorBill, recalcVendor } from '../lib/calc'
 import { PageHeader, Field, Spinner } from '../components/ui'
@@ -55,7 +55,9 @@ export default function Receiving() {
     // build a readable summary for the bill (no separate items table)
     const summary = validLines.map(l => {
       const p = products.find(x => x.id === l.product_id)
-      return `${l.qty} × ${p?.name || 'item'} @ ${money(Number(l.unit_cost) || 0, cur)}`
+      const upc = p?.units_per_ctn
+      const qtyLabel = upc ? `${l.qty} (${ctnLabel(l.qty, upc)})` : `${l.qty}`
+      return `${qtyLabel} × ${p?.name || 'item'} @ ${money(Number(l.unit_cost) || 0, cur)}`
     }).join('\n')
     const billNotes = [notes, '— Received —', summary].filter(Boolean).join('\n')
 
@@ -124,7 +126,7 @@ export default function Receiving() {
                   </td>
                   <td className="py-2 px-2">
                     <input className="input py-1.5 text-right" type="number" step="1" value={l.qty} onChange={e => setLine(i, { qty: e.target.value, ctn: '' })} />
-                    {upc ? <div className="mt-0.5 text-right text-[10px] text-ink/40">1 box = {upc}</div> : null}
+                    {upc ? <div className="mt-0.5 text-right text-[10px] text-ink/40">1 box = {upc}{Number(l.qty) > 0 ? ` · ${ctnLabel(l.qty, upc)}` : ''}</div> : null}
                   </td>
                   <td className="py-2 px-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={l.unit_cost} onChange={e => setLine(i, { unit_cost: e.target.value })} /></td>
                   <td className="py-2 px-2 text-right tabular-nums text-ink/70">{money((Number(l.qty) || 0) * (Number(l.unit_cost) || 0), cur)}</td>
