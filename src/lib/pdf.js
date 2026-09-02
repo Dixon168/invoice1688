@@ -284,43 +284,82 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   pdf.save(`packing-slip-${numberLabel}.pdf`)
 }
 
-// Vendor / receiving bill PDF (purchase side). opts.preview returns a blob url.
+// Vendor / receiving bill PDF (purchase side), styled like an invoice with boxed sections.
 export async function vendorBillPDF({ bill, vendor, company }, opts = {}) {
   const pdf = new jsPDF()
   const cur = bill.currency || company?.default_currency || 'USD'
   const numberLabel = bill.bill_number || 'Bill'
-  const allText = [company?.name, company?.email, company?.phone, vendor?.name, vendor?.email, bill?.notes].filter(Boolean).join(' ')
+
+  // split notes into free text + received lines
+  const raw = bill.notes || ''
+  const marker = '\u2014 Received \u2014'
+  let freeNotes = raw, received = ''
+  if (raw.includes(marker)) { const parts = raw.split(marker); freeNotes = (parts[0] || '').trim(); received = (parts[1] || '').trim() }
+  else if (/\u00d7/.test(raw)) { received = raw; freeNotes = '' }
+  const rows = received.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const m = l.match(/^(.+?)\s*\u00d7\s*(.+?)\s*@\s*(.+)$/)
+    if (!m) return [l, '', '', '']
+    const qty = m[1].trim(), name = m[2].trim(), costStr = m[3].trim()
+    const q = parseFloat(qty) || 0
+    const c = parseFloat(String(costStr).replace(/[^0-9.]/g, '')) || 0
+    return [name, qty, costStr, money(q * c, cur)]
+  })
+
+  const allText = [company?.name, company?.email, company?.phone, vendor?.name, vendor?.email, raw].filter(Boolean).join(' ')
   const font = await ensureFont(pdf, allText)
 
-  let y = header(pdf, company, 'Purchase Bill', numberLabel, font)
-  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-  pdf.text(`Date: ${fmtDate(bill.bill_date)}`, 196, 33, { align: 'right' })
-  if (bill.due_date) pdf.text(`Due: ${fmtDate(bill.due_date)}`, 196, 37.5, { align: 'right' })
+  header(pdf, company, 'Purchase Bill', numberLabel, font)
 
-  // vendor block
-  y += 8
-  pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-  pdf.text('VENDOR', 14, y)
-  pdf.setFont(font, 'bold'); pdf.setFontSize(11); pdf.setTextColor(...INK)
-  pdf.text(vendor?.name || '', 14, y + 6)
-  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-  let yy = y + 11
-  for (const line of [vendor?.email, vendor?.phone].filter(Boolean)) { pdf.text(String(line), 14, yy); yy += 4.5 }
+  // ---- boxed info row: VENDOR (left) + BILL INFO (right) ----
+  const boxY = 46, boxH = 26
+  pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3)
+  pdf.roundedRect(14, boxY, 110, boxH, 1.5, 1.5)   // vendor box
+  pdf.roundedRect(130, boxY, 66, boxH, 1.5, 1.5)   // bill info box
 
-  // received / details (from bill notes)
-  let ny = Math.max(yy + 4, y + 20)
-  if (bill.notes) {
-    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-    pdf.text('Received / details', 14, ny)
-    pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK)
-    const lines = pdf.splitTextToSize(bill.notes, 182)
-    pdf.text(lines, 14, ny + 6)
-    ny += 6 + lines.length * 4.6
+  pdf.setFont(font, 'bold'); pdf.setFontSize(8); pdf.setTextColor(...MUTED)
+  pdf.text('VENDOR', 18, boxY + 6)
+  pdf.setFont(font, 'bold'); pdf.setFontSize(10); pdf.setTextColor(...INK)
+  pdf.text(vendor?.name || '', 18, boxY + 12)
+  pdf.setFont(font, 'normal'); pdf.setFontSize(8); pdf.setTextColor(...MUTED)
+  let vy = boxY + 17
+  for (const line of [vendor?.email, vendor?.phone].filter(Boolean)) { pdf.text(String(line), 18, vy); vy += 4 }
+
+  pdf.setFont(font, 'normal'); pdf.setFontSize(8); pdf.setTextColor(...MUTED)
+  const infoRow = (label, val, yy) => { pdf.setTextColor(...MUTED); pdf.text(label, 134, yy); pdf.setTextColor(...INK); pdf.text(String(val || '-'), 192, yy, { align: 'right' }) }
+  infoRow('Bill #', numberLabel, boxY + 7)
+  infoRow('Bill date', fmtDate(bill.bill_date), boxY + 13)
+  infoRow('Due', bill.due_date ? fmtDate(bill.due_date) : '-', boxY + 19)
+  infoRow('Status', String(bill.status || ''), boxY + 25)
+
+  // ---- items table (boxed grid) ----
+  let startY = boxY + boxH + 8
+  if (rows.length) {
+    autoTable(pdf, {
+      startY,
+      head: [['Item', 'Qty', 'Unit cost', 'Total']],
+      body: rows,
+      theme: 'grid',
+      styles: { font, fontSize: 9, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      bodyStyles: { fontSize: 9, textColor: INK, font },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+      margin: { left: 14, right: 14 },
+    })
+    startY = pdf.lastAutoTable.finalY
   }
 
-  // totals box (bottom-right)
+  // ---- notes box (free text, if any) ----
   const pageH = pdf.internal.pageSize.getHeight()
-  let ty = Math.max(ny + 10, pageH - 60, 210)
+  let ty = Math.max(startY + 10, pageH - 60, 200)
+  if (freeNotes) {
+    const nlines = pdf.splitTextToSize(freeNotes, 120)
+    pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3)
+    pdf.roundedRect(14, startY + 8, 120, 10 + nlines.length * 4.4, 1.5, 1.5)
+    pdf.setFont(font, 'bold'); pdf.setFontSize(8); pdf.setTextColor(...MUTED); pdf.text('NOTES', 18, startY + 14)
+    pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK); pdf.text(nlines, 18, startY + 19)
+  }
+
+  // ---- totals box (bottom-right) ----
   const right = 196, labelX = 150
   const tTop = ty
   const row = (label, val, bold) => {
