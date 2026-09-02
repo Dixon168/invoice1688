@@ -989,6 +989,15 @@ const EXTRA26 = {
 }
 for (const l of Object.keys(EXTRA26)) Object.assign(T[l], EXTRA26[l])
 
+const EXTRA27 = {
+  en: { f_units_per_ctn: 'Units per box (CTN)', f_units_per_ctn_ph: 'e.g. 20 · blank if sold loose', th_ctn: 'Boxes' },
+  zh: { f_units_per_ctn: '每箱单位数 (CTN)', f_units_per_ctn_ph: '如 20 · 散卖则留空', th_ctn: '箱数' },
+  es: { f_units_per_ctn: 'Unidades por caja (CTN)', f_units_per_ctn_ph: 'p. ej. 20 · vacío si suelto', th_ctn: 'Cajas' },
+  vi: { f_units_per_ctn: 'Số cái mỗi thùng (CTN)', f_units_per_ctn_ph: 'vd 20 · để trống nếu bán lẻ', th_ctn: 'Thùng' },
+  ko: { f_units_per_ctn: '박스당 수량 (CTN)', f_units_per_ctn_ph: '예: 20 · 낱개 판매면 비움', th_ctn: '박스' },
+}
+for (const l of Object.keys(EXTRA27)) Object.assign(T[l], EXTRA27[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

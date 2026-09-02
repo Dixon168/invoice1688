@@ -143,7 +143,7 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
       const name = it.product_name || it.description || ''
       const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
       const sub = [extra, it.detail].filter(Boolean).join('\n')
-      return [sub ? `${name}\n${sub}` : name, String(Number(it.quantity)), money(it.unit_price, cur), money(it.line_total, cur)]
+      return [sub ? `${name}\n${sub}` : name, it.ctn_qty && it.units_per_ctn ? `${Number(it.quantity)}\n(${Number(it.ctn_qty)} CTN×${it.units_per_ctn})` : String(Number(it.quantity)), money(it.unit_price, cur), money(it.line_total, cur)]
     }),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
@@ -265,7 +265,7 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
       const name = it.product_name || it.description || ''
       const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
       const sub = [extra, it.detail].filter(Boolean).join('\n')
-      return [sub ? `${name}\n${sub}` : name, String(Number(it.quantity))]
+      return [sub ? `${name}\n${sub}` : name, it.ctn_qty && it.units_per_ctn ? `${Number(it.quantity)} (${Number(it.ctn_qty)} CTN×${it.units_per_ctn})` : String(Number(it.quantity))]
     }),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },

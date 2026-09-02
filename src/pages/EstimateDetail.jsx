@@ -59,7 +59,7 @@ export default function EstimateDetail() {
     if (error) { setBusy(false); return alert(error.message) }
     const rows = items.map((it, idx) => ({
       invoice_id: inv.id, product_id: it.product_id || null, description: it.description, detail: it.detail || null,
-      quantity: it.quantity, unit_price: it.unit_price, tax_rate: it.tax_rate, line_total: it.line_total, sort_order: idx,
+      quantity: it.quantity, unit_price: it.unit_price, tax_rate: it.tax_rate, line_total: it.line_total, ctn_qty: it.ctn_qty, units_per_ctn: it.units_per_ctn, sort_order: idx,
     }))
     await supabase.from('invoice_items').insert(rows)
     await supabase.from('companies').update({ next_invoice_seq: seq + 1 }).eq('id', company.id)
@@ -135,7 +135,7 @@ export default function EstimateDetail() {
               {items.map(it => (
                 <tr key={it.id}>
                   <td className="py-2.5 text-ink"><div className="font-medium">{it.product_name || it.description}</div>{it.product_name && it.description && it.description !== it.product_name && <div className="text-xs text-ink/55">{it.description}</div>}{it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}</td>
-                  <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}</td>
+                  <td className="py-2.5 text-right tabular-nums">{Number(it.quantity)}{it.ctn_qty && it.units_per_ctn ? <div className="text-[10px] text-ink/45">{Number(it.ctn_qty)} CTN × {it.units_per_ctn}</div> : null}</td>
                   <td className="py-2.5 text-right tabular-nums">{money(it.unit_price, cur)}</td>
                   <td className="py-2.5 text-right font-medium tabular-nums">{money(it.line_total, cur)}</td>
                 </tr>

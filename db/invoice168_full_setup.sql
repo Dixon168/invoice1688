@@ -702,3 +702,11 @@ end $$;
 
 -- ===== payment note (e.g. Deposit) =====
 alter table public.payments add column if not exists note text;
+
+
+-- ===== packaging: units per box (CTN) =====
+alter table public.products       add column if not exists units_per_ctn integer;
+alter table public.invoice_items  add column if not exists ctn_qty       numeric(12,2);
+alter table public.invoice_items  add column if not exists units_per_ctn integer;
+alter table public.estimate_items add column if not exists ctn_qty       numeric(12,2);
+alter table public.estimate_items add column if not exists units_per_ctn integer;

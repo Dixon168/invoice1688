@@ -9,7 +9,7 @@ import { TextCombo } from '../components/Combo'
 import { adjustStock } from '../lib/inventory'
 import { useT } from '../i18n'
 
-const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: true, stock_quantity: 0, reorder_point: '', is_active: true }
+const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: true, stock_quantity: 0, reorder_point: '', units_per_ctn: '', is_active: true }
 
 const productFields = [
   { key: 'name', label: 'Name', type: 'text', required: true },
@@ -118,6 +118,7 @@ export default function Products() {
       track_inventory: !!form.track_inventory,
       stock_quantity: Number(form.stock_quantity) || 0,
       reorder_point: form.reorder_point === '' || form.reorder_point == null ? null : Number(form.reorder_point),
+      units_per_ctn: form.units_per_ctn === '' || form.units_per_ctn == null ? null : Number(form.units_per_ctn),
       is_active: form.is_active, company_id: company.id,
     }
     if (editing) await supabase.from('products').update(payload).eq('id', editing.id)
@@ -334,6 +335,7 @@ export default function Products() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label={t('f_selling_price')}><input className="input" type="number" step="0.01" value={form.unit_price} onChange={e => setForm({ ...form, unit_price: e.target.value })} /></Field>
+            <Field label={t('f_units_per_ctn') || 'Units per box (CTN)'}><input className="input" type="number" step="1" min="0" value={form.units_per_ctn} onChange={e => setForm({ ...form, units_per_ctn: e.target.value })} placeholder={t('f_units_per_ctn_ph') || 'e.g. 20 · leave blank if sold loose'} /></Field>
             <Field label={t('f_default_tax')}>
               <select className="input" value={form.tax_rate_id || ''} onChange={e => setForm({ ...form, tax_rate_id: e.target.value })}>
                 <option value="">No tax</option>

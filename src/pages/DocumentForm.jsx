@@ -24,7 +24,7 @@ const CFG = {
     primaryLabel: 'Save & send',
   },
 }
-const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', detail: '', quantity: 1, unit_price: 0, tax_rate: 0, taxable: true })
+const emptyItem = () => ({ key: Math.random().toString(36).slice(2), product_id: '', description: '', detail: '', quantity: 1, unit_price: 0, tax_rate: 0, taxable: true, ctn: "", units_per_ctn: null })
 
 export default function DocumentForm({ kind = 'invoice' }) {
   const cfg = CFG[kind]
@@ -86,7 +86,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
           const loaded = (its || []).map(i => {
             const prod = i.product_id ? prodMap[i.product_id] : null
             const taxable = prod ? !!prod.tax_rate_id : (Number(i.tax_rate) > 0)
-            return { key: i.id, product_id: i.product_id || '', description: i.description, detail: i.detail || '', quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate), taxable }
+            return { key: i.id, product_id: i.product_id || '', description: i.description, detail: i.detail || '', quantity: Number(i.quantity), unit_price: Number(i.unit_price), tax_rate: Number(i.tax_rate), taxable, ctn: i.ctn_qty ?? '', units_per_ctn: i.units_per_ctn ?? (prod?.units_per_ctn ?? null) }
           })
           setItems(loaded)
           const firstRate = loaded.find(l => Number(l.tax_rate) > 0)?.tax_rate || (defTax ? Number(defTax.rate) || 0 : 0)
@@ -149,7 +149,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
     setCustomers(prev => [...prev, data]); pickCustomer(data); setCustOpen(false)
   }
   const applyProduct = (idx, p) => {
-    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, detail: p.description || '', unit_price: Number(p.unit_price) || 0, taxable: !!p.tax_rate_id } : it))
+    setItems(items.map((it, i) => i === idx ? { ...it, product_id: p.id, description: p.name, detail: p.description || '', unit_price: Number(p.unit_price) || 0, taxable: !!p.tax_rate_id, units_per_ctn: p.units_per_ctn || null, ctn: '' } : it))
   }
   const createAndPick = async (idx, name) => {
     const { data, error } = await supabase.from('products').insert({ company_id: company.id, name, unit_price: Number(items[idx]?.unit_price) || 0 }).select('*').single()
@@ -211,6 +211,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
     const rows = items.map((it, idx) => ({
       [cfg.itemFK]: docId, product_id: it.product_id || null, description: it.description || '(item)', detail: it.detail || null,
       quantity: Number(it.quantity) || 0, unit_price: Number(it.unit_price) || 0,
+      ctn_qty: it.ctn === '' || it.ctn == null ? null : Number(it.ctn),
+      units_per_ctn: it.units_per_ctn || null,
       tax_rate: (isExempt || it.taxable === false) ? 0 : (Number(taxRate) || 0),
       line_total: Math.round((Number(it.quantity) || 0) * (Number(it.unit_price) || 0) * 100) / 100,
       sort_order: idx,
@@ -255,6 +257,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
             <thead className="bg-sand/60 text-left text-xs uppercase tracking-wide text-ink/50">
               <tr>
                 <th className="px-3 py-3 font-semibold">{t('th_item_desc')}</th>
+                <th className="w-20 px-3 py-3 text-right font-semibold">{t('th_ctn') || 'Boxes'}</th>
                 <th className="w-20 px-3 py-3 text-right font-semibold">{t('th_qty')}</th>
                 <th className="w-28 px-3 py-3 text-right font-semibold">{t('th_price')}</th>
                 <th className="w-28 px-3 py-3 text-right font-semibold">{t('th_amount')}</th>
@@ -271,7 +274,16 @@ export default function DocumentForm({ kind = 'invoice' }) {
                     <input className="input mt-1 py-1 text-xs text-ink/60" value={it.detail || ''} placeholder={t('ph_line_detail') || 'Description (optional)'}
                       onChange={e => setItem(idx, { detail: e.target.value })} />
                   </td>
-                  <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value })} /></td>
+                  <td className="px-3 py-2">
+                    {it.units_per_ctn ? (
+                      <input className="input py-1.5 text-right" type="number" step="1" min="0" value={it.ctn || ''}
+                        onChange={e => { const c = e.target.value; setItem(idx, { ctn: c, quantity: c === '' ? it.quantity : Math.round(Number(c) * Number(it.units_per_ctn)) }) }} />
+                    ) : <span className="block text-center text-xs text-ink/25">—</span>}
+                  </td>
+                  <td className="px-3 py-2">
+                    <input className="input py-1.5 text-right" type="number" step="0.01" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value, ctn: '' })} />
+                    {it.units_per_ctn ? <div className="mt-0.5 text-right text-[10px] text-ink/40">1 box = {it.units_per_ctn}{it.ctn ? ` · ${it.ctn}×${it.units_per_ctn}=${Math.round(Number(it.ctn) * Number(it.units_per_ctn))}` : ''}</div> : null}
+                  </td>
                   <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} /></td>
                   <td className="px-3 py-2 text-right font-medium tabular-nums">{money((Number(it.quantity) || 0) * (Number(it.unit_price) || 0), cur)}</td>
                   <td className="px-2 py-2"><button onClick={() => delItem(idx)} className="rounded-md p-1.5 text-ink/40 hover:bg-clay/10 hover:text-clay"><Trash2 size={16} /></button></td>
