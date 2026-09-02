@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -27,6 +27,7 @@ export default function VendorDetail() {
   const [bills, setBills] = useState([])
   const [payments, setPayments] = useState([])
   const [payOpen, setPayOpen] = useState(false)
+  const [openBill, setOpenBill] = useState(null)
 
   const load = async () => {
     const { data: vend } = await supabase.from('vendors').select('*').eq('id', id).maybeSingle()
@@ -86,14 +87,34 @@ export default function VendorDetail() {
                 {bills.map(b => {
                   const od = isOverdue(b.due_date, b.status)
                   const s = od ? BILL_STATUS.overdue : (BILL_STATUS[b.status] || BILL_STATUS.unpaid)
+                  const isOpen = openBill === b.id
                   return (
-                    <tr key={b.id}>
-                      <td className="px-5 py-2.5 font-semibold text-ink">{b.bill_number || '—'}</td>
-                      <td className="px-5 py-2.5 text-ink/55">{fmtDate(b.bill_date)}</td>
-                      <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{money(b.total, cur)}</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums text-clay">{money(b.amount_due, cur)}</td>
-                    </tr>
+                    <React.Fragment key={b.id}>
+                      <tr className="cursor-pointer hover:bg-sand/40" onClick={() => setOpenBill(isOpen ? null : b.id)}>
+                        <td className="px-5 py-2.5 font-semibold text-ink"><span className="mr-1 inline-block text-ink/40">{isOpen ? '▾' : '▸'}</span>{b.bill_number || '—'}</td>
+                        <td className="px-5 py-2.5 text-ink/55">{fmtDate(b.bill_date)}</td>
+                        <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">{money(b.total, cur)}</td>
+                        <td className="px-5 py-2.5 text-right tabular-nums text-clay">{money(b.amount_due, cur)}</td>
+                      </tr>
+                      {isOpen && (
+                        <tr className="bg-sand/30">
+                          <td colSpan={5} className="px-5 py-3">
+                            <div className="grid gap-3 sm:grid-cols-3">
+                              <div><div className="label">Bill date</div><div className="text-ink/80">{fmtDate(b.bill_date)}</div></div>
+                              <div><div className="label">Due</div><div className="text-ink/80">{b.due_date ? fmtDate(b.due_date) : '—'}</div></div>
+                              <div><div className="label">Paid / Due</div><div className="text-ink/80">{money(b.amount_paid, cur)} / <span className="text-clay">{money(b.amount_due, cur)}</span></div></div>
+                            </div>
+                            {b.notes ? (
+                              <div className="mt-3">
+                                <div className="label mb-1">Received / details</div>
+                                <pre className="whitespace-pre-wrap rounded-lg border border-black/10 bg-white p-3 text-xs leading-relaxed text-ink/80">{b.notes}</pre>
+                              </div>
+                            ) : <div className="mt-3 text-sm text-ink/45">No line details recorded for this bill.</div>}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   )
                 })}
               </tbody>
