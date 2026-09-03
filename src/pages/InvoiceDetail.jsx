@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Pencil, Trash2, Plus, FileDown, Package, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, fmtDate, todayISO, STATUS, ctnLabel } from '../lib/format'
+import { money, fmtDate, fmtDateTime, todayISO, STATUS, ctnLabel } from '../lib/format'
 import { recalcInvoice, recalcCustomer, applyStoreCredit } from '../lib/calc'
 import { reverseInvoiceInventory } from '../lib/inventory'
 import { documentPDF, packingSlipPDF } from '../lib/pdf'
@@ -54,7 +54,7 @@ export default function InvoiceDetail() {
     setBusy(true)
     await supabase.from('payments').insert({
       company_id: company.id, invoice_id: id, customer_id: inv.customer_id,
-      amount: amt, method: pay.method, payment_date: pay.payment_date, reference: pay.reference, note: pay.note || null,
+      amount: amt, method: pay.method, payment_date: pay.payment_date, reference: pay.reference, note: pay.note || null, paid_at: new Date().toISOString(),
     })
     await recalcInvoice(id)
     await recalcCustomer(inv.customer_id)
@@ -189,15 +189,30 @@ export default function InvoiceDetail() {
           <p className="py-6 text-center text-sm text-ink/50">No payments recorded yet.</p>
         ) : (
           <table className="w-full text-sm">
+            <thead className="text-left text-xs uppercase tracking-wide text-ink/45">
+              <tr>
+                <th className="py-2 font-semibold">{t('f_date')} / time</th>
+                <th className="py-2 font-semibold">{t('f_method') || 'Method'}</th>
+                <th className="py-2 font-semibold">{t('f_note') || 'Note'}</th>
+                <th className="py-2 text-right font-semibold">{t('m_paid') || 'Paid'}</th>
+                <th className="py-2 text-right font-semibold">{t('m_balance_due') || 'Balance'}</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-black/[.05]">
-              {payments.map(p => (
-                <tr key={p.id}>
-                  <td className="py-2.5 text-ink/70">{fmtDate(p.payment_date)}</td>
-                  <td className="py-2.5 capitalize text-ink/60">{p.method.replace('_', ' ')}</td>
-                  <td className="py-2.5 text-ink/60">{[p.note, p.reference].filter(Boolean).join(' · ')}</td>
-                  <td className="py-2.5 text-right font-medium tabular-nums">{money(p.amount, cur)}</td>
-                </tr>
-              ))}
+              {(() => {
+                const ordered = [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date)))
+                let run = 0
+                const withBal = ordered.map(p => { run += Number(p.amount) || 0; return { ...p, balance: Math.max(0, Math.round((Number(inv.total) - run) * 100) / 100) } })
+                return withBal.reverse().map(p => (
+                  <tr key={p.id}>
+                    <td className="py-2.5 text-ink/70">{p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date)}</td>
+                    <td className="py-2.5 capitalize text-ink/60">{p.method.replace('_', ' ')}</td>
+                    <td className="py-2.5 text-ink/60">{[p.note, p.reference].filter(Boolean).join(' · ')}</td>
+                    <td className="py-2.5 text-right font-medium tabular-nums text-moss-700">{money(p.amount, cur)}</td>
+                    <td className="py-2.5 text-right tabular-nums text-ink/60">{money(p.balance, cur)}</td>
+                  </tr>
+                ))
+              })()}
             </tbody>
           </table>
         )}

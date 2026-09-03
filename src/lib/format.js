@@ -47,3 +47,11 @@ export function ctnLabel(qty, upc) {
   if (rem === 0) return `${boxes} CTN`
   return `${boxes} CTN + ${rem}`
 }
+
+// date + time, e.g. "Jun 4, 2026, 2:37 PM"
+export function fmtDateTime(v) {
+  if (!v) return ''
+  const d = new Date(v)
+  if (isNaN(d.getTime())) return String(v)
+  return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}

@@ -5,7 +5,7 @@ import { vendorBillPDF } from '../lib/pdf'
 import { usePdfPreview, PdfPreview } from '../components/PdfPreview'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { money, fmtDate, isOverdue } from '../lib/format'
+import { money, fmtDate, isOverdue, fmtDateTime } from '../lib/format'
 import { recalcVendorBill, recalcVendor } from '../lib/calc'
 import { Spinner } from '../components/ui'
 import AllocatePayment from '../components/AllocatePayment'
@@ -55,7 +55,7 @@ export default function VendorDetail() {
     for (const r of rows) {
       await supabase.from('vendor_payments').insert({
         company_id: company.id, vendor_id: id, bill_id: r.id,
-        amount: r.amount, method: meta.method, payment_date: meta.payment_date, reference: meta.reference,
+        amount: r.amount, method: meta.method, payment_date: meta.payment_date, reference: meta.reference, paid_at: new Date().toISOString(),
       })
       await recalcVendorBill(r.id)
     }
@@ -93,7 +93,7 @@ export default function VendorDetail() {
                   const s = od ? BILL_STATUS.overdue : (BILL_STATUS[b.status] || BILL_STATUS.unpaid)
                   return (
                     <tr key={b.id} className="cursor-pointer hover:bg-sand/40" title="Open PDF"
-                      onClick={() => preview.open(() => vendorBillPDF({ bill: b, vendor: v, company, products: prods }, { preview: true }))}>
+                      onClick={() => preview.open(() => vendorBillPDF({ bill: b, vendor: v, company, products: prods, payments: payments.filter(pp => pp.bill_id === b.id) }, { preview: true }))}>
                       <td className="px-5 py-2.5 font-semibold text-ink">{b.bill_number || '—'}</td>
                       <td className="px-5 py-2.5 text-ink/55">{fmtDate(b.bill_date)}</td>
                       <td className="px-5 py-2.5"><span className={`badge ${s.cls}`}>{t(s.key)}</span></td>
@@ -112,15 +112,31 @@ export default function VendorDetail() {
           <div className="border-b border-black/[.07] px-5 py-3 font-display text-lg text-ink">{t('sec_payments_made')}</div>
           {payments.length === 0 ? <p className="px-5 py-8 text-center text-sm text-ink/50">No payments yet.</p> : (
             <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase tracking-wide text-ink/45">
+                <tr>
+                  <th className="px-5 py-2 font-semibold">{t('f_date')} / time</th>
+                  <th className="px-5 py-2 font-semibold">{t('th_bill') || 'Bill'}</th>
+                  <th className="px-5 py-2 font-semibold">{t('f_method') || 'Method'}</th>
+                  <th className="px-5 py-2 text-right font-semibold">{t('m_paid') || 'Paid'}</th>
+                  <th className="px-5 py-2 text-right font-semibold">{t('m_balance_due') || 'Balance'}</th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-black/[.05]">
-                {payments.map(p => (
-                  <tr key={p.id}>
-                    <td className="px-5 py-2.5 text-ink/70">{fmtDate(p.payment_date)}</td>
-                    <td className="px-5 py-2.5 text-ink/55">{p.bill?.bill_number || '—'}</td>
-                    <td className="px-5 py-2.5 capitalize text-ink/55">{p.method.replace('_', ' ')}</td>
-                    <td className="px-5 py-2.5 text-right font-medium tabular-nums">{money(p.amount, cur)}</td>
-                  </tr>
-                ))}
+                {(() => {
+                  const billTotal = {}; for (const b of bills) billTotal[b.id] = Number(b.total) || 0
+                  const asc = [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date)))
+                  const run = {}
+                  const withBal = asc.map(p => { run[p.bill_id] = (run[p.bill_id] || 0) + (Number(p.amount) || 0); const tot = billTotal[p.bill_id]; return { ...p, balance: tot != null ? Math.max(0, Math.round((tot - run[p.bill_id]) * 100) / 100) : null } })
+                  return withBal.reverse().map(p => (
+                    <tr key={p.id}>
+                      <td className="px-5 py-2.5 text-ink/70">{p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date)}</td>
+                      <td className="px-5 py-2.5 text-ink/55">{p.bill?.bill_number || '—'}</td>
+                      <td className="px-5 py-2.5 capitalize text-ink/55">{p.method.replace('_', ' ')}</td>
+                      <td className="px-5 py-2.5 text-right font-medium tabular-nums text-moss-700">{money(p.amount, cur)}</td>
+                      <td className="px-5 py-2.5 text-right tabular-nums text-ink/60">{p.balance == null ? '—' : money(p.balance, cur)}</td>
+                    </tr>
+                  ))
+                })()}
               </tbody>
             </table>
           )}

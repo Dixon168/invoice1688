@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { money, fmtDate, ctnLabel } from './format'
+import { money, fmtDate, fmtDateTime, ctnLabel } from './format'
 
 const INK = [17, 33, 27]
 const MUTED = [110, 120, 115]
@@ -205,23 +205,30 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
     pdf.text('Payments received', 14, py)
     autoTable(pdf, {
       startY: py + 3,
-      head: [['Date', 'Method', 'Note', 'Amount']],
-      body: [...payments]
-        .sort((a, b) => String(a.payment_date).localeCompare(String(b.payment_date)))
-        .map(p => [
-          fmtDate(p.payment_date),
-          String(p.method || '').replace('_', ' '),
-          [p.note, p.reference].filter(Boolean).join(' · '),
-          money(p.amount, cur),
-        ]),
-      foot: [['', '', 'Paid', money(d.amount_paid, cur)], ['', '', 'Amount due', money(d.amount_due, cur)]],
+      head: [['Date / time', 'Method', 'Note', 'Amount', 'Balance']],
+      body: (() => {
+        const asc = [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date)))
+        let run = 0
+        return asc.map(p => {
+          run += Number(p.amount) || 0
+          const bal = Math.max(0, Math.round((Number(d.total) - run) * 100) / 100)
+          return [
+            p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date),
+            String(p.method || '').replace('_', ' '),
+            [p.note, p.reference].filter(Boolean).join(' · '),
+            money(p.amount, cur),
+            money(bal, cur),
+          ]
+        })
+      })(),
+      foot: [['', '', '', 'Paid', money(d.amount_paid, cur)], ['', '', '', 'Amount due', money(d.amount_due, cur)]],
       theme: 'grid',
       styles: { font, fontSize: 8.5, lineColor: [220, 222, 218], lineWidth: 0.1 },
       headStyles: { fillColor: [240, 240, 236], textColor: INK, fontSize: 8.5, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
       footStyles: { fillColor: [248, 248, 245], textColor: INK, fontStyle: 'bold', font, halign: 'right' },
-      columnStyles: { 3: { halign: 'right' } },
+      columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' } },
       margin: { left: 14, right: 14 },
-      tableWidth: 150,
+      tableWidth: 182,
     })
     drawPageBorder(pdf)
   }
@@ -285,7 +292,7 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
 }
 
 // Vendor / receiving bill PDF (purchase side), styled like an invoice with boxed sections.
-export async function vendorBillPDF({ bill, vendor, company, products }, opts = {}) {
+export async function vendorBillPDF({ bill, vendor, company, products, payments }, opts = {}) {
   const pdf = new jsPDF()
   const cur = bill.currency || company?.default_currency || 'USD'
   const numberLabel = bill.bill_number || 'Bill'
@@ -383,6 +390,36 @@ export async function vendorBillPDF({ bill, vendor, company, products }, opts = 
   pdf.roundedRect(labelX - 8, tTop - 6, right - (labelX - 8) + 2, (ty - tTop) + 6, 1.5, 1.5)
 
   drawPageBorder(pdf)
+
+  // payment history for this bill
+  if ((payments || []).length > 0) {
+    let py = ty + 12
+    if (py > pdf.internal.pageSize.getHeight() - 50) { pdf.addPage(); py = 20 }
+    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    pdf.text('Payments made', 14, py)
+    autoTable(pdf, {
+      startY: py + 3,
+      head: [['Date / time', 'Method', 'Note', 'Amount', 'Balance']],
+      body: (() => {
+        const asc = [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date)))
+        let run = 0
+        return asc.map(p => {
+          run += Number(p.amount) || 0
+          const bal = Math.max(0, Math.round((Number(bill.total) - run) * 100) / 100)
+          return [p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date), String(p.method || '').replace('_', ' '), [p.note, p.reference].filter(Boolean).join(' · '), money(p.amount, cur), money(bal, cur)]
+        })
+      })(),
+      foot: [['', '', '', 'Paid', money(bill.amount_paid, cur)], ['', '', '', 'Amount due', money(bill.amount_due, cur)]],
+      theme: 'grid',
+      styles: { font, fontSize: 8.5, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      headStyles: { fillColor: [240, 240, 236], textColor: INK, fontSize: 8.5, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      footStyles: { fillColor: [248, 248, 245], textColor: INK, fontStyle: 'bold', font, halign: 'right' },
+      columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' } },
+      margin: { left: 14, right: 14 },
+      tableWidth: 182,
+    })
+    drawPageBorder(pdf)
+  }
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `bill-${numberLabel}.pdf` }
   pdf.save(`bill-${numberLabel}.pdf`)
 }
