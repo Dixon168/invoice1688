@@ -998,6 +998,15 @@ const EXTRA27 = {
 }
 for (const l of Object.keys(EXTRA27)) Object.assign(T[l], EXTRA27[l])
 
+const EXTRA_REP = {
+  en: { rep_title: 'Payments collected', rep_today: 'Today', rep_7d: 'Last 7 days', rep_month: 'This month', rep_total: 'Total collected', rep_payments: 'payments', rep_none: 'No payments in this range.', pm_credit: 'Store credit' },
+  zh: { rep_title: '收款汇总', rep_today: '今天', rep_7d: '近7天', rep_month: '本月', rep_total: '收款总额', rep_payments: '笔', rep_none: '此范围内暂无收款。', pm_credit: '门店余额' },
+  es: { rep_title: 'Pagos cobrados', rep_today: 'Hoy', rep_7d: 'Últimos 7 días', rep_month: 'Este mes', rep_total: 'Total cobrado', rep_payments: 'pagos', rep_none: 'Sin pagos en este rango.', pm_credit: 'Crédito' },
+  vi: { rep_title: 'Đã thu', rep_today: 'Hôm nay', rep_7d: '7 ngày qua', rep_month: 'Tháng này', rep_total: 'Tổng đã thu', rep_payments: 'lần', rep_none: 'Không có thanh toán trong khoảng này.', pm_credit: 'Tín dụng' },
+  ko: { rep_title: '수금 현황', rep_today: '오늘', rep_7d: '최근 7일', rep_month: '이번 달', rep_total: '총 수금액', rep_payments: '건', rep_none: '해당 기간 결제 없음.', pm_credit: '스토어 크레딧' },
+}
+for (const l of Object.keys(EXTRA_REP)) Object.assign(T[l], EXTRA_REP[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

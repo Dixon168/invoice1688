@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, STATUS } from '../lib/format'
 import { PageHeader, Spinner } from '../components/ui'
+import PaymentsReport from '../components/PaymentsReport'
 import { useT } from '../i18n'
 
 function Stat({ icon: Icon, label, value, tone = 'ink', onClick }) {
@@ -67,6 +68,8 @@ export default function Dashboard() {
         <Stat icon={AlertTriangle} label={t('stat_overdue')} value={`${data.overdueCount}`} tone="clay" onClick={() => navigate('/invoices?filter=overdue')} />
         <Stat icon={Wallet} label={t('stat_owe')} value={money(data.payable, cur)} tone="clay" onClick={() => navigate('/bills?filter=unpaid')} />
       </div>
+
+      <PaymentsReport currency={cur} />
 
       <div className="card mt-6 overflow-hidden">
         <div className="flex items-center justify-between border-b border-black/[.07] px-5 py-4">
