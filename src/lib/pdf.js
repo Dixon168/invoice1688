@@ -153,13 +153,59 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
     margin: { left: 14, right: 14 },
   })
 
-  // totals — anchored toward the bottom-right so the layout stays consistent even with one line item
+  // ---- bottom row: payments table on the LEFT, totals box on the RIGHT ----
   const tableEnd = pdf.lastAutoTable.finalY
-  const totalRowCount = 3 + (kind === 'invoice' ? 2 : 0)
-  const totalsHeight = totalRowCount * 6 + 6
   const pageH = pdf.internal.pageSize.getHeight()
-  let ty = Math.max(tableEnd + 12, pageH - 60, 230)
-  if (ty + totalsHeight > pageH - 16) ty = tableEnd + 12 // very long invoice: fall back to right after the table
+
+  const hasPay = kind === 'invoice' && (payments || []).length > 0
+  const payRows = hasPay ? [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date))) : []
+  const payHeight = hasPay ? (payRows.length + 2) * 6 + 12 : 0
+  const totalsRowCount = 3 + (kind === 'invoice' ? 2 : 0)
+  const totalsHeight = totalsRowCount * 6 + 10
+
+  // notes/terms sit just under the items table (left), above the bottom row
+  let ny = tableEnd + 10
+  if (d.notes || d.terms) {
+    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    if (d.notes) { pdf.text('Notes', 14, ny); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.notes, 118), 14, ny + 5); ny += 5 + pdf.splitTextToSize(d.notes, 118).length * 4.5 }
+    if (d.terms) { pdf.setFont(font, 'bold'); pdf.setTextColor(...MUTED); pdf.text('Terms', 14, ny + 3); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.terms, 118), 14, ny + 8); ny += 8 + pdf.splitTextToSize(d.terms, 118).length * 4.5 }
+    ny += 6
+  }
+
+  const bottomRowH = Math.max(payHeight, totalsHeight)
+  let rowY = Math.max(ny, pageH - 16 - bottomRowH)   // anchor toward the bottom for a professional look
+  if (rowY < ny) rowY = ny
+
+  // LEFT: payments table
+  if (hasPay) {
+    pdf.setFont(font, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(...MUTED)
+    pdf.text('Payments received', 14, rowY)
+    autoTable(pdf, {
+      startY: rowY + 2,
+      head: [['Date / time', 'Method', 'Amount', 'Balance']],
+      body: (() => {
+        let run = 0
+        return payRows.map(p => {
+          run += Number(p.amount) || 0
+          const bal = Math.max(0, Math.round((Number(d.total) - run) * 100) / 100)
+          const meth = String(p.method || '').replace('_', ' ')
+          const noteTxt = [p.note, p.reference].filter(Boolean).join(' \u00b7 ')
+          return [p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date), noteTxt ? `${meth} \u00b7 ${noteTxt}` : meth, money(p.amount, cur), money(bal, cur)]
+        })
+      })(),
+      foot: [['', 'Paid', '', money(d.amount_paid, cur)], ['', 'Amount due', '', money(d.amount_due, cur)]],
+      theme: 'grid',
+      styles: { font, fontSize: 7.5, lineColor: [220, 222, 218], lineWidth: 0.1, cellPadding: 1.5 },
+      headStyles: { fillColor: [240, 240, 236], textColor: INK, fontSize: 7.5, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      footStyles: { fillColor: [248, 248, 245], textColor: INK, fontStyle: 'bold', font, halign: 'right', fontSize: 7.5 },
+      columnStyles: { 0: { cellWidth: 34 }, 2: { halign: 'right', cellWidth: 22 }, 3: { halign: 'right', cellWidth: 24 } },
+      margin: { left: 14 },
+      tableWidth: 128,
+    })
+  }
+
+  // RIGHT: totals box (bottom-right)
+  let ty = rowY
   const right = 196, labelX = 150
   const tTop = ty
   const row = (label, val, bold) => {
@@ -169,69 +215,24 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   }
   row('Subtotal', money(d.subtotal, cur))
   row('Tax', money(d.tax_total, cur))
-  // divider before the grand total
   pdf.setDrawColor(200, 202, 198); pdf.setLineWidth(0.2); pdf.line(labelX - 4, ty - 4, right, ty - 4)
   row('Total', money(d.total, cur), true)
   if (kind === 'invoice') {
     row('Paid', money(d.amount_paid, cur))
     row('Amount due', money(d.amount_due, cur), true)
   }
-  // light box around the totals block
   pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3)
   pdf.roundedRect(labelX - 8, tTop - 6, right - (labelX - 8) + 2, (ty - tTop) + 6, 1.5, 1.5)
 
-  // notes / terms / payment instructions — start just under the table (left side, independent of totals)
-  let ny = tableEnd + 12
-  if (d.notes || d.terms) {
-    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-    if (d.notes) { pdf.text('Notes', 14, ny); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.notes, 120), 14, ny + 5); ny += 5 + pdf.splitTextToSize(d.notes, 120).length * 4.5 }
-    if (d.terms) { pdf.setFont(font, 'bold'); pdf.setTextColor(...MUTED); pdf.text('Terms', 14, ny + 4); pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(d.terms, 120), 14, ny + 9); ny += 9 + pdf.splitTextToSize(d.terms, 120).length * 4.5 }
-  }
-  ty = Math.max(ty, ny)
   if (kind === 'invoice' && company?.payment_instructions) {
-    ty += 8; pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-    pdf.text('Payment instructions', 14, ty)
-    pdf.setFont(font, 'normal'); pdf.setTextColor(...INK)
-    pdf.text(pdf.splitTextToSize(company.payment_instructions, 120), 14, ty + 5)
+    const piY = Math.max(ty, pdf.lastAutoTable ? pdf.lastAutoTable.finalY : ty) + 8
+    pdf.setFont(font, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(...MUTED)
+    pdf.text('Payment instructions', 14, piY)
+    pdf.setFont(font, 'normal'); pdf.setTextColor(...INK); pdf.setFontSize(9)
+    pdf.text(pdf.splitTextToSize(company.payment_instructions, 118), 14, piY + 5)
   }
 
   drawPageBorder(pdf)
-
-  // payment history (invoice only) — list each payment with date, method, note, amount
-  if (kind === 'invoice' && (payments || []).length > 0) {
-    let py = ty + 10
-    if (py > pdf.internal.pageSize.getHeight() - 50) { pdf.addPage(); py = 20 }
-    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-    pdf.text('Payments received', 14, py)
-    autoTable(pdf, {
-      startY: py + 3,
-      head: [['Date / time', 'Method', 'Note', 'Amount', 'Balance']],
-      body: (() => {
-        const asc = [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date)))
-        let run = 0
-        return asc.map(p => {
-          run += Number(p.amount) || 0
-          const bal = Math.max(0, Math.round((Number(d.total) - run) * 100) / 100)
-          return [
-            p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date),
-            String(p.method || '').replace('_', ' '),
-            [p.note, p.reference].filter(Boolean).join(' · '),
-            money(p.amount, cur),
-            money(bal, cur),
-          ]
-        })
-      })(),
-      foot: [['', '', '', 'Paid', money(d.amount_paid, cur)], ['', '', '', 'Amount due', money(d.amount_due, cur)]],
-      theme: 'grid',
-      styles: { font, fontSize: 8.5, lineColor: [220, 222, 218], lineWidth: 0.1 },
-      headStyles: { fillColor: [240, 240, 236], textColor: INK, fontSize: 8.5, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
-      footStyles: { fillColor: [248, 248, 245], textColor: INK, fontStyle: 'bold', font, halign: 'right' },
-      columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' } },
-      margin: { left: 14, right: 14 },
-      tableWidth: 182,
-    })
-    drawPageBorder(pdf)
-  }
 
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `${kind}-${numberLabel}.pdf` }
   pdf.save(`${kind}-${numberLabel}.pdf`)
@@ -376,50 +377,57 @@ export async function vendorBillPDF({ bill, vendor, company, products, payments 
     pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK); pdf.text(nlines, 18, startY + 19)
   }
 
-  // ---- totals box (bottom-right) ----
+  // ---- bottom row: payments (LEFT) + totals box (RIGHT) ----
+  const pageH2 = pdf.internal.pageSize.getHeight()
+  const hasPay = (payments || []).length > 0
+  const payRows = hasPay ? [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date))) : []
+  const payHeight = hasPay ? (payRows.length + 2) * 6 + 12 : 0
+  const totalsHeight = 3 * 6 + 10
+  const bottomRowH = Math.max(payHeight, totalsHeight)
+  let rowY = Math.max(startY + 12, pageH2 - 16 - bottomRowH)
+
+  if (hasPay) {
+    pdf.setFont(font, 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(...MUTED)
+    pdf.text('Payments made', 14, rowY)
+    autoTable(pdf, {
+      startY: rowY + 2,
+      head: [['Date / time', 'Method', 'Amount', 'Balance']],
+      body: (() => {
+        let run = 0
+        return payRows.map(p => {
+          run += Number(p.amount) || 0
+          const bal = Math.max(0, Math.round((Number(bill.total) - run) * 100) / 100)
+          const meth = String(p.method || '').replace('_', ' ')
+          const noteTxt = [p.note, p.reference].filter(Boolean).join(' \u00b7 ')
+          return [p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date), noteTxt ? `${meth} \u00b7 ${noteTxt}` : meth, money(p.amount, cur), money(bal, cur)]
+        })
+      })(),
+      foot: [['', 'Paid', '', money(bill.amount_paid, cur)], ['', 'Amount due', '', money(bill.amount_due, cur)]],
+      theme: 'grid',
+      styles: { font, fontSize: 7.5, lineColor: [220, 222, 218], lineWidth: 0.1, cellPadding: 1.5 },
+      headStyles: { fillColor: [240, 240, 236], textColor: INK, fontSize: 7.5, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+      footStyles: { fillColor: [248, 248, 245], textColor: INK, fontStyle: 'bold', font, halign: 'right', fontSize: 7.5 },
+      columnStyles: { 0: { cellWidth: 34 }, 2: { halign: 'right', cellWidth: 22 }, 3: { halign: 'right', cellWidth: 24 } },
+      margin: { left: 14 },
+      tableWidth: 128,
+    })
+  }
+
+  let ty2 = rowY
   const right = 196, labelX = 150
-  const tTop = ty
+  const tTop = ty2
   const row = (label, val, bold) => {
     pdf.setFont(font, bold ? 'bold' : 'normal'); pdf.setFontSize(bold ? 11 : 9); pdf.setTextColor(...INK)
-    pdf.text(label, labelX, ty); pdf.text(val, right, ty, { align: 'right' }); ty += bold ? 7 : 5.5
+    pdf.text(label, labelX, ty2); pdf.text(val, right, ty2, { align: 'right' }); ty2 += bold ? 7 : 5.5
   }
   row('Total', money(bill.total, cur), true)
   row('Paid', money(bill.amount_paid, cur))
   row('Amount due', money(bill.amount_due, cur), true)
   pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3)
-  pdf.roundedRect(labelX - 8, tTop - 6, right - (labelX - 8) + 2, (ty - tTop) + 6, 1.5, 1.5)
+  pdf.roundedRect(labelX - 8, tTop - 6, right - (labelX - 8) + 2, (ty2 - tTop) + 6, 1.5, 1.5)
 
   drawPageBorder(pdf)
 
-  // payment history for this bill
-  if ((payments || []).length > 0) {
-    let py = ty + 12
-    if (py > pdf.internal.pageSize.getHeight() - 50) { pdf.addPage(); py = 20 }
-    pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
-    pdf.text('Payments made', 14, py)
-    autoTable(pdf, {
-      startY: py + 3,
-      head: [['Date / time', 'Method', 'Note', 'Amount', 'Balance']],
-      body: (() => {
-        const asc = [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date)))
-        let run = 0
-        return asc.map(p => {
-          run += Number(p.amount) || 0
-          const bal = Math.max(0, Math.round((Number(bill.total) - run) * 100) / 100)
-          return [p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date), String(p.method || '').replace('_', ' '), [p.note, p.reference].filter(Boolean).join(' · '), money(p.amount, cur), money(bal, cur)]
-        })
-      })(),
-      foot: [['', '', '', 'Paid', money(bill.amount_paid, cur)], ['', '', '', 'Amount due', money(bill.amount_due, cur)]],
-      theme: 'grid',
-      styles: { font, fontSize: 8.5, lineColor: [220, 222, 218], lineWidth: 0.1 },
-      headStyles: { fillColor: [240, 240, 236], textColor: INK, fontSize: 8.5, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
-      footStyles: { fillColor: [248, 248, 245], textColor: INK, fontStyle: 'bold', font, halign: 'right' },
-      columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' } },
-      margin: { left: 14, right: 14 },
-      tableWidth: 182,
-    })
-    drawPageBorder(pdf)
-  }
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `bill-${numberLabel}.pdf` }
   pdf.save(`bill-${numberLabel}.pdf`)
 }
