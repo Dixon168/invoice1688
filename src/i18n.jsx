@@ -1048,6 +1048,15 @@ const EXTRA_VD = {
 }
 for (const l of Object.keys(EXTRA_VD)) Object.assign(T[l], EXTRA_VD[l])
 
+const EXTRA_CE = {
+  en: { credit_excess_title: 'Issue store credit?', credit_excess_neg: 'This is a credit note with a negative total.', credit_excess_over: 'The new total is lower than what has already been paid.', credit_excess_body: "The difference can be added to the customer's store credit.", credit_excess_confirm: 'Save & issue credit' },
+  zh: { credit_excess_title: '转为门店余额？', credit_excess_neg: '这是一张负数的贷记单。', credit_excess_over: '新总额低于已收款金额。', credit_excess_body: '差额可以转入该客户的门店余额。', credit_excess_confirm: '保存并转余额' },
+  es: { credit_excess_title: '¿Emitir crédito?', credit_excess_neg: 'Esta es una nota de crédito con total negativo.', credit_excess_over: 'El nuevo total es menor que lo ya pagado.', credit_excess_body: 'La diferencia puede añadirse al crédito del cliente.', credit_excess_confirm: 'Guardar y emitir crédito' },
+  vi: { credit_excess_title: 'Cấp tín dụng?', credit_excess_neg: 'Đây là phiếu ghi có với tổng âm.', credit_excess_over: 'Tổng mới thấp hơn số đã thanh toán.', credit_excess_body: 'Phần chênh lệch có thể chuyển vào tín dụng của khách.', credit_excess_confirm: 'Lưu & cấp tín dụng' },
+  ko: { credit_excess_title: '스토어 크레딧 발행?', credit_excess_neg: '총액이 음수인 크레딧 노트입니다.', credit_excess_over: '새 총액이 이미 결제된 금액보다 적습니다.', credit_excess_body: '차액을 고객 스토어 크레딧에 추가할 수 있습니다.', credit_excess_confirm: '저장 후 크레딧 발행' },
+}
+for (const l of Object.keys(EXTRA_CE)) Object.assign(T[l], EXTRA_CE[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

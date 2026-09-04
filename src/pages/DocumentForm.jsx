@@ -4,7 +4,7 @@ import { Plus, Trash2, ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, todayISO, ctnLabel } from '../lib/format'
-import { computeTotals, recalcCustomer, recalcInvoice } from '../lib/calc'
+import { computeTotals, recalcCustomer, recalcInvoice, addCustomerCredit } from '../lib/calc'
 import { applyInvoiceInventory } from '../lib/inventory'
 import { Spinner, Field, Modal } from '../components/ui'
 import { ItemCombo, NameCombo } from '../components/Combo'
@@ -59,6 +59,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const [collectFor, setCollectFor] = useState(null)
   const [collectDate, setCollectDate] = useState(todayISO())
   const [collectPays, setCollectPays] = useState([{ amount: '', method: 'cash', note: '' }])
+  const [creditExcessOpen, setCreditExcessOpen] = useState(false)
+  const [creditExcess, setCreditExcess] = useState({ amount: 0, status: 'sent', negative: false })
   const [notes, setNotes] = useState('')
   const [terms, setTerms] = useState('')
   const [items, setItems] = useState([emptyItem()])
@@ -171,15 +173,19 @@ export default function DocumentForm({ kind = 'invoice' }) {
     if (!customerId) { alert('Please choose a customer.'); return null }
     if (!number.trim()) { alert(`${cfg.title} number is required.`); return null }
     setBusy(true)
-    // protect paid invoices: don't let the new total drop below what's already been paid
+    // A negative total (credit note) or an edit that drops the total below what's been paid
+    // creates money owed back to the customer — offer to move it to store credit.
+    let priorPaid = 0
     if (editing && kind === 'invoice') {
-      const { data: pays } = await supabase.from('payments').select('amount').eq('invoice_id', id)
-      const paid = Math.round(((pays || []).reduce((s, p) => s + Number(p.amount || 0), 0)) * 100) / 100
-      if (paid > 0 && totals.total < paid - 0.001) {
-        setBusy(false)
-        alert(`${t('edit_paid_warn') || 'This invoice already has payments of'} ${money(paid, cur)}. ${t('edit_paid_warn2') || 'The new total'} ${money(totals.total, cur)} ${t('edit_paid_warn3') || 'is lower and would create an overpayment. Please raise the total, or remove/refund payments first.'}`)
-        return null
-      }
+      const { data: pays } = await supabase.from('payments').select('amount').eq('invoice_id', id).is('voided_at', null)
+      priorPaid = Math.round(((pays || []).reduce((s, p) => s + Number(p.amount || 0), 0)) * 100) / 100
+    }
+    const excess = Math.round((priorPaid - totals.total) * 100) / 100
+    if (kind === 'invoice' && excess > 0.001 && !opts.confirmedCredit) {
+      setBusy(false)
+      setCreditExcess({ amount: excess, status: newStatus || status, negative: totals.total < 0 })
+      setCreditExcessOpen(true)
+      return null
     }
     const c = customers.find(x => x.id === customerId)
     const hasDelivery = delivery.address || delivery.city || delivery.state || delivery.postal_code || delivery.country
@@ -223,9 +229,22 @@ export default function DocumentForm({ kind = 'invoice' }) {
       sort_order: idx,
     }))
     await supabase.from(cfg.itemTable).insert(rows)
+    if (kind === 'invoice' && opts.confirmedCredit && excess > 0.001) {
+      await supabase.from('payments').insert({
+        company_id: company.id, invoice_id: docId, customer_id: customerId,
+        amount: -excess, method: 'credit', payment_date: todayISO(),
+        note: totals.total < 0 ? 'Credit note → store credit' : 'Overpayment → store credit', paid_at: new Date().toISOString(),
+      })
+      await addCustomerCredit(customerId, excess)
+      await supabase.from('credits').insert({
+        company_id: company.id, customer_id: customerId, credit_date: todayISO(),
+        reason: 'overpayment', amount: excess, restock: false, notes: `${t('void_from_invoice') || 'From invoice'} ${number.trim()}`,
+      })
+    }
     if (kind === 'invoice') {
       await applyInvoiceInventory(company.id, docId, items)
       await recalcInvoice(docId); await recalcCustomer(customerId)
+      if (opts.confirmedCredit && excess > 0.001) await supabase.from('invoices').update({ status: 'paid' }).eq('id', docId)
     }
     setBusy(false)
     if (!opts.skipNav) navigate(`${cfg.basePath}/${docId}`)
@@ -448,6 +467,24 @@ export default function DocumentForm({ kind = 'invoice' }) {
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => { setCollectOpen(false); navigate(`${cfg.basePath}/${collectFor}`) }}>{t('cr_skip') || 'Skip'}</button>
           <button className="btn-primary" onClick={recordCollect} disabled={busy}>{busy ? t('saving') : (t('record_payment') || 'Record payment')}</button>
+        </div>
+      </Modal>
+      <Modal open={creditExcessOpen} onClose={() => setCreditExcessOpen(false)} title={t('credit_excess_title') || 'Issue store credit?'}>
+        <p className="text-sm text-ink/70">
+          {creditExcess.negative
+            ? (t('credit_excess_neg') || 'This is a credit note with a negative total.')
+            : (t('credit_excess_over') || 'The new total is lower than what has already been paid.')}
+          {' '}{t('credit_excess_body') || 'The difference can be added to the customer’s store credit.'}
+        </p>
+        <div className="mt-3 flex items-center justify-between rounded-lg bg-moss-50 p-3">
+          <span className="text-sm font-medium text-moss-700">{t('store_credit') || 'Store credit'}</span>
+          <span className="font-display text-xl text-moss-800 tabular-nums">+{money(creditExcess.amount, cur)}</span>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button className="btn-outline" onClick={() => setCreditExcessOpen(false)}>{t('cancel')}</button>
+          <button className="btn-primary" onClick={() => { setCreditExcessOpen(false); save(creditExcess.status, { confirmedCredit: true }) }} disabled={busy}>
+            {t('credit_excess_confirm') || 'Save & issue credit'}
+          </button>
         </div>
       </Modal>
     </div>
