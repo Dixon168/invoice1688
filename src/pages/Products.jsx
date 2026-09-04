@@ -9,7 +9,7 @@ import { TextCombo } from '../components/Combo'
 import { adjustStock } from '../lib/inventory'
 import { useT } from '../i18n'
 
-const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: true, stock_quantity: 0, reorder_point: '', units_per_ctn: '', is_active: true }
+const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, category: '', subcategory: '', tax_rate_id: '', preferred_vendor_id: '', track_inventory: true, stock_quantity: 0, reorder_point: '', reorder_qty: '', units_per_ctn: '', is_active: true }
 
 const productFields = [
   { key: 'name', label: 'Name', type: 'text', required: true },
@@ -118,6 +118,7 @@ export default function Products() {
       track_inventory: !!form.track_inventory,
       stock_quantity: Number(form.stock_quantity) || 0,
       reorder_point: form.reorder_point === '' || form.reorder_point == null ? null : Number(form.reorder_point),
+      reorder_qty: form.reorder_qty === '' || form.reorder_qty == null ? null : Number(form.reorder_qty),
       units_per_ctn: form.units_per_ctn === '' || form.units_per_ctn == null ? null : Number(form.units_per_ctn),
       is_active: form.is_active, company_id: company.id,
     }
@@ -357,6 +358,7 @@ export default function Products() {
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <Field label={t('f_stock_qty')}><input className="input" type="number" step="1" value={form.stock_quantity} onChange={e => setForm({ ...form, stock_quantity: e.target.value })} /></Field>
                 <Field label={t('f_reorder_point')}><input className="input" type="number" step="1" value={form.reorder_point} onChange={e => setForm({ ...form, reorder_point: e.target.value })} placeholder="e.g. 5" /></Field>
+                <Field label={t('f_reorder_qty') || 'Default order qty'}><input className="input" type="number" step="1" value={form.reorder_qty} onChange={e => setForm({ ...form, reorder_qty: e.target.value })} placeholder="e.g. 20" /></Field>
               </div>
             )}
           </div>

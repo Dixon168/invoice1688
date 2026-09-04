@@ -151,3 +151,21 @@ export function splitByMethod(rows, methodLines) {
   }
   return out
 }
+
+// recompute a purchase order's totals + status from its items
+export async function recalcPO(poId) {
+  const { data: its } = await supabase.from('purchase_order_items').select('qty_ordered, qty_received, unit_cost').eq('po_id', poId)
+  const rows = its || []
+  const subtotal = Math.round(rows.reduce((s, r) => s + (Number(r.qty_ordered) || 0) * (Number(r.unit_cost) || 0), 0) * 100) / 100
+  const { data: po } = await supabase.from('purchase_orders').select('status').eq('id', poId).maybeSingle()
+  let status = po?.status || 'draft'
+  if (status !== 'cancelled') {
+    const anyRecv = rows.some(r => (Number(r.qty_received) || 0) > 0)
+    const allRecv = rows.length > 0 && rows.every(r => (Number(r.qty_received) || 0) >= (Number(r.qty_ordered) || 0) - 0.001)
+    if (allRecv) status = 'received'
+    else if (anyRecv) status = 'partial'
+    // draft/ordered left as-is otherwise
+  }
+  await supabase.from('purchase_orders').update({ subtotal, total: subtotal, status }).eq('id', poId)
+  return { subtotal, status }
+}

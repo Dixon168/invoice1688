@@ -719,3 +719,24 @@ alter table public.vendor_payments add column if not exists paid_at timestamptz;
 
 -- ===== payment void marker (keep record, exclude from totals/reports) =====
 alter table public.payments add column if not exists voided_at timestamptz;
+
+
+-- ===== purchasing (PO) =====
+alter table public.products add column if not exists reorder_qty integer;
+create table if not exists public.purchase_orders (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references public.companies(id) on delete cascade,
+  vendor_id uuid references public.vendors(id) on delete set null,
+  po_number text, status text not null default 'draft',
+  order_date date not null default current_date, expected_date date, notes text,
+  subtotal numeric(12,2) not null default 0, total numeric(12,2) not null default 0,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.purchase_order_items (
+  id uuid primary key default gen_random_uuid(),
+  po_id uuid not null references public.purchase_orders(id) on delete cascade,
+  product_id uuid references public.products(id) on delete set null,
+  description text, qty_ordered numeric(12,2) not null default 0, qty_received numeric(12,2) not null default 0,
+  unit_cost numeric(12,2) not null default 0, units_per_ctn integer, ctn_qty numeric(12,2), sort_order int not null default 0
+);
+alter table public.vendor_bills add column if not exists po_id uuid references public.purchase_orders(id) on delete set null;
