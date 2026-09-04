@@ -25,7 +25,8 @@ export default function InvoiceDetail() {
   const [customer, setCustomer] = useState(null)
   const [payments, setPayments] = useState([])
   const [payOpen, setPayOpen] = useState(false)
-  const [pay, setPay] = useState({ amount: '', method: 'cash', payment_date: todayISO(), reference: '', note: '' })
+  const [payDate, setPayDate] = useState(todayISO())
+  const [payLines, setPayLines] = useState([{ amount: '', method: 'cash', note: '' }])
   const [busy, setBusy] = useState(false)
 
   const load = async () => {
@@ -46,22 +47,28 @@ export default function InvoiceDetail() {
   }
   useEffect(() => { load() }, [id])
 
+  const payEntered = payLines.reduce((s, p) => s + (Number(p.amount) || 0), 0)
   const recordPayment = async () => {
-    let amt = Number(pay.amount)
-    if (!amt || amt <= 0) return alert('Enter a valid amount.')
+    const valid = payLines.filter(p => (Number(p.amount) || 0) > 0)
+    if (valid.length === 0) return alert('Enter a valid amount.')
     const due = Number(inv.amount_due) || 0
-    if (amt > due) amt = due   // lock: no overpay
+    if (payEntered > due + 0.001) return alert(`${t('collect_over') || 'Payments exceed the amount due'} (${money(due, cur)})`)
     setBusy(true)
-    await supabase.from('payments').insert({
+    const now = new Date().toISOString()
+    const rows = valid.map(p => ({
       company_id: company.id, invoice_id: id, customer_id: inv.customer_id,
-      amount: amt, method: pay.method, payment_date: pay.payment_date, reference: pay.reference, note: pay.note || null, paid_at: new Date().toISOString(),
-    })
+      amount: Number(p.amount), method: p.method, payment_date: payDate, note: p.note || null, paid_at: now,
+    }))
+    await supabase.from('payments').insert(rows)
     await recalcInvoice(id)
     await recalcCustomer(inv.customer_id)
     setBusy(false); setPayOpen(false)
-    setPay({ amount: '', method: 'cash', payment_date: todayISO(), reference: '', note: '' })
+    setPayLines([{ amount: '', method: 'cash', note: '' }]); setPayDate(todayISO())
     load()
   }
+  const setPayLine = (i, patch) => setPayLines(payLines.map((p, idx) => idx === i ? { ...p, ...patch } : p))
+  const addPayLine = () => setPayLines([...payLines, { amount: '', method: 'cash', note: '' }])
+  const removePayLine = (i) => setPayLines(payLines.length > 1 ? payLines.filter((_, idx) => idx !== i) : payLines)
 
   const applyCreditOne = async () => {
     const avail = Number(customer?.credit_balance) || 0
@@ -178,7 +185,7 @@ export default function InvoiceDetail() {
           <h2 className="font-display text-xl text-ink">Payments</h2>
           <div className="flex gap-2">
             {inv.status !== 'paid' && inv.status !== 'cancelled' &&
-              <button className="btn-primary" onClick={() => { setPay(p => ({ ...p, amount: String(inv.amount_due) })); setPayOpen(true) }}><Plus size={16} /> {t('record_payment')}</button>}
+              <button className="btn-primary" onClick={() => { setPayDate(todayISO()); setPayLines([{ amount: String(inv.amount_due), method: 'cash', note: '' }]); setPayOpen(true) }}><Plus size={16} /> {t('record_payment')}</button>}
             {inv.status !== 'paid' && inv.status !== 'cancelled' && Number(customer?.credit_balance) > 0 && Number(inv.amount_due) > 0 &&
               <button className="btn-outline" onClick={applyCreditOne}><Wallet size={16} /> {t('cr_use')} ({money(Math.min(Number(customer.credit_balance), Number(inv.amount_due)), cur)})</button>}
             {inv.status === 'draft' && <button className="btn-outline" onClick={() => setStatus('sent')}>{t('mark_sent')}</button>}
@@ -218,24 +225,37 @@ export default function InvoiceDetail() {
         )}
       </div>
 
-      <Modal open={payOpen} onClose={() => setPayOpen(false)} title="Record payment">
-        <div className="space-y-4">
-          <Field label={t('f_amount')}><input className="input" type="number" step="0.01" value={pay.amount} onChange={e => setPay({ ...pay, amount: e.target.value })} /></Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label={t('f_date')}><input className="input" type="date" value={pay.payment_date} onChange={e => setPay({ ...pay, payment_date: e.target.value })} /></Field>
-            <Field label={t('f_method')}>
-              <select className="input" value={pay.method} onChange={e => setPay({ ...pay, method: e.target.value })}>
-                <option value="cash">{t('pm_cash')}</option><option value="card">{t('pm_card')}</option>
-                <option value="bank_transfer">{t('pm_bank')}</option><option value="check">{t('pm_check')}</option><option value="other">{t('pm_other')}</option>
-              </select>
-            </Field>
-          </div>
-          <Field label={t('f_note') || 'Note'}><input className="input" value={pay.note} onChange={e => setPay({ ...pay, note: e.target.value })} placeholder={t('pay_note_ph') || 'e.g. Deposit'} /></Field>
-          <Field label={t('f_reference')}><input className="input" value={pay.reference} onChange={e => setPay({ ...pay, reference: e.target.value })} placeholder={t('pay_ref_ph') || 'Optional (check #, txn id)'} /></Field>
+      <Modal open={payOpen} onClose={() => setPayOpen(false)} title={t('record_payment') || 'Record payment'} wide>
+        <div className="mb-3 flex items-center justify-between rounded-lg bg-sand/60 p-3 text-sm">
+          <span className="text-ink/60">{t('m_balance_due') || 'Amount due'}</span><span className="font-display text-lg text-ink tabular-nums">{money(inv.amount_due, cur)}</span>
         </div>
+        <div className="mb-3">
+          <Field label={t('f_date')}><input className="input w-48" type="date" value={payDate} onChange={e => setPayDate(e.target.value)} /></Field>
+        </div>
+        <div className="space-y-2">
+          {payLines.map((p, i) => (
+            <div key={i} className="flex items-end gap-2">
+              <div className="w-32"><span className="label">{(t('pay') || 'Payment') + ' ' + (i + 1)}</span>
+                <input className="input" type="number" step="0.01" min="0" value={p.amount} placeholder="0.00" onChange={e => setPayLine(i, { amount: e.target.value })} /></div>
+              <select className="input w-36" value={p.method} onChange={e => setPayLine(i, { method: e.target.value })}>
+                {['cash', 'card', 'bank_transfer', 'check', 'other'].map(m => <option key={m} value={m}>{t('pm_' + (m === 'bank_transfer' ? 'bank' : m)) || m}</option>)}
+              </select>
+              <input className="input flex-1" value={p.note} placeholder={t('f_note') || 'Note'} onChange={e => setPayLine(i, { note: e.target.value })} />
+              <button type="button" className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay disabled:opacity-30" disabled={payLines.length === 1} onClick={() => removePayLine(i)}><Trash2 size={16} /></button>
+            </div>
+          ))}
+        </div>
+        <button type="button" className="btn-ghost mt-2" onClick={addPayLine}><Plus size={16} /> {t('add_payment') || 'Add payment'}</button>
+
+        <div className="mt-4 space-y-1 border-t border-black/10 pt-3 text-sm">
+          <div className="flex justify-between"><span className="text-ink/60">{t('rep_total') || 'Total'}</span><span className="tabular-nums">{money(payEntered, cur)}</span></div>
+          <div className="flex justify-between font-semibold"><span className={payEntered > Number(inv.amount_due) + 0.001 ? 'text-clay' : 'text-ink/70'}>{t('m_balance_due') || 'Amount due'}</span><span className={`tabular-nums ${payEntered > Number(inv.amount_due) + 0.001 ? 'text-clay' : 'text-ink'}`}>{money(Math.max(0, Number(inv.amount_due) - payEntered), cur)}</span></div>
+          {payEntered > Number(inv.amount_due) + 0.001 && <div className="text-xs text-clay">{t('collect_over') || 'Payments exceed the amount due'}</div>}
+        </div>
+
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setPayOpen(false)}>{t('cancel')}</button>
-          <button className="btn-primary" onClick={recordPayment} disabled={busy}>{busy ? 'Saving…' : 'Record payment'}</button>
+          <button className="btn-primary" onClick={recordPayment} disabled={busy}>{busy ? t('saving') : (t('record_payment') || 'Record payment')}</button>
         </div>
       </Modal>
       <PdfPreview preview={preview} />
