@@ -1075,6 +1075,15 @@ const EXTRA_PO2 = {
 }
 for (const l of Object.keys(EXTRA_PO2)) Object.assign(T[l], EXTRA_PO2[l])
 
+const EXTRA_PO3 = {
+  en: { po_tab_build: 'Build PO', po_add_item: 'Add an item to order…', po_add_low: 'Add all low stock', po_cart_empty: 'No items yet', po_cart_empty_h: 'Add low-stock items or search for any product to start a purchase order.', po_select_vendor: 'Select vendor…', po_need_vendor: 'Please select a vendor.', low: 'Low' },
+  zh: { po_tab_build: '建采购单', po_add_item: '搜索添加商品…', po_add_low: '加入全部低库存', po_cart_empty: '还没有商品', po_cart_empty_h: '加入低库存商品，或搜索任意商品开始建采购单。', po_select_vendor: '选择供应商…', po_need_vendor: '请选择供应商。', low: '低' },
+  es: { po_tab_build: 'Crear OC', po_add_item: 'Agregar un artículo…', po_add_low: 'Agregar stock bajo', po_cart_empty: 'Sin artículos', po_cart_empty_h: 'Agrega artículos con stock bajo o busca cualquier producto.', po_select_vendor: 'Seleccionar proveedor…', po_need_vendor: 'Selecciona un proveedor.', low: 'Bajo' },
+  vi: { po_tab_build: 'Tạo PO', po_add_item: 'Thêm mặt hàng…', po_add_low: 'Thêm hàng tồn thấp', po_cart_empty: 'Chưa có mặt hàng', po_cart_empty_h: 'Thêm hàng tồn thấp hoặc tìm bất kỳ sản phẩm nào.', po_select_vendor: 'Chọn NCC…', po_need_vendor: 'Vui lòng chọn nhà cung cấp.', low: 'Thấp' },
+  ko: { po_tab_build: '발주 작성', po_add_item: '주문할 항목 추가…', po_add_low: '재고 부족 전체 추가', po_cart_empty: '항목 없음', po_cart_empty_h: '재고 부족 항목을 추가하거나 제품을 검색하세요.', po_select_vendor: '공급업체 선택…', po_need_vendor: '공급업체를 선택하세요.', low: '부족' },
+}
+for (const l of Object.keys(EXTRA_PO3)) Object.assign(T[l], EXTRA_PO3[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
