@@ -53,13 +53,18 @@ export default function InvoiceDetail() {
     if (valid.length === 0) return alert('Enter a valid amount.')
     const due = Number(inv.amount_due) || 0
     if (payEntered > due + 0.001) return alert(`${t('collect_over') || 'Payments exceed the amount due'} (${money(due, cur)})`)
+    const creditUsed = Math.round(valid.filter(p => p.method === 'credit').reduce((s, p) => s + (Number(p.amount) || 0), 0) * 100) / 100
+    const avail = Math.round((Number(customer?.credit_balance) || 0) * 100) / 100
+    if (creditUsed > avail + 0.001) return alert(`${t('store_credit') || 'Store credit'}: ${money(creditUsed, cur)} > ${money(avail, cur)}`)
     setBusy(true)
     const now = new Date().toISOString()
     const rows = valid.map(p => ({
       company_id: company.id, invoice_id: id, customer_id: inv.customer_id,
-      amount: Number(p.amount), method: p.method, payment_date: payDate, note: p.note || null, paid_at: now,
+      amount: Number(p.amount), method: p.method, payment_date: payDate,
+      note: p.method === 'credit' ? (p.note || 'Store credit applied') : (p.note || null), paid_at: now,
     }))
     await supabase.from('payments').insert(rows)
+    if (creditUsed > 0) await addCustomerCredit(inv.customer_id, -creditUsed)
     await recalcInvoice(id)
     await recalcCustomer(inv.customer_id)
     setBusy(false); setPayOpen(false)
@@ -262,6 +267,7 @@ export default function InvoiceDetail() {
                 <input className="input" type="number" step="0.01" min="0" value={p.amount} placeholder="0.00" onChange={e => setPayLine(i, { amount: e.target.value })} /></div>
               <select className="input w-36" value={p.method} onChange={e => setPayLine(i, { method: e.target.value })}>
                 {['cash', 'card', 'bank_transfer', 'check', 'other'].map(m => <option key={m} value={m}>{t('pm_' + (m === 'bank_transfer' ? 'bank' : m)) || m}</option>)}
+                {Number(customer?.credit_balance) > 0 && <option value="credit">{t('store_credit') || 'Store credit'} ({money(customer.credit_balance, cur)})</option>}
               </select>
               <input className="input flex-1" value={p.note} placeholder={t('f_note') || 'Note'} onChange={e => setPayLine(i, { note: e.target.value })} />
               <button type="button" className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay disabled:opacity-30" disabled={payLines.length === 1} onClick={() => removePayLine(i)}><Trash2 size={16} /></button>
