@@ -1007,6 +1007,15 @@ const EXTRA_REP = {
 }
 for (const l of Object.keys(EXTRA_REP)) Object.assign(T[l], EXTRA_REP[l])
 
+const EXTRA_COLLECT = {
+  en: { save_and_collect: 'Save & collect payment', collect_payment: 'Collect payment', pay_full: 'Full', cr_skip: 'Skip', record_payment: 'Record payment', pm_bank: 'Bank transfer', pm_cash: 'Cash', pm_card: 'Card', pm_check: 'Check', pm_other: 'Other', f_method: 'Method' },
+  zh: { save_and_collect: '保存并收款', collect_payment: '收款', pay_full: '全额', cr_skip: '跳过', record_payment: '记录付款', pm_bank: '银行转账', pm_cash: '现金', pm_card: '刷卡', pm_check: '支票', pm_other: '其他', f_method: '方式' },
+  es: { save_and_collect: 'Guardar y cobrar', collect_payment: 'Cobrar pago', pay_full: 'Total', cr_skip: 'Omitir', record_payment: 'Registrar pago', pm_bank: 'Transferencia', pm_cash: 'Efectivo', pm_card: 'Tarjeta', pm_check: 'Cheque', pm_other: 'Otro', f_method: 'Método' },
+  vi: { save_and_collect: 'Lưu & thu tiền', collect_payment: 'Thu tiền', pay_full: 'Toàn bộ', cr_skip: 'Bỏ qua', record_payment: 'Ghi nhận', pm_bank: 'Chuyển khoản', pm_cash: 'Tiền mặt', pm_card: 'Thẻ', pm_check: 'Séc', pm_other: 'Khác', f_method: 'Phương thức' },
+  ko: { save_and_collect: '저장 후 수금', collect_payment: '수금', pay_full: '전액', cr_skip: '건너뛰기', record_payment: '결제 기록', pm_bank: '계좌이체', pm_cash: '현금', pm_card: '카드', pm_check: '수표', pm_other: '기타', f_method: '방식' },
+}
+for (const l of Object.keys(EXTRA_COLLECT)) Object.assign(T[l], EXTRA_COLLECT[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

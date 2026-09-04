@@ -55,6 +55,9 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const [taxId, setTaxId] = useState('')
   const [taxRate, setTaxRate] = useState(0)
   const [paidAmount, setPaidAmount] = useState(0)
+  const [collectOpen, setCollectOpen] = useState(false)
+  const [collectFor, setCollectFor] = useState(null)
+  const [collectPay, setCollectPay] = useState({ amount: '', method: 'cash', payment_date: todayISO(), note: '' })
   const [notes, setNotes] = useState('')
   const [terms, setTerms] = useState('')
   const [items, setItems] = useState([emptyItem()])
@@ -163,9 +166,9 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const calcItems = useMemo(() => items.map(it => ({ ...it, tax_rate: it.taxable === false ? 0 : taxRate })), [items, taxRate])
   const totals = useMemo(() => computeTotals(calcItems, isExempt), [calcItems, isExempt])
 
-  const save = async (newStatus) => {
-    if (!customerId) return alert('Please choose a customer.')
-    if (!number.trim()) return alert(`${cfg.title} number is required.`)
+  const save = async (newStatus, opts = {}) => {
+    if (!customerId) { alert('Please choose a customer.'); return null }
+    if (!number.trim()) { alert(`${cfg.title} number is required.`); return null }
     setBusy(true)
     // protect paid invoices: don't let the new total drop below what's already been paid
     if (editing && kind === 'invoice') {
@@ -173,7 +176,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
       const paid = Math.round(((pays || []).reduce((s, p) => s + Number(p.amount || 0), 0)) * 100) / 100
       if (paid > 0 && totals.total < paid - 0.001) {
         setBusy(false)
-        return alert(`${t('edit_paid_warn') || 'This invoice already has payments of'} ${money(paid, cur)}. ${t('edit_paid_warn2') || 'The new total'} ${money(totals.total, cur)} ${t('edit_paid_warn3') || 'is lower and would create an overpayment. Please raise the total, or remove/refund payments first.'}`)
+        alert(`${t('edit_paid_warn') || 'This invoice already has payments of'} ${money(paid, cur)}. ${t('edit_paid_warn2') || 'The new total'} ${money(totals.total, cur)} ${t('edit_paid_warn3') || 'is lower and would create an overpayment. Please raise the total, or remove/refund payments first.'}`)
+        return null
       }
     }
     const c = customers.find(x => x.id === customerId)
@@ -203,7 +207,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
       await supabase.from(cfg.itemTable).delete().eq(cfg.itemFK, id)
     } else {
       const { data, error } = await supabase.from(cfg.table).insert(head).select('id').single()
-      if (error) { setBusy(false); return alert(error.message) }
+      if (error) { setBusy(false); alert(error.message); return null }
       docId = data.id
       await supabase.from('companies').update({ [cfg.seqField]: (company?.[cfg.seqField] || 1) + 1 }).eq('id', company.id)
       refreshCompany()
@@ -223,7 +227,29 @@ export default function DocumentForm({ kind = 'invoice' }) {
       await recalcInvoice(docId); await recalcCustomer(customerId)
     }
     setBusy(false)
-    navigate(`${cfg.basePath}/${docId}`)
+    if (!opts.skipNav) navigate(`${cfg.basePath}/${docId}`)
+    return docId
+  }
+
+  const saveAndCollect = async () => {
+    const docId = await save('sent', { skipNav: true })
+    if (!docId) return
+    setCollectFor(docId)
+    setCollectPay({ amount: String(totals.total), method: 'cash', payment_date: todayISO(), note: '' })
+    setCollectOpen(true)
+  }
+  const recordCollect = async () => {
+    const amt = Math.min(Number(collectPay.amount) || 0, totals.total)
+    if (amt <= 0) { alert(t('cr_need_amount') || 'Enter an amount'); return }
+    setBusy(true)
+    await supabase.from('payments').insert({
+      company_id: company.id, invoice_id: collectFor, customer_id: customerId,
+      amount: amt, method: collectPay.method, payment_date: collectPay.payment_date,
+      note: collectPay.note || null, paid_at: new Date().toISOString(),
+    })
+    await recalcInvoice(collectFor); await recalcCustomer(customerId)
+    setBusy(false); setCollectOpen(false)
+    navigate(`${cfg.basePath}/${collectFor}`)
   }
 
   if (loading) return <Spinner />
@@ -345,7 +371,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <button className="btn-outline" onClick={() => save('draft')} disabled={busy}>{t('save_draft')}</button>
-            <button className="btn-primary flex-1" onClick={() => save('sent')} disabled={busy}>{busy ? t('saving') : t(kind === 'invoice' ? 'mark_sent_save' : 'send_save')}</button>
+            <button className="btn-outline flex-1" onClick={() => save('sent')} disabled={busy}>{busy ? t('saving') : t(kind === 'invoice' ? 'mark_sent_save' : 'send_save')}</button>
+            {kind === 'invoice' && <button className="btn-primary flex-1" onClick={saveAndCollect} disabled={busy}>{t('save_and_collect') || 'Save & collect payment'}</button>}
           </div>
         </div>
       </div>
@@ -378,6 +405,36 @@ export default function DocumentForm({ kind = 'invoice' }) {
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setCustOpen(false)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={saveNewCust}>{t('save')}</button>
+        </div>
+      </Modal>
+
+      <Modal open={collectOpen} onClose={() => { setCollectOpen(false); navigate(`${cfg.basePath}/${collectFor}`) }} title={t('collect_payment') || 'Collect payment'}>
+        <div className="mb-3 rounded-lg bg-sand/60 p-3 text-sm">
+          <div className="flex justify-between"><span className="text-ink/60">{t('m_total')}</span><span className="tabular-nums">{money(totals.total, cur)}</span></div>
+        </div>
+        <div className="space-y-4">
+          <Field label={t('cr_amount') || 'Amount'}>
+            <div className="flex items-center gap-2">
+              <input className="input" type="number" step="0.01" min="0" max={totals.total} value={collectPay.amount} onChange={e => setCollectPay({ ...collectPay, amount: e.target.value })} autoFocus />
+              <button type="button" className="btn-outline whitespace-nowrap" onClick={() => setCollectPay({ ...collectPay, amount: String(totals.total) })}>{t('pay_full') || 'Full'}</button>
+            </div>
+          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={t('f_method') || 'Method'}>
+              <select className="input" value={collectPay.method} onChange={e => setCollectPay({ ...collectPay, method: e.target.value })}>
+                {['cash', 'card', 'bank_transfer', 'check', 'other'].map(m => <option key={m} value={m}>{t('pm_' + (m === 'bank_transfer' ? 'bank' : m)) || m}</option>)}
+              </select>
+            </Field>
+            <Field label={t('f_date')}><input className="input" type="date" value={collectPay.payment_date} onChange={e => setCollectPay({ ...collectPay, payment_date: e.target.value })} /></Field>
+          </div>
+          <Field label={t('f_note') || 'Note'}><input className="input" value={collectPay.note} onChange={e => setCollectPay({ ...collectPay, note: e.target.value })} placeholder={t('pay_note_ph') || 'e.g. Deposit'} /></Field>
+          {Number(collectPay.amount) > 0 && Number(collectPay.amount) < totals.total && (
+            <div className="text-sm text-clay">{t('m_balance_due') || 'Amount due'}: {money(Math.max(0, totals.total - (Number(collectPay.amount) || 0)), cur)}</div>
+          )}
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button className="btn-outline" onClick={() => { setCollectOpen(false); navigate(`${cfg.basePath}/${collectFor}`) }}>{t('cr_skip') || 'Skip'}</button>
+          <button className="btn-primary" onClick={recordCollect} disabled={busy}>{busy ? t('saving') : (t('record_payment') || 'Record payment')}</button>
         </div>
       </Modal>
     </div>
