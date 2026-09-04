@@ -86,12 +86,15 @@ export default function CustomerDetail() {
           <h1 className="font-display text-3xl text-ink">{c.name}</h1>
           <p className="mt-1 text-sm text-ink/60">{[c.email, c.phone, c.billing_city].filter(Boolean).join(' · ') || '—'}</p>
         </div>
-        <div className="text-right">
-          <div className="label">{t('m_balance_owed')}</div>
-          <div className="font-display text-3xl text-clay tabular-nums">{money(c.balance, cur)}</div>
-          {Number(c.credit_balance) > 0 && (
-            <div className="mt-1 text-sm text-moss-700">{t('cr_available')}: <b className="tabular-nums">{money(c.credit_balance, cur)}</b></div>
-          )}
+        <div className="flex gap-8 text-right">
+          <div>
+            <div className="label">{t('m_balance_owed')}</div>
+            <div className="font-display text-3xl text-clay tabular-nums">{money(c.balance, cur)}</div>
+          </div>
+          <div>
+            <div className="label">{t('store_credit') || 'Store credit'}</div>
+            <div className={`font-display text-3xl tabular-nums ${Number(c.credit_balance) > 0 ? 'text-moss-700' : 'text-ink/30'}`}>{money(c.credit_balance || 0, cur)}</div>
+          </div>
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button className="btn-primary" onClick={() => setPayOpen(true)} disabled={open.length === 0}><Plus size={16} /> {t('receive_payment')}</button>

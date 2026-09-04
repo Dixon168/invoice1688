@@ -1034,6 +1034,15 @@ const EXTRA_VOID = {
 }
 for (const l of Object.keys(EXTRA_VOID)) Object.assign(T[l], EXTRA_VOID[l])
 
+const EXTRA_SC = {
+  en: { store_credit: 'Store credit' },
+  zh: { store_credit: '门店余额' },
+  es: { store_credit: 'Crédito de tienda' },
+  vi: { store_credit: 'Tín dụng cửa hàng' },
+  ko: { store_credit: '스토어 크레딧' },
+}
+for (const l of Object.keys(EXTRA_SC)) Object.assign(T[l], EXTRA_SC[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
