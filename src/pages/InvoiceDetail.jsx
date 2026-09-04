@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Pencil, Trash2, Plus, FileDown, Package, Wallet } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Plus, FileDown, Package, Wallet, Ban } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, fmtDateTime, todayISO, STATUS, ctnLabel } from '../lib/format'
-import { recalcInvoice, recalcCustomer, applyStoreCredit } from '../lib/calc'
+import { recalcInvoice, recalcCustomer, applyStoreCredit, addCustomerCredit } from '../lib/calc'
 import { reverseInvoiceInventory } from '../lib/inventory'
 import { documentPDF, packingSlipPDF } from '../lib/pdf'
 import { usePdfPreview, PdfPreview } from '../components/PdfPreview'
@@ -75,6 +75,29 @@ export default function InvoiceDetail() {
     if (avail <= 0 || Number(inv.amount_due) <= 0) return
     await applyStoreCredit(company.id, inv.customer_id, avail, [{ id, amount_due: inv.amount_due }])
     load()
+  }
+
+  const [voidOpen, setVoidOpen] = useState(false)
+  const openVoid = () => {
+    if (Number(inv.amount_paid) > 0) { setVoidOpen(true); return }
+    if (!confirm(t('void_confirm_nopay') || 'Void this invoice? The stock will be returned to inventory.')) return
+    voidInvoice('simple')
+  }
+  const voidInvoice = async (mode) => {
+    setBusy(true)
+    const paid = Number(inv.amount_paid) || 0
+    if (mode === 'credit' && paid > 0) {
+      await supabase.from('credits').insert({
+        company_id: company.id, customer_id: inv.customer_id, credit_date: todayISO(),
+        reason: 'overpayment', amount: paid, restock: false, notes: `${t('void_from_invoice') || 'From voided invoice'} ${inv.invoice_number}`,
+      })
+      await addCustomerCredit(inv.customer_id, paid)
+    }
+    if (paid > 0) await supabase.from('payments').delete().eq('invoice_id', id)
+    await reverseInvoiceInventory(id)
+    await supabase.from('invoices').update({ status: 'cancelled' }).eq('id', id)
+    await recalcInvoice(id); await recalcCustomer(inv.customer_id)
+    setBusy(false); setVoidOpen(false); load()
   }
 
   const setStatus = async (status) => {
@@ -189,7 +212,7 @@ export default function InvoiceDetail() {
             {inv.status !== 'paid' && inv.status !== 'cancelled' && Number(customer?.credit_balance) > 0 && Number(inv.amount_due) > 0 &&
               <button className="btn-outline" onClick={applyCreditOne}><Wallet size={16} /> {t('cr_use')} ({money(Math.min(Number(customer.credit_balance), Number(inv.amount_due)), cur)})</button>}
             {inv.status === 'draft' && <button className="btn-outline" onClick={() => setStatus('sent')}>{t('mark_sent')}</button>}
-            {inv.status !== 'cancelled' && inv.status !== 'paid' && <button className="btn-ghost" onClick={() => setStatus('cancelled')}>{t('cancel')}</button>}
+            {inv.status !== 'cancelled' && <button className="btn-ghost" onClick={openVoid}><Ban size={16} /> {t('void') || 'Void'}</button>}
           </div>
         </div>
         {payments.length === 0 ? (
@@ -256,6 +279,22 @@ export default function InvoiceDetail() {
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setPayOpen(false)}>{t('cancel')}</button>
           <button className="btn-primary" onClick={recordPayment} disabled={busy}>{busy ? t('saving') : (t('record_payment') || 'Record payment')}</button>
+        </div>
+      </Modal>
+      <Modal open={voidOpen} onClose={() => setVoidOpen(false)} title={t('void_invoice') || 'Void invoice'}>
+        <p className="text-sm text-ink/70">{t('void_has_pay') || 'This invoice already has payments of'} <b>{money(inv.amount_paid, cur)}</b>. {t('void_choose') || 'Choose how to handle the money that was already paid:'}</p>
+        <div className="mt-4 space-y-2">
+          <button className="w-full rounded-xl border border-black/10 p-4 text-left hover:border-clay/40 hover:bg-clay/[.03]" onClick={() => voidInvoice('refund')} disabled={busy}>
+            <div className="font-semibold text-ink">{t('void_refund') || 'Refund & void'}</div>
+            <div className="text-sm text-ink/55">{t('void_refund_h') || 'Remove the payments (you hand the money back), return stock, and mark the invoice void.'}</div>
+          </button>
+          <button className="w-full rounded-xl border border-black/10 p-4 text-left hover:border-moss-600/40 hover:bg-moss-50" onClick={() => voidInvoice('credit')} disabled={busy}>
+            <div className="font-semibold text-ink">{t('void_credit') || 'Void & keep as store credit'}</div>
+            <div className="text-sm text-ink/55">{t('void_credit_h') || 'Move the paid amount to the customer’s store credit, return stock, and mark the invoice void.'}</div>
+          </button>
+        </div>
+        <div className="mt-5 flex justify-end">
+          <button className="btn-outline" onClick={() => setVoidOpen(false)}>{t('cancel')}</button>
         </div>
       </Modal>
       <PdfPreview preview={preview} />

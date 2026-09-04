@@ -234,6 +234,15 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
 
   drawPageBorder(pdf)
 
+  if (kind === 'invoice' && d.status === 'cancelled') {
+    pdf.saveGraphicsState && pdf.saveGraphicsState()
+    try { pdf.setGState(new pdf.GState({ opacity: 0.18 })) } catch (e) {}
+    pdf.setFont(font, 'bold'); pdf.setFontSize(90); pdf.setTextColor(194, 96, 59)
+    pdf.text('VOID', 105, 160, { align: 'center', angle: 30 })
+    try { pdf.setGState(new pdf.GState({ opacity: 1 })) } catch (e) {}
+    pdf.restoreGraphicsState && pdf.restoreGraphicsState()
+  }
+
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `${kind}-${numberLabel}.pdf` }
   pdf.save(`${kind}-${numberLabel}.pdf`)
 }

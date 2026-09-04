@@ -1025,6 +1025,15 @@ const EXTRA_COLLECT2 = {
 }
 for (const l of Object.keys(EXTRA_COLLECT2)) Object.assign(T[l], EXTRA_COLLECT2[l])
 
+const EXTRA_VOID = {
+  en: { void: 'Void', void_invoice: 'Void invoice', void_confirm_nopay: 'Void this invoice? The stock will be returned to inventory.', void_has_pay: 'This invoice already has payments of', void_choose: 'Choose how to handle the money that was already paid:', void_refund: 'Refund & void', void_refund_h: 'Remove the payments (you hand the money back), return stock, and mark the invoice void.', void_credit: 'Void & keep as store credit', void_credit_h: "Move the paid amount to the customer's store credit, return stock, and mark the invoice void.", void_from_invoice: 'From voided invoice' },
+  zh: { void: '作废', void_invoice: '作废发票', void_confirm_nopay: '确定作废这张发票吗？库存会退回。', void_has_pay: '这张发票已收款', void_choose: '请选择已收款项如何处理：', void_refund: '退款并作废', void_refund_h: '删除付款记录（你把钱退还客户），退回库存，并把发票标记为作废。', void_credit: '作废并转为客户余额', void_credit_h: '把已收金额转成客户的门店余额，退回库存，并把发票标记为作废。', void_from_invoice: '来自作废发票' },
+  es: { void: 'Anular', void_invoice: 'Anular factura', void_confirm_nopay: '¿Anular esta factura? El stock se devolverá al inventario.', void_has_pay: 'Esta factura ya tiene pagos de', void_choose: 'Elija cómo manejar el dinero ya pagado:', void_refund: 'Reembolsar y anular', void_refund_h: 'Elimina los pagos (devuelves el dinero), regresa el stock y anula la factura.', void_credit: 'Anular y dejar como crédito', void_credit_h: 'Pasa lo pagado al crédito del cliente, regresa el stock y anula la factura.', void_from_invoice: 'De factura anulada' },
+  vi: { void: 'Hủy', void_invoice: 'Hủy hóa đơn', void_confirm_nopay: 'Hủy hóa đơn này? Hàng sẽ được trả lại kho.', void_has_pay: 'Hóa đơn này đã có thanh toán', void_choose: 'Chọn cách xử lý số tiền đã trả:', void_refund: 'Hoàn tiền & hủy', void_refund_h: 'Xóa thanh toán (bạn trả tiền lại), trả hàng về kho và đánh dấu hủy.', void_credit: 'Hủy & giữ làm tín dụng', void_credit_h: 'Chuyển số đã trả thành tín dụng của khách, trả hàng về kho và đánh dấu hủy.', void_from_invoice: 'Từ hóa đơn đã hủy' },
+  ko: { void: '무효', void_invoice: '청구서 무효', void_confirm_nopay: '이 청구서를 무효 처리할까요? 재고가 복원됩니다.', void_has_pay: '이 청구서에는 이미 결제가 있습니다:', void_choose: '이미 지불된 금액 처리 방법을 선택하세요:', void_refund: '환불 후 무효', void_refund_h: '결제를 삭제(현금 환불)하고 재고를 복원하며 청구서를 무효 처리합니다.', void_credit: '무효 후 스토어 크레딧', void_credit_h: '지불액을 고객 스토어 크레딧으로 이동하고 재고를 복원하며 청구서를 무효 처리합니다.', void_from_invoice: '무효 청구서에서' },
+}
+for (const l of Object.keys(EXTRA_VOID)) Object.assign(T[l], EXTRA_VOID[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
