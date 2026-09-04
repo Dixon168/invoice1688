@@ -26,6 +26,7 @@ import VendorDetail from './pages/VendorDetail'
 import Bills from './pages/Bills'
 import Receiving from './pages/Receiving'
 import Purchasing from './pages/Purchasing'
+import PurchaseOrderDetail from './pages/PurchaseOrderDetail'
 import Credits from './pages/Credits'
 import Contact from './pages/Contact'
 import Features from './pages/Features'
@@ -82,6 +83,7 @@ function Shell() {
       <Route path="/bills" element={<Protected><Bills /></Protected>} />
       <Route path="/receiving" element={<Protected><Receiving /></Protected>} />
       <Route path="/purchasing" element={<Protected><Purchasing /></Protected>} />
+      <Route path="/purchasing/:id" element={<Protected><PurchaseOrderDetail /></Protected>} />
       <Route path="/credits" element={<Protected><Credits /></Protected>} />
       <Route path="/contact" element={<Protected><Contact /></Protected>} />
       <Route path="/tax-rates" element={<Protected><TaxRates /></Protected>} />

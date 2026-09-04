@@ -1066,6 +1066,15 @@ const EXTRA_PO = {
 }
 for (const l of Object.keys(EXTRA_PO)) Object.assign(T[l], EXTRA_PO[l])
 
+const EXTRA_PO2 = {
+  en: { po_mark_ordered: 'Mark as ordered', po_receive: 'Receive', po_expected: 'Expected', po_ordered: 'Ordered', po_received: 'Received', po_remaining: 'Remaining', po_receive_now: 'Receive', po_receive_hint: 'Enter how many of each item arrived. Stock and a vendor bill are updated automatically.', po_receive_confirm: 'Receive & update stock', po_receive_none: 'Enter quantities to receive.', po_cancel_confirm: 'Cancel this purchase order?' },
+  zh: { po_mark_ordered: '标记已下单', po_receive: '收货', po_expected: '预计到货', po_ordered: '订购', po_received: '已收', po_remaining: '待收', po_receive_now: '本次收', po_receive_hint: '填写每项实际到货数量，库存和供应商账单会自动更新。', po_receive_confirm: '收货并更新库存', po_receive_none: '请填写要收货的数量。', po_cancel_confirm: '取消这张采购单？' },
+  es: { po_mark_ordered: 'Marcar como ordenado', po_receive: 'Recibir', po_expected: 'Esperado', po_ordered: 'Ordenado', po_received: 'Recibido', po_remaining: 'Restante', po_receive_now: 'Recibir', po_receive_hint: 'Indica cuántos llegaron. El stock y una factura se actualizan solos.', po_receive_confirm: 'Recibir y actualizar stock', po_receive_none: 'Ingresa cantidades a recibir.', po_cancel_confirm: '¿Cancelar esta orden de compra?' },
+  vi: { po_mark_ordered: 'Đánh dấu đã đặt', po_receive: 'Nhận hàng', po_expected: 'Dự kiến', po_ordered: 'Đã đặt', po_received: 'Đã nhận', po_remaining: 'Còn lại', po_receive_now: 'Nhận', po_receive_hint: 'Nhập số lượng đã đến. Tồn kho và hóa đơn NCC tự cập nhật.', po_receive_confirm: 'Nhận & cập nhật kho', po_receive_none: 'Nhập số lượng cần nhận.', po_cancel_confirm: 'Hủy đơn mua này?' },
+  ko: { po_mark_ordered: '발주 확정', po_receive: '입고', po_expected: '예정', po_ordered: '주문', po_received: '입고됨', po_remaining: '남음', po_receive_now: '입고', po_receive_hint: '도착 수량을 입력하세요. 재고와 공급업체 청구서가 자동 갱신됩니다.', po_receive_confirm: '입고 & 재고 갱신', po_receive_none: '입고 수량을 입력하세요.', po_cancel_confirm: '이 발주를 취소할까요?' },
+}
+for (const l of Object.keys(EXTRA_PO2)) Object.assign(T[l], EXTRA_PO2[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

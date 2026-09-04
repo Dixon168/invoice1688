@@ -442,3 +442,60 @@ export async function vendorBillPDF({ bill, vendor, company, products, payments 
   if (opts.preview) return { url: pdf.output('bloburl'), filename: `bill-${numberLabel}.pdf` }
   pdf.save(`bill-${numberLabel}.pdf`)
 }
+
+// Purchase Order PDF (what you send to the vendor)
+export async function purchaseOrderPDF({ po, items, vendor, company }, opts = {}) {
+  const pdf = new jsPDF()
+  const cur = company?.default_currency || 'USD'
+  const numberLabel = po.po_number || 'PO'
+  const allText = [company?.name, company?.email, company?.phone, vendor?.name, vendor?.email, po?.notes, ...(items || []).map(i => i.description)].filter(Boolean).join(' ')
+  const font = await ensureFont(pdf, allText)
+
+  header(pdf, company, 'Purchase Order', numberLabel, font)
+
+  const boxY = 46, boxH = 26
+  pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3)
+  pdf.roundedRect(14, boxY, 110, boxH, 1.5, 1.5)
+  pdf.roundedRect(130, boxY, 66, boxH, 1.5, 1.5)
+  pdf.setFont(font, 'bold'); pdf.setFontSize(8); pdf.setTextColor(...MUTED); pdf.text('VENDOR', 18, boxY + 6)
+  pdf.setFont(font, 'bold'); pdf.setFontSize(10); pdf.setTextColor(...INK); pdf.text(vendor?.name || '—', 18, boxY + 12)
+  pdf.setFont(font, 'normal'); pdf.setFontSize(8); pdf.setTextColor(...MUTED)
+  let vy = boxY + 17
+  for (const line of [vendor?.email, vendor?.phone].filter(Boolean)) { pdf.text(String(line), 18, vy); vy += 4 }
+  const infoRow = (label, val, yy) => { pdf.setTextColor(...MUTED); pdf.text(label, 134, yy); pdf.setTextColor(...INK); pdf.text(String(val || '-'), 192, yy, { align: 'right' }) }
+  infoRow('PO #', numberLabel, boxY + 7)
+  infoRow('Order date', fmtDate(po.order_date), boxY + 13)
+  infoRow('Expected', po.expected_date ? fmtDate(po.expected_date) : '-', boxY + 19)
+  infoRow('Status', String(po.status || ''), boxY + 25)
+
+  autoTable(pdf, {
+    startY: boxY + boxH + 8,
+    head: [['Item', 'Qty', 'Unit cost', 'Total']],
+    body: (items || []).map(it => {
+      const q = Number(it.qty_ordered) || 0, c = Number(it.unit_cost) || 0
+      const qlabel = it.units_per_ctn ? `${q} (${ctnLabel(q, it.units_per_ctn)})` : String(q)
+      return [it.description || '', qlabel, money(c, cur), money(q * c, cur)]
+    }),
+    theme: 'grid',
+    styles: { font, fontSize: 9, lineColor: [220, 222, 218], lineWidth: 0.1 },
+    headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
+    bodyStyles: { fontSize: 9, textColor: INK, font },
+    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    margin: { left: 14, right: 14 },
+  })
+
+  let ty = pdf.lastAutoTable.finalY + 10
+  const right = 196, labelX = 150, tTop = ty
+  const row = (label, val, bold) => { pdf.setFont(font, bold ? 'bold' : 'normal'); pdf.setFontSize(bold ? 11 : 9); pdf.setTextColor(...INK); pdf.text(label, labelX, ty); pdf.text(val, right, ty, { align: 'right' }); ty += bold ? 7 : 5.5 }
+  row('Total', money(po.total, cur), true)
+  pdf.setDrawColor(210, 212, 208); pdf.setLineWidth(0.3); pdf.roundedRect(labelX - 8, tTop - 6, right - (labelX - 8) + 2, (ty - tTop) + 6, 1.5, 1.5)
+
+  if (po.notes) {
+    pdf.setFont(font, 'bold'); pdf.setFontSize(8); pdf.setTextColor(...MUTED); pdf.text('NOTES', 14, tTop)
+    pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK); pdf.text(pdf.splitTextToSize(po.notes, 120), 14, tTop + 5)
+  }
+
+  drawPageBorder(pdf)
+  if (opts.preview) return { url: pdf.output('bloburl'), filename: `po-${numberLabel}.pdf` }
+  pdf.save(`po-${numberLabel}.pdf`)
+}

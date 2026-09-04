@@ -82,6 +82,8 @@ export default function Purchasing() {
       await supabase.from('purchase_orders').update({ subtotal, total: subtotal }).eq('id', po.id)
     }
     setBusy(false)
+    const n = Object.keys(groups).length
+    if (n === 1 && firstPo) { navigate(`/purchasing/${firstPo}`); return }
     setTab('pending'); load()
   }
 
@@ -100,7 +102,7 @@ export default function Purchasing() {
         </thead>
         <tbody className="divide-y divide-black/[.06]">
           {list.map(o => (
-            <tr key={o.id} className="hover:bg-sand/40">
+            <tr key={o.id} className="cursor-pointer hover:bg-sand/40" onClick={() => navigate(`/purchasing/${o.id}`)}>
               <td className="px-4 py-3 font-semibold text-ink">{o.po_number || '—'}</td>
               <td className="px-4 py-3 text-ink/70">{o.vendor?.name || '—'}</td>
               <td className="px-4 py-3 text-ink/55">{fmtDate(o.order_date)}</td>
