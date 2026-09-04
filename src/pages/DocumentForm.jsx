@@ -57,7 +57,8 @@ export default function DocumentForm({ kind = 'invoice' }) {
   const [paidAmount, setPaidAmount] = useState(0)
   const [collectOpen, setCollectOpen] = useState(false)
   const [collectFor, setCollectFor] = useState(null)
-  const [collectPay, setCollectPay] = useState({ amount: '', method: 'cash', payment_date: todayISO(), note: '' })
+  const [collectDate, setCollectDate] = useState(todayISO())
+  const [collectPays, setCollectPays] = useState([{ amount: '', method: 'cash', note: '' }])
   const [notes, setNotes] = useState('')
   const [terms, setTerms] = useState('')
   const [items, setItems] = useState([emptyItem()])
@@ -235,22 +236,30 @@ export default function DocumentForm({ kind = 'invoice' }) {
     const docId = await save('sent', { skipNav: true })
     if (!docId) return
     setCollectFor(docId)
-    setCollectPay({ amount: String(totals.total), method: 'cash', payment_date: todayISO(), note: '' })
+    setCollectDate(todayISO())
+    setCollectPays([{ amount: String(totals.total), method: 'cash', note: '' }])
     setCollectOpen(true)
   }
+  const collectEntered = collectPays.reduce((s, p) => s + (Number(p.amount) || 0), 0)
   const recordCollect = async () => {
-    const amt = Math.min(Number(collectPay.amount) || 0, totals.total)
-    if (amt <= 0) { alert(t('cr_need_amount') || 'Enter an amount'); return }
+    const valid = collectPays.filter(p => (Number(p.amount) || 0) > 0)
+    if (valid.length === 0) { alert(t('cr_need_amount') || 'Enter an amount'); return }
+    if (collectEntered > totals.total + 0.001) { alert((t('collect_over') || 'Payments exceed the invoice total') + ` (${money(totals.total, cur)})`); return }
     setBusy(true)
-    await supabase.from('payments').insert({
+    const now = new Date().toISOString()
+    const rows = valid.map(p => ({
       company_id: company.id, invoice_id: collectFor, customer_id: customerId,
-      amount: amt, method: collectPay.method, payment_date: collectPay.payment_date,
-      note: collectPay.note || null, paid_at: new Date().toISOString(),
-    })
+      amount: Number(p.amount), method: p.method, payment_date: collectDate,
+      note: p.note || null, paid_at: now,
+    }))
+    await supabase.from('payments').insert(rows)
     await recalcInvoice(collectFor); await recalcCustomer(customerId)
     setBusy(false); setCollectOpen(false)
     navigate(`${cfg.basePath}/${collectFor}`)
   }
+  const setPayLine = (i, patch) => setCollectPays(collectPays.map((p, idx) => idx === i ? { ...p, ...patch } : p))
+  const addPayLine = () => setCollectPays([...collectPays, { amount: '', method: 'cash', note: '' }])
+  const removePayLine = (i) => setCollectPays(collectPays.length > 1 ? collectPays.filter((_, idx) => idx !== i) : collectPays)
 
   if (loading) return <Spinner />
 
@@ -408,30 +417,34 @@ export default function DocumentForm({ kind = 'invoice' }) {
         </div>
       </Modal>
 
-      <Modal open={collectOpen} onClose={() => { setCollectOpen(false); navigate(`${cfg.basePath}/${collectFor}`) }} title={t('collect_payment') || 'Collect payment'}>
-        <div className="mb-3 rounded-lg bg-sand/60 p-3 text-sm">
-          <div className="flex justify-between"><span className="text-ink/60">{t('m_total')}</span><span className="tabular-nums">{money(totals.total, cur)}</span></div>
+      <Modal open={collectOpen} onClose={() => { setCollectOpen(false); navigate(`${cfg.basePath}/${collectFor}`) }} title={t('collect_payment') || 'Collect payment'} wide>
+        <div className="mb-3 flex items-center justify-between rounded-lg bg-sand/60 p-3 text-sm">
+          <span className="text-ink/60">{t('m_total')}</span><span className="font-display text-lg text-ink tabular-nums">{money(totals.total, cur)}</span>
         </div>
-        <div className="space-y-4">
-          <Field label={t('cr_amount') || 'Amount'}>
-            <div className="flex items-center gap-2">
-              <input className="input" type="number" step="0.01" min="0" max={totals.total} value={collectPay.amount} onChange={e => setCollectPay({ ...collectPay, amount: e.target.value })} autoFocus />
-              <button type="button" className="btn-outline whitespace-nowrap" onClick={() => setCollectPay({ ...collectPay, amount: String(totals.total) })}>{t('pay_full') || 'Full'}</button>
-            </div>
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label={t('f_method') || 'Method'}>
-              <select className="input" value={collectPay.method} onChange={e => setCollectPay({ ...collectPay, method: e.target.value })}>
+        <div className="mb-3">
+          <Field label={t('f_date')}><input className="input w-48" type="date" value={collectDate} onChange={e => setCollectDate(e.target.value)} /></Field>
+        </div>
+        <div className="space-y-2">
+          {collectPays.map((p, i) => (
+            <div key={i} className="flex items-end gap-2">
+              <div className="w-32"><span className="label">{(t('pay') || 'Payment') + ' ' + (i + 1)}</span>
+                <input className="input" type="number" step="0.01" min="0" value={p.amount} placeholder="0.00" onChange={e => setPayLine(i, { amount: e.target.value })} /></div>
+              <select className="input w-36" value={p.method} onChange={e => setPayLine(i, { method: e.target.value })}>
                 {['cash', 'card', 'bank_transfer', 'check', 'other'].map(m => <option key={m} value={m}>{t('pm_' + (m === 'bank_transfer' ? 'bank' : m)) || m}</option>)}
               </select>
-            </Field>
-            <Field label={t('f_date')}><input className="input" type="date" value={collectPay.payment_date} onChange={e => setCollectPay({ ...collectPay, payment_date: e.target.value })} /></Field>
-          </div>
-          <Field label={t('f_note') || 'Note'}><input className="input" value={collectPay.note} onChange={e => setCollectPay({ ...collectPay, note: e.target.value })} placeholder={t('pay_note_ph') || 'e.g. Deposit'} /></Field>
-          {Number(collectPay.amount) > 0 && Number(collectPay.amount) < totals.total && (
-            <div className="text-sm text-clay">{t('m_balance_due') || 'Amount due'}: {money(Math.max(0, totals.total - (Number(collectPay.amount) || 0)), cur)}</div>
-          )}
+              <input className="input flex-1" value={p.note} placeholder={t('f_note') || 'Note'} onChange={e => setPayLine(i, { note: e.target.value })} />
+              <button type="button" className="rounded-md p-2 text-ink/40 hover:bg-clay/10 hover:text-clay disabled:opacity-30" disabled={collectPays.length === 1} onClick={() => removePayLine(i)}><Trash2 size={16} /></button>
+            </div>
+          ))}
         </div>
+        <button type="button" className="btn-ghost mt-2" onClick={addPayLine}><Plus size={16} /> {t('add_payment') || 'Add payment'}</button>
+
+        <div className="mt-4 space-y-1 border-t border-black/10 pt-3 text-sm">
+          <div className="flex justify-between"><span className="text-ink/60">{t('rep_total') || 'Total collected'}</span><span className="tabular-nums">{money(collectEntered, cur)}</span></div>
+          <div className="flex justify-between font-semibold"><span className={collectEntered > totals.total + 0.001 ? 'text-clay' : 'text-ink/70'}>{t('m_balance_due') || 'Amount due'}</span><span className={`tabular-nums ${collectEntered > totals.total + 0.001 ? 'text-clay' : 'text-ink'}`}>{money(Math.max(0, totals.total - collectEntered), cur)}</span></div>
+          {collectEntered > totals.total + 0.001 && <div className="text-xs text-clay">{t('collect_over') || 'Payments exceed the invoice total'}</div>}
+        </div>
+
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => { setCollectOpen(false); navigate(`${cfg.basePath}/${collectFor}`) }}>{t('cr_skip') || 'Skip'}</button>
           <button className="btn-primary" onClick={recordCollect} disabled={busy}>{busy ? t('saving') : (t('record_payment') || 'Record payment')}</button>

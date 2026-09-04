@@ -1016,6 +1016,15 @@ const EXTRA_COLLECT = {
 }
 for (const l of Object.keys(EXTRA_COLLECT)) Object.assign(T[l], EXTRA_COLLECT[l])
 
+const EXTRA_COLLECT2 = {
+  en: { pay: 'Payment', add_payment: 'Add payment', collect_over: 'Payments exceed the invoice total' },
+  zh: { pay: '付款', add_payment: '添加付款', collect_over: '付款金额超过发票总额' },
+  es: { pay: 'Pago', add_payment: 'Agregar pago', collect_over: 'Los pagos superan el total de la factura' },
+  vi: { pay: 'Thanh toán', add_payment: 'Thêm thanh toán', collect_over: 'Thanh toán vượt quá tổng hóa đơn' },
+  ko: { pay: '결제', add_payment: '결제 추가', collect_over: '결제 금액이 청구서 총액을 초과합니다' },
+}
+for (const l of Object.keys(EXTRA_COLLECT2)) Object.assign(T[l], EXTRA_COLLECT2[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
