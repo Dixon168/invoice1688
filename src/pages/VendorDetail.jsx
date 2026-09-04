@@ -6,7 +6,7 @@ import { usePdfPreview, PdfPreview } from '../components/PdfPreview'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, isOverdue, fmtDateTime } from '../lib/format'
-import { recalcVendorBill, recalcVendor } from '../lib/calc'
+import { recalcVendorBill, recalcVendor, splitByMethod } from '../lib/calc'
 import { Spinner } from '../components/ui'
 import AllocatePayment from '../components/AllocatePayment'
 import { useT } from '../i18n'
@@ -52,13 +52,16 @@ export default function VendorDetail() {
   const items = open.map(b => ({ id: b.id, label: b.bill_number || 'Bill', sub: `Due ${fmtDate(b.due_date)}`, due: Number(b.amount_due) }))
 
   const payBills = async (rows, meta) => {
-    for (const r of rows) {
+    const now = new Date().toISOString()
+    const split = splitByMethod(rows, meta.methodLines)
+    const affected = [...new Set(split.map(s => s.id))]
+    for (const s of split) {
       await supabase.from('vendor_payments').insert({
-        company_id: company.id, vendor_id: id, bill_id: r.id,
-        amount: r.amount, method: meta.method, payment_date: meta.payment_date, reference: meta.reference, paid_at: new Date().toISOString(),
+        company_id: company.id, vendor_id: id, bill_id: s.id,
+        amount: s.amount, method: s.method, payment_date: meta.payment_date, reference: meta.reference, paid_at: now,
       })
-      await recalcVendorBill(r.id)
     }
+    for (const bid of affected) await recalcVendorBill(bid)
     await recalcVendor(id)
     setPayOpen(false); load()
   }

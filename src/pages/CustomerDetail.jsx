@@ -4,7 +4,7 @@ import { ArrowLeft, Plus, FileText, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { money, fmtDate, STATUS, isOverdue } from '../lib/format'
-import { recalcInvoice, recalcCustomer, addCustomerCredit, applyStoreCredit } from '../lib/calc'
+import { recalcInvoice, recalcCustomer, addCustomerCredit, applyStoreCredit, splitByMethod } from '../lib/calc'
 import { Spinner } from '../components/ui'
 import AllocatePayment from '../components/AllocatePayment'
 import { useT } from '../i18n'
@@ -39,26 +39,31 @@ export default function CustomerDetail() {
   const items = open.map(i => ({ id: i.id, label: i.invoice_number, sub: `Due ${fmtDate(i.due_date)}`, due: Number(i.amount_due) }))
 
   const receivePayment = async (rows, meta) => {
+    const now = new Date().toISOString()
     let remCredit = Math.round(Number(meta.useCredit || 0) * 100) / 100
+    const cashRows = []
     for (const r of rows) {
       const amt = Math.round(Number(r.amount) * 100) / 100
       const creditPart = Math.round(Math.min(remCredit, amt) * 100) / 100
       if (creditPart > 0) {
         await supabase.from('payments').insert({
           company_id: company.id, invoice_id: r.id, customer_id: id,
-          amount: creditPart, method: 'credit', payment_date: meta.payment_date, notes: 'Store credit applied',
+          amount: creditPart, method: 'credit', payment_date: meta.payment_date, note: 'Store credit applied', paid_at: now,
         })
         remCredit = Math.round((remCredit - creditPart) * 100) / 100
       }
       const cashPart = Math.round((amt - creditPart) * 100) / 100
-      if (cashPart > 0) {
-        await supabase.from('payments').insert({
-          company_id: company.id, invoice_id: r.id, customer_id: id,
-          amount: cashPart, method: meta.method, payment_date: meta.payment_date, reference: meta.reference,
-        })
-      }
-      await recalcInvoice(r.id)
+      if (cashPart > 0) cashRows.push({ id: r.id, amount: cashPart })
     }
+    // split the non-credit portion across the chosen payment methods
+    const split = splitByMethod(cashRows, meta.methodLines)
+    for (const s of split) {
+      await supabase.from('payments').insert({
+        company_id: company.id, invoice_id: s.id, customer_id: id,
+        amount: s.amount, method: s.method, payment_date: meta.payment_date, reference: meta.reference, paid_at: now,
+      })
+    }
+    for (const r of rows) await recalcInvoice(r.id)
     const creditUsed = Math.round(((Number(meta.useCredit || 0)) - remCredit) * 100) / 100
     if (creditUsed > 0) await addCustomerCredit(id, -creditUsed)
     await recalcCustomer(id)

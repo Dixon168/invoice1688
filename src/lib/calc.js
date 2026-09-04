@@ -130,3 +130,24 @@ export async function applyStoreCredit(companyId, customerId, available, invoice
   if (used > 0) { await addCustomerCredit(customerId, -used); await recalcCustomer(customerId) }
   return used
 }
+
+// Split allocation rows across payment method lines (greedy), producing {id, amount, method} rows.
+// rows: [{id, amount}]  methodLines: [{method, amount}]
+export function splitByMethod(rows, methodLines) {
+  const methods = (methodLines || []).filter(m => (Number(m.amount) || 0) > 0).map(m => ({ method: m.method, remaining: Math.round((Number(m.amount) || 0) * 100) / 100 }))
+  const out = []
+  const r2 = (n) => Math.round(n * 100) / 100
+  if (methods.length === 0) return rows.map(r => ({ id: r.id, amount: r2(Number(r.amount) || 0), method: (methodLines && methodLines[0] && methodLines[0].method) || 'cash' }))
+  for (const r of rows) {
+    let amt = r2(Number(r.amount) || 0)
+    for (const m of methods) {
+      if (amt <= 0.001) break
+      if (m.remaining <= 0.001) continue
+      const take = r2(Math.min(amt, m.remaining))
+      out.push({ id: r.id, amount: take, method: m.method })
+      amt = r2(amt - take); m.remaining = r2(m.remaining - take)
+    }
+    if (amt > 0.001) out.push({ id: r.id, amount: amt, method: methods[0].method })
+  }
+  return out
+}
