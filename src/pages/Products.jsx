@@ -152,7 +152,7 @@ export default function Products() {
     setBusy(false); setAdj(null); load()
   }
 
-  const isLow = (p) => p.track_inventory && p.reorder_point != null && Number(p.stock_quantity) <= Number(p.reorder_point)
+  const isLow = (p) => p.track_inventory && Number(p.reorder_point) > 0 && Number(p.stock_quantity) <= Number(p.reorder_point)
 
   // category dropdowns sourced from the categories table (single source of truth)
   const topCats = cats.filter(c => !c.parent_id)
@@ -287,7 +287,7 @@ export default function Products() {
                     <td className="px-4 py-3 text-right tabular-nums text-ink/70">
                       {p.track_inventory ? (
                         <span className="inline-flex items-center gap-1.5">
-                          {p.reorder_point != null && Number(p.stock_quantity) <= Number(p.reorder_point) &&
+                          {Number(p.reorder_point) > 0 && Number(p.stock_quantity) <= Number(p.reorder_point) &&
                             <span className="badge bg-red-100 text-red-700">Low</span>}
                           {Number(p.stock_quantity)}
                         </span>

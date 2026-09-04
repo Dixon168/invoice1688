@@ -36,7 +36,7 @@ export default function Purchasing() {
   }
   useEffect(() => { load() }, [])
 
-  const lowStock = useMemo(() => (products || []).filter(p => p.track_inventory && p.reorder_point != null && Number(p.stock_quantity) <= Number(p.reorder_point)), [products])
+  const lowStock = useMemo(() => (products || []).filter(p => p.track_inventory && Number(p.reorder_point) > 0 && Number(p.stock_quantity) <= Number(p.reorder_point)), [products])
 
   useEffect(() => {
     // initialise selection rows for low-stock items
