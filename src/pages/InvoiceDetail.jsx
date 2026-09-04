@@ -98,7 +98,7 @@ export default function InvoiceDetail() {
       })
       await addCustomerCredit(inv.customer_id, paid)
     }
-    if (paid > 0) await supabase.from('payments').delete().eq('invoice_id', id)
+    if (paid > 0) await supabase.from('payments').update({ voided_at: new Date().toISOString() }).eq('invoice_id', id).is('voided_at', null)
     await reverseInvoiceInventory(id)
     await supabase.from('invoices').update({ status: 'cancelled' }).eq('id', id)
     await recalcInvoice(id); await recalcCustomer(inv.customer_id)
@@ -237,14 +237,14 @@ export default function InvoiceDetail() {
               {(() => {
                 const ordered = [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date)))
                 let run = 0
-                const withBal = ordered.map(p => { run += Number(p.amount) || 0; return { ...p, balance: Math.max(0, Math.round((Number(inv.total) - run) * 100) / 100) } })
+                const withBal = ordered.map(p => { if (!p.voided_at) run += Number(p.amount) || 0; return { ...p, balance: Math.max(0, Math.round((Number(inv.total) - run) * 100) / 100) } })
                 return withBal.reverse().map(p => (
-                  <tr key={p.id}>
-                    <td className="py-2.5 text-ink/70">{p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date)}</td>
-                    <td className="py-2.5 capitalize text-ink/60">{p.method.replace('_', ' ')}</td>
-                    <td className="py-2.5 text-ink/60">{[p.note, p.reference].filter(Boolean).join(' · ')}</td>
-                    <td className="py-2.5 text-right font-medium tabular-nums text-moss-700">{money(p.amount, cur)}</td>
-                    <td className="py-2.5 text-right tabular-nums text-ink/60">{money(p.balance, cur)}</td>
+                  <tr key={p.id} className={p.voided_at ? 'text-ink/35' : ''}>
+                    <td className="py-2.5">{p.paid_at ? fmtDateTime(p.paid_at) : fmtDate(p.payment_date)}</td>
+                    <td className="py-2.5 capitalize">{p.method.replace('_', ' ')}{p.voided_at && <span className="badge ml-1 bg-clay/10 text-clay">{t('voided') || 'Voided'}</span>}</td>
+                    <td className="py-2.5">{[p.note, p.reference].filter(Boolean).join(' · ')}</td>
+                    <td className={`py-2.5 text-right font-medium tabular-nums ${p.voided_at ? 'text-ink/35 line-through' : 'text-moss-700'}`}>{money(p.amount, cur)}</td>
+                    <td className="py-2.5 text-right tabular-nums text-ink/60">{p.voided_at ? '—' : money(p.balance, cur)}</td>
                   </tr>
                 ))
               })()}

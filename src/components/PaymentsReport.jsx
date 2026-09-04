@@ -37,6 +37,7 @@ export default function PaymentsReport({ currency }) {
     ;(async () => {
       setRows(null)
       const { data } = await supabase.from('payments').select('amount, method, payment_date')
+        .is('voided_at', null)
         .gte('payment_date', from).lte('payment_date', to)
       if (alive) setRows(data || [])
     })()

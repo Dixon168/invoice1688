@@ -19,7 +19,7 @@ export async function recalcInvoice(invoiceId) {
     .select('total, status').eq('id', invoiceId).maybeSingle()
   if (!inv) return
   const { data: pays } = await supabase.from('payments')
-    .select('amount').eq('invoice_id', invoiceId)
+    .select('amount').eq('invoice_id', invoiceId).is('voided_at', null)
   const paid = (pays || []).reduce((s, p) => s + Number(p.amount || 0), 0)
   const total = Number(inv.total || 0)
   const due = Math.round((total - paid) * 100) / 100

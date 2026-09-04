@@ -1043,6 +1043,11 @@ const EXTRA_SC = {
 }
 for (const l of Object.keys(EXTRA_SC)) Object.assign(T[l], EXTRA_SC[l])
 
+const EXTRA_VD = {
+  en: { voided: 'Voided' }, zh: { voided: '已作废' }, es: { voided: 'Anulado' }, vi: { voided: 'Đã hủy' }, ko: { voided: '무효' },
+}
+for (const l of Object.keys(EXTRA_VD)) Object.assign(T[l], EXTRA_VD[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

@@ -157,8 +157,9 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   const tableEnd = pdf.lastAutoTable.finalY
   const pageH = pdf.internal.pageSize.getHeight()
 
-  const hasPay = kind === 'invoice' && (payments || []).length > 0
-  const payRows = hasPay ? [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date))) : []
+  const livePayments = (payments || []).filter(p => !p.voided_at)
+  const hasPay = kind === 'invoice' && livePayments.length > 0
+  const payRows = hasPay ? [...livePayments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date))) : []
   const payHeight = hasPay ? (payRows.length + 2) * 6 + 12 : 0
   const totalsRowCount = 3 + (kind === 'invoice' ? 2 : 0)
   const totalsHeight = totalsRowCount * 6 + 10
@@ -388,8 +389,9 @@ export async function vendorBillPDF({ bill, vendor, company, products, payments 
 
   // ---- bottom row: payments (LEFT) + totals box (RIGHT) ----
   const pageH2 = pdf.internal.pageSize.getHeight()
-  const hasPay = (payments || []).length > 0
-  const payRows = hasPay ? [...payments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date))) : []
+  const livePayments = (payments || []).filter(p => !p.voided_at)
+  const hasPay = livePayments.length > 0
+  const payRows = hasPay ? [...livePayments].sort((a, b) => String(a.paid_at || a.payment_date).localeCompare(String(b.paid_at || b.payment_date))) : []
   const payHeight = hasPay ? (payRows.length + 2) * 6 + 12 : 0
   const totalsHeight = 3 * 6 + 10
   const bottomRowH = Math.max(payHeight, totalsHeight)

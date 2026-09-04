@@ -715,3 +715,7 @@ alter table public.estimate_items add column if not exists units_per_ctn integer
 -- ===== payment timestamp (date+time) =====
 alter table public.payments        add column if not exists paid_at timestamptz;
 alter table public.vendor_payments add column if not exists paid_at timestamptz;
+
+
+-- ===== payment void marker (keep record, exclude from totals/reports) =====
+alter table public.payments add column if not exists voided_at timestamptz;
