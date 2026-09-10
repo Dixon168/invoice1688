@@ -274,6 +274,16 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   let yy = y + 11
   const lines = hasDelivery ? addressLines(d, 'delivery_') : addressLines(d, 'billing_')
   for (const line of lines) { pdf.text(String(line), 14, yy); yy += 4.5 }
+  if (customer?.phone) { pdf.setFont(font, 'bold'); pdf.text(`Tel: ${customer.phone}`, 14, yy); pdf.setFont(font, 'normal'); yy += 5 }
+
+  // blank write-in line for C/O (care-of) — recipient name or the customer's own notes
+  yy += 6
+  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK)
+  pdf.text('C/O:', 14, yy)
+  pdf.setDrawColor(160, 165, 158); pdf.setLineWidth(0.25)
+  pdf.line(26, yy + 1, 120, yy + 1)
+  pdf.line(14, yy + 9, 120, yy + 9)
+  yy += 12
 
   // items: description + quantity only (no prices on a packing slip)
   autoTable(pdf, {
