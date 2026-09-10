@@ -46,6 +46,10 @@ export default function DocumentForm({ kind = 'invoice' }) {
 
   const [customerId, setCustomerId] = useState('')
   const [delivery, setDelivery] = useState({ address: '', city: '', state: '', postal_code: '', country: '' })
+  const [careOf, setCareOf] = useState('')
+  const [shipNote, setShipNote] = useState('')
+  const [showCO, setShowCO] = useState(false)
+  const [showNote, setShowNote] = useState(false)
   const [customerQuery, setCustomerQuery] = useState('')
   const [number, setNumber] = useState('')
   const [issueDate, setIssueDate] = useState(todayISO())
@@ -87,6 +91,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
           setIssueDate(d.issue_date); setEndDate(d[cfg.dateField] || ''); setStatus(d.status)
           setIsExempt(d.is_exempt); setNotes(d.notes || ''); setTerms(d.terms || '')
           setDelivery({ address: d.delivery_address || '', city: d.delivery_city || '', state: d.delivery_state || '', postal_code: d.delivery_postal_code || '', country: d.delivery_country || '' })
+          setCareOf(d.care_of || ''); setShipNote(d.ship_note || ''); setShowCO(!!d.care_of); setShowNote(!!d.ship_note)
           setEmployeeId(d.employee_id || '')
           const prodMap = {}; for (const pr of (p || [])) prodMap[pr.id] = pr
           const loaded = (its || []).map(i => {
@@ -204,6 +209,7 @@ export default function DocumentForm({ kind = 'invoice' }) {
       billing_address: c?.billing_address, billing_city: c?.billing_city, billing_state: c?.billing_state,
       billing_country: c?.billing_country, billing_postal_code: c?.billing_postal_code,
       delivery_address: dlv.address || null, delivery_city: dlv.city || null, delivery_state: dlv.state || null,
+      care_of: careOf || null, ship_note: shipNote || null,
       delivery_country: dlv.country || null, delivery_postal_code: dlv.postal_code || null,
     }
     if (kind === 'invoice') head.amount_due = totals.total
@@ -356,7 +362,19 @@ export default function DocumentForm({ kind = 'invoice' }) {
           <Field label={t('f_notes')}><textarea className="input min-h-[70px]" value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('ph_visible_customer')} /></Field>
           <Field label={t('f_terms')}><textarea className="input min-h-[60px]" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
           <div className="border-t border-black/10 pt-3">
-            <div className="label mb-2">{t('ship_to') || 'Ship to (delivery address)'}</div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="label !mb-0">{t('ship_to') || 'Ship to (delivery address)'}</span>
+              <div className="flex gap-1">
+                {!showCO && <button type="button" className="rounded-md border border-black/10 px-2 py-0.5 text-xs text-moss-700 hover:bg-moss-50" onClick={() => setShowCO(true)}>＋ C/O</button>}
+                {!showNote && <button type="button" className="rounded-md border border-black/10 px-2 py-0.5 text-xs text-moss-700 hover:bg-moss-50" onClick={() => setShowNote(true)}>＋ {t('f_note') || 'Note'}</button>}
+              </div>
+            </div>
+            {showCO && (
+              <div className="mb-2 flex items-center gap-1">
+                <input className="input py-1.5 text-sm" placeholder={t('f_care_of') || 'C/O — care-of recipient'} value={careOf} onChange={e => setCareOf(e.target.value)} />
+                <button type="button" className="rounded-md p-1.5 text-ink/40 hover:text-clay" onClick={() => { setCareOf(''); setShowCO(false) }}><Trash2 size={15} /></button>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div className="col-span-2"><input className="input py-1.5 text-sm" placeholder={t('f_delivery_address') || 'Delivery address'} value={delivery.address} onChange={e => setDelivery({ ...delivery, address: e.target.value })} /></div>
               <input className="input py-1.5 text-sm" placeholder={t('f_city')} value={delivery.city} onChange={e => setDelivery({ ...delivery, city: e.target.value })} />
@@ -364,6 +382,12 @@ export default function DocumentForm({ kind = 'invoice' }) {
               <input className="input py-1.5 text-sm" placeholder={t('f_postal_code')} value={delivery.postal_code} onChange={e => setDelivery({ ...delivery, postal_code: e.target.value })} />
               <input className="input py-1.5 text-sm" placeholder={t('f_country')} value={delivery.country} onChange={e => setDelivery({ ...delivery, country: e.target.value })} />
             </div>
+            {showNote && (
+              <div className="mt-2 flex items-start gap-1">
+                <textarea className="input min-h-[46px] py-1.5 text-sm" placeholder={t('ship_note_ph') || 'Note to print on tickets'} value={shipNote} onChange={e => setShipNote(e.target.value)} />
+                <button type="button" className="rounded-md p-1.5 text-ink/40 hover:text-clay" onClick={() => { setShipNote(''); setShowNote(false) }}><Trash2 size={15} /></button>
+              </div>
+            )}
           </div>
           <Field label={t('emp_made_by')}>
             <select className="input" value={employeeId} onChange={e => setEmployeeId(e.target.value)}>

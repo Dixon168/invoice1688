@@ -1084,6 +1084,15 @@ const EXTRA_PO3 = {
 }
 for (const l of Object.keys(EXTRA_PO3)) Object.assign(T[l], EXTRA_PO3[l])
 
+const EXTRA_CO = {
+  en: { f_care_of: 'C/O — care-of recipient', ship_note_ph: 'Note to print on tickets' },
+  zh: { f_care_of: 'C/O — 代收人', ship_note_ph: '要印在单据上的备注' },
+  es: { f_care_of: 'C/O — destinatario', ship_note_ph: 'Nota para imprimir en los tickets' },
+  vi: { f_care_of: 'C/O — người nhận hộ', ship_note_ph: 'Ghi chú in trên phiếu' },
+  ko: { f_care_of: 'C/O — 대리 수령인', ship_note_ph: '전표에 인쇄할 메모' },
+}
+for (const l of Object.keys(EXTRA_CO)) Object.assign(T[l], EXTRA_CO[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {

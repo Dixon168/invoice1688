@@ -740,3 +740,10 @@ create table if not exists public.purchase_order_items (
   unit_cost numeric(12,2) not null default 0, units_per_ctn integer, ctn_qty numeric(12,2), sort_order int not null default 0
 );
 alter table public.vendor_bills add column if not exists po_id uuid references public.purchase_orders(id) on delete set null;
+
+
+-- ===== ship-to C/O + note =====
+alter table public.invoices  add column if not exists care_of text;
+alter table public.estimates add column if not exists care_of text;
+alter table public.invoices  add column if not exists ship_note text;
+alter table public.estimates add column if not exists ship_note text;

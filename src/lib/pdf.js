@@ -120,18 +120,21 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   let yy = y + 11
   for (const line of [customer?.email, ...addressLines(d)].filter(Boolean)) { pdf.text(String(line), 14, yy); yy += 4.5 }
 
-  // ship to (only if a delivery address exists and differs from billing)
+  // ship to — show if delivery differs from billing, or a C/O / note was added
   const shipLines = addressLines(d, 'delivery_')
   const billLines = addressLines(d, 'billing_')
-  if (shipLines.length > 0 && shipLines.join('|') !== billLines.join('|')) {
+  if ((shipLines.length > 0 && shipLines.join('|') !== billLines.join('|')) || d.care_of || d.ship_note) {
     const sx = 110
     pdf.setFont(font, 'bold'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
     pdf.text('SHIP TO', sx, y)
     pdf.setFont(font, 'bold'); pdf.setFontSize(11); pdf.setTextColor(...INK)
     pdf.text(customer?.name || '', sx, y + 6)
-    pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
     let sy = y + 11
-    for (const line of shipLines) { pdf.text(String(line), sx, sy); sy += 4.5 }
+    if (d.care_of) { pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK); pdf.text(`C/O: ${d.care_of}`, sx, sy); sy += 5 }
+    pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
+    for (const line of (shipLines.length ? shipLines : billLines)) { pdf.text(String(line), sx, sy); sy += 4.5 }
+    if (customer?.phone) { pdf.setFont(font, 'bold'); pdf.setTextColor(...INK); pdf.text(`Tel: ${customer.phone}`, sx, sy); pdf.setFont(font, 'normal'); sy += 5 }
+    if (d.ship_note) { pdf.setTextColor(...INK); const nl = pdf.splitTextToSize(`Note: ${d.ship_note}`, 84); pdf.text(nl, sx, sy + 1); sy += 1 + nl.length * 4.4 }
     yy = Math.max(yy, sy)
   }
 
@@ -270,20 +273,18 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   pdf.text('SHIP TO', 14, y)
   pdf.setFont(font, 'bold'); pdf.setFontSize(11); pdf.setTextColor(...INK)
   pdf.text(customer?.name || '', 14, y + 6)
-  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
   let yy = y + 11
+  if (d.care_of) { pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK); pdf.text(`C/O: ${d.care_of}`, 14, yy); yy += 5 }
+  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...MUTED)
   const lines = hasDelivery ? addressLines(d, 'delivery_') : addressLines(d, 'billing_')
   for (const line of lines) { pdf.text(String(line), 14, yy); yy += 4.5 }
-  if (customer?.phone) { pdf.setFont(font, 'bold'); pdf.text(`Tel: ${customer.phone}`, 14, yy); pdf.setFont(font, 'normal'); yy += 5 }
-
-  // blank write-in line for C/O (care-of) — recipient name or the customer's own notes
-  yy += 6
-  pdf.setFont(font, 'normal'); pdf.setFontSize(9); pdf.setTextColor(...INK)
-  pdf.text('C/O:', 14, yy)
-  pdf.setDrawColor(160, 165, 158); pdf.setLineWidth(0.25)
-  pdf.line(26, yy + 1, 120, yy + 1)
-  pdf.line(14, yy + 9, 120, yy + 9)
-  yy += 12
+  if (customer?.phone) { pdf.setFont(font, 'bold'); pdf.setTextColor(...INK); pdf.text(`Tel: ${customer.phone}`, 14, yy); pdf.setFont(font, 'normal'); yy += 5 }
+  if (d.ship_note) {
+    pdf.setTextColor(...INK); pdf.setFontSize(9)
+    const nl = pdf.splitTextToSize(`Note: ${d.ship_note}`, 120)
+    pdf.text(nl, 14, yy + 1); yy += 1 + nl.length * 4.4
+  }
+  yy += 2
 
   // items: description + quantity only (no prices on a packing slip)
   autoTable(pdf, {
