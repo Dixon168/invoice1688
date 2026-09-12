@@ -141,7 +141,7 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   // items
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
-    head: [['Product / Description', 'SKU', 'Qty', 'Unit price', 'Amount']],
+    head: [['Product / Description', 'UPC', 'Qty', 'Unit price', 'Amount']],
     body: (items || []).map(it => {
       const name = it.product_name || it.description || ''
       const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
@@ -290,7 +290,7 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   // items: description + quantity only (no prices on a packing slip)
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
-    head: [['Description', 'SKU', 'Qty packed']],
+    head: [['Description', 'UPC', 'Qty packed']],
     body: (items || []).map(it => {
       const name = it.product_name || it.description || ''
       const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
@@ -376,7 +376,7 @@ export async function vendorBillPDF({ bill, vendor, company, products, payments 
   if (rows.length) {
     autoTable(pdf, {
       startY,
-      head: [['Item', 'SKU', 'Qty', 'Unit cost', 'Total']],
+      head: [['Item', 'UPC', 'Qty', 'Unit cost', 'Total']],
       body: rows,
       theme: 'grid',
       styles: { font, fontSize: 9, lineColor: [220, 222, 218], lineWidth: 0.1 },
@@ -482,7 +482,7 @@ export async function purchaseOrderPDF({ po, items, vendor, company }, opts = {}
 
   autoTable(pdf, {
     startY: boxY + boxH + 8,
-    head: [['Item', 'SKU', 'Qty', 'Unit cost', 'Total']],
+    head: [['Item', 'UPC', 'Qty', 'Unit cost', 'Total']],
     body: (items || []).map(it => {
       const q = Number(it.qty_ordered) || 0, c = Number(it.unit_cost) || 0
       const qlabel = it.units_per_ctn ? `${q} (${ctnLabel(q, it.units_per_ctn)})` : String(q)

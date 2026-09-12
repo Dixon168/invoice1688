@@ -13,7 +13,7 @@ const blank = { name: '', sku: '', description: '', unit_price: 0, cost: 0, cate
 
 const productFields = [
   { key: 'name', label: 'Name', type: 'text', required: true },
-  { key: 'sku', label: 'SKU', type: 'text' },
+  { key: 'sku', label: 'UPC', type: 'text' },
   { key: 'description', label: 'Description', type: 'text' },
   { key: 'category', label: 'Category', type: 'text' },
   { key: 'subcategory', label: 'Subcategory', type: 'text' },
@@ -24,7 +24,7 @@ const productFields = [
   { key: 'reorder_point', label: 'Reorder point', type: 'number' },
   { key: 'tax_rate_name', label: 'Tax rate (optional)', type: 'text' },
 ]
-const productExample = ['Widget A', 'SKU-001', 'Sample item', 'Beverages', 'Coffee', 5, 9.99, 'yes', 100, 10, '(leave blank = default tax)']
+const productExample = ['Widget A', 'UPC-001', 'Sample item', 'Beverages', 'Coffee', 5, 9.99, 'yes', 100, 10, '(leave blank = default tax)']
 
 export default function Products() {
   const { company } = useAuth()
