@@ -38,7 +38,13 @@ export default function PurchaseOrderDetail() {
       supabase.from('purchase_order_items').select('*').eq('po_id', id).order('sort_order'),
       p.vendor_id ? supabase.from('vendors').select('*').eq('id', p.vendor_id).maybeSingle() : Promise.resolve({ data: null }),
     ])
-    setItems(its || []); setVendor(v || null)
+    setVendor(v || null)
+    const pids = [...new Set((its || []).map(x => x.product_id).filter(Boolean))]
+    if (pids.length) {
+      const { data: prods } = await supabase.from('products').select('id, sku').in('id', pids)
+      const smap = {}; for (const pr of (prods || [])) smap[pr.id] = pr.sku
+      setItems((its || []).map(x => ({ ...x, product_sku: smap[x.product_id] || '' })))
+    } else setItems(its || [])
   }
   useEffect(() => { load() }, [id])
 

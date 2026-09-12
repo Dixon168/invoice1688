@@ -141,18 +141,19 @@ export async function documentPDF({ kind, doc: d, items, customer, company, empl
   // items
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
-    head: [['Product / Description', 'Qty', 'Unit price', 'Amount']],
+    head: [['Product / Description', 'SKU', 'Qty', 'Unit price', 'Amount']],
     body: (items || []).map(it => {
       const name = it.product_name || it.description || ''
       const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
       const sub = [extra, it.detail].filter(Boolean).join('\n')
-      return [sub ? `${name}\n${sub}` : name, it.units_per_ctn ? `${Number(it.quantity)} (${ctnLabel(it.quantity, it.units_per_ctn)})` : String(Number(it.quantity)), money(it.unit_price, cur), money(it.line_total, cur)]
+      const qtyCell = it.units_per_ctn ? `${Number(it.quantity)} (${ctnLabel(it.quantity, it.units_per_ctn)})` : String(Number(it.quantity))
+      return [sub ? `${name}\n${sub}` : name, it.product_sku || '', qtyCell, money(it.unit_price, cur), money(it.line_total, cur)]
     }),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     bodyStyles: { fontSize: 9, textColor: INK, font },
-    columnStyles: { 1: { halign: 'right', cellWidth: 32 }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    columnStyles: { 1: { cellWidth: 26 }, 2: { halign: 'right', cellWidth: 28 }, 3: { halign: 'right' }, 4: { halign: 'right' } },
     margin: { left: 14, right: 14 },
   })
 
@@ -289,18 +290,18 @@ export async function packingSlipPDF({ doc: d, items, customer, company }, opts 
   // items: description + quantity only (no prices on a packing slip)
   autoTable(pdf, {
     startY: Math.max(yy + 4, y + 20),
-    head: [['Description', 'Qty packed']],
+    head: [['Description', 'SKU', 'Qty packed']],
     body: (items || []).map(it => {
       const name = it.product_name || it.description || ''
       const extra = (it.product_name && it.description && it.description !== it.product_name) ? it.description : ''
       const sub = [extra, it.detail].filter(Boolean).join('\n')
-      return [sub ? `${name}\n${sub}` : name, it.units_per_ctn ? `${Number(it.quantity)} (${ctnLabel(it.quantity, it.units_per_ctn)})` : String(Number(it.quantity))]
+      return [sub ? `${name}\n${sub}` : name, it.product_sku || '', it.units_per_ctn ? `${Number(it.quantity)} (${ctnLabel(it.quantity, it.units_per_ctn)})` : String(Number(it.quantity))]
     }),
     theme: 'grid',
     styles: { font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     headStyles: { fillColor: INK, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     bodyStyles: { fontSize: 9, textColor: INK, font },
-    columnStyles: { 1: { halign: 'right', cellWidth: 40 } },
+    columnStyles: { 1: { cellWidth: 36 }, 2: { halign: 'right', cellWidth: 34 } },
     margin: { left: 14, right: 14 },
   })
 
@@ -319,9 +320,10 @@ export async function vendorBillPDF({ bill, vendor, company, products, payments 
   const cur = bill.currency || company?.default_currency || 'USD'
   const numberLabel = bill.bill_number || 'Bill'
 
-  // product name -> units per box (to show CTN even on older bills)
+  // product name -> units per box + sku (to show CTN and SKU even on older bills)
   const upcByName = {}
-  for (const p of (products || [])) { if (p.units_per_ctn) upcByName[String(p.name).trim().toLowerCase()] = Number(p.units_per_ctn) }
+  const skuByName = {}
+  for (const p of (products || [])) { const key = String(p.name).trim().toLowerCase(); if (p.units_per_ctn) upcByName[key] = Number(p.units_per_ctn); if (p.sku) skuByName[key] = p.sku }
 
   // split notes into free text + received lines
   const raw = bill.notes || ''
@@ -331,17 +333,16 @@ export async function vendorBillPDF({ bill, vendor, company, products, payments 
   else if (/\u00d7/.test(raw)) { received = raw; freeNotes = '' }
   const rows = received.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
     const m = l.match(/^(.+?)\s*\u00d7\s*(.+?)\s*@\s*(.+)$/)
-    if (!m) return [l, '', '', '']
+    if (!m) return [l, '', '', '', '']
     let qty = m[1].trim(); const name = m[2].trim(); const costStr = m[3].trim()
     const q = parseFloat(qty) || 0
     const c = parseFloat(String(costStr).replace(/[^0-9.]/g, '')) || 0
-    // if the qty text doesn't already carry a CTN breakdown, derive it from the product's box size
     if (!/CTN/i.test(qty)) {
       const upc = upcByName[name.toLowerCase()]
       const lbl = upc ? ctnLabel(q, upc) : ''
       if (lbl) qty = `${q} (${lbl})`
     }
-    return [name, qty, costStr, money(q * c, cur)]
+    return [name, skuByName[name.toLowerCase()] || '', qty, costStr, money(q * c, cur)]
   })
 
   const allText = [company?.name, company?.email, company?.phone, vendor?.name, vendor?.email, raw].filter(Boolean).join(' ')
@@ -375,13 +376,13 @@ export async function vendorBillPDF({ bill, vendor, company, products, payments 
   if (rows.length) {
     autoTable(pdf, {
       startY,
-      head: [['Item', 'Qty', 'Unit cost', 'Total']],
+      head: [['Item', 'SKU', 'Qty', 'Unit cost', 'Total']],
       body: rows,
       theme: 'grid',
       styles: { font, fontSize: 9, lineColor: [220, 222, 218], lineWidth: 0.1 },
       headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
       bodyStyles: { fontSize: 9, textColor: INK, font },
-      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+      columnStyles: { 1: { cellWidth: 26 }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
       margin: { left: 14, right: 14 },
     })
     startY = pdf.lastAutoTable.finalY
@@ -481,17 +482,18 @@ export async function purchaseOrderPDF({ po, items, vendor, company }, opts = {}
 
   autoTable(pdf, {
     startY: boxY + boxH + 8,
-    head: [['Item', 'Qty', 'Unit cost', 'Total']],
+    head: [['Item', 'SKU', 'Qty', 'Unit cost', 'Total']],
     body: (items || []).map(it => {
       const q = Number(it.qty_ordered) || 0, c = Number(it.unit_cost) || 0
       const qlabel = it.units_per_ctn ? `${q} (${ctnLabel(q, it.units_per_ctn)})` : String(q)
-      return [it.detail ? `${it.description || ''}\n${it.detail}` : (it.description || ''), qlabel, money(c, cur), money(q * c, cur)]
+      const nm = it.detail ? `${it.description || ''}\n${it.detail}` : (it.description || '')
+      return [nm, it.product_sku || '', qlabel, money(c, cur), money(q * c, cur)]
     }),
     theme: 'grid',
     styles: { font, fontSize: 9, lineColor: [220, 222, 218], lineWidth: 0.1 },
     headStyles: { fillColor: MOSS, textColor: 255, fontSize: 9, font, lineColor: [220, 222, 218], lineWidth: 0.1 },
     bodyStyles: { fontSize: 9, textColor: INK, font },
-    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    columnStyles: { 1: { cellWidth: 26 }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
     margin: { left: 14, right: 14 },
   })
 

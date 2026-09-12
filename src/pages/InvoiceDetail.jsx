@@ -40,8 +40,8 @@ export default function InvoiceDetail() {
     ])
     const pids = [...new Set((its || []).map(x => x.product_id).filter(Boolean))]
     let pmap = {}
-    if (pids.length) { const { data: prods } = await supabase.from('products').select('id,name').in('id', pids); for (const p of (prods || [])) pmap[p.id] = p.name }
-    setItems((its || []).map(x => ({ ...x, product_name: pmap[x.product_id] || '' })))
+    if (pids.length) { const { data: prods } = await supabase.from('products').select('id,name,sku').in('id', pids); for (const p of (prods || [])) pmap[p.id] = p }
+    setItems((its || []).map(x => ({ ...x, product_name: pmap[x.product_id]?.name || '', product_sku: pmap[x.product_id]?.sku || '' })))
     setCustomer(cu || null); setPayments(ps || [])
     if (i.employee_id) { const { data: emp } = await supabase.from('employees').select('name').eq('id', i.employee_id).maybeSingle(); setEmployeeName(emp?.name || '') } else setEmployeeName('')
   }
