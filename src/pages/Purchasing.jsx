@@ -153,7 +153,7 @@ export default function Purchasing() {
                       <td className="px-3 py-2 text-center"><input type="checkbox" checked={!!r.checked} onChange={e => setRow(r.key, { checked: e.target.checked })} /></td>
                       <td className="px-3 py-2">
                         <div className="font-medium text-ink">{r.name}{low && <span className="badge ml-2 bg-clay/15 text-clay">{t('low') || 'Low'}</span>}{r.sku && <span className="ml-2 text-xs text-ink/40">{r.sku}</span>}</div>
-                        <input className="input mt-1 py-1 text-xs text-ink/60" placeholder={t('f_description') || 'Description (optional)'} value={r.detail || ''} onChange={e => setRow(r.key, { detail: e.target.value })} />
+                        <input className="input mt-1 py-1 text-xs text-ink/60" placeholder={t('item_description') || 'Item description'} value={r.detail || ''} onChange={e => setRow(r.key, { detail: e.target.value })} />
                       </td>
                       <td className={`px-3 py-2 text-right tabular-nums ${low ? 'text-clay' : 'text-ink/50'}`}>{r.stock}{Number(r.reorder_point) > 0 ? <span className="text-ink/35"> / {Number(r.reorder_point)}</span> : null}</td>
                       <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="1" min="0" value={r.qty} onChange={e => setRow(r.key, { qty: e.target.value })} /></td>

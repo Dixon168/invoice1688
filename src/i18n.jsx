@@ -1093,6 +1093,15 @@ const EXTRA_CO = {
 }
 for (const l of Object.keys(EXTRA_CO)) Object.assign(T[l], EXTRA_CO[l])
 
+const EXTRA_ID = {
+  en: { item_description: 'Item description' },
+  zh: { item_description: '商品描述' },
+  es: { item_description: 'Descripción del artículo' },
+  vi: { item_description: 'Mô tả mặt hàng' },
+  ko: { item_description: '품목 설명' },
+}
+for (const l of Object.keys(EXTRA_ID)) Object.assign(T[l], EXTRA_ID[l])
+
 const Ctx = createContext({ lang: 'en', setLang: () => {}, t: (k) => k })
 
 export function LanguageProvider({ children }) {
