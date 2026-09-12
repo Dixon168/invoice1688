@@ -312,6 +312,7 @@ export default function Products() {
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? `${t('edit')} ${t('th_item')}` : t('new_item')}>
         <div className="space-y-4">
           <Field label={t('f_name_req')}><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
+          <Field label={t('f_description')}><textarea className="input min-h-[60px]" value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label={t('f_category')}>
               <select className="input" value={form.category || ''} onChange={e => onCategory(e.target.value)}>
@@ -362,7 +363,6 @@ export default function Products() {
               </div>
             )}
           </div>
-          <Field label={t('f_description')}><textarea className="input min-h-[70px]" value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} /></Field>
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <button className="btn-outline" onClick={() => setOpen(false)}>{t('cancel')}</button>
