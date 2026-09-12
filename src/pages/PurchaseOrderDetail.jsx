@@ -136,7 +136,7 @@ export default function PurchaseOrderDetail() {
                 const q = Number(it.qty_ordered) || 0, rq = Number(it.qty_received) || 0
                 return (
                   <tr key={it.id}>
-                    <td className="py-2.5 text-ink">{it.description}</td>
+                    <td className="py-2.5 text-ink">{it.description}{it.detail ? <div className="text-xs text-ink/50">{it.detail}</div> : null}</td>
                     <td className="py-2.5 text-right tabular-nums">{q}{it.units_per_ctn ? <span className="ml-1 text-[11px] text-ink/45">({ctnLabel(q, it.units_per_ctn)})</span> : null}</td>
                     <td className={`py-2.5 text-right tabular-nums ${rq >= q ? 'text-moss-700' : rq > 0 ? 'text-clay' : 'text-ink/40'}`}>{rq}</td>
                     <td className="py-2.5 text-right tabular-nums text-ink/70">{money(it.unit_cost, cur)}</td>

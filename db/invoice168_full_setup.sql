@@ -747,3 +747,5 @@ alter table public.invoices  add column if not exists care_of text;
 alter table public.estimates add column if not exists care_of text;
 alter table public.invoices  add column if not exists ship_note text;
 alter table public.estimates add column if not exists ship_note text;
+
+alter table public.purchase_order_items add column if not exists detail text;

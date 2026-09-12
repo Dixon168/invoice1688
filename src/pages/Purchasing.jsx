@@ -29,7 +29,7 @@ export default function Purchasing() {
 
   const load = async () => {
     const [{ data: p }, { data: v }, { data: o }] = await Promise.all([
-      supabase.from('products').select('id, name, sku, category, subcategory, stock_quantity, reorder_point, reorder_qty, cost, preferred_vendor_id, units_per_ctn, track_inventory').order('name'),
+      supabase.from('products').select('id, name, sku, description, category, subcategory, stock_quantity, reorder_point, reorder_qty, cost, preferred_vendor_id, units_per_ctn, track_inventory').order('name'),
       supabase.from('vendors').select('id, name').order('name'),
       supabase.from('purchase_orders').select('*, vendor:vendors(name)').order('order_date', { ascending: false }).order('created_at', { ascending: false }),
     ])
@@ -41,7 +41,7 @@ export default function Purchasing() {
 
   const rowFor = (p) => {
     const suggested = p.reorder_qty != null ? Number(p.reorder_qty) : Math.max(Number(p.reorder_point) - Number(p.stock_quantity), 0) || Number(p.reorder_point) || 1
-    return { key: p.id, checked: true, product_id: p.id, name: p.name, sku: p.sku, stock: Number(p.stock_quantity), reorder_point: p.reorder_point, units_per_ctn: p.units_per_ctn, qty: String(suggested), unit_cost: String(Number(p.cost) || 0) }
+    return { key: p.id, checked: true, product_id: p.id, name: p.name, sku: p.sku, detail: p.description || '', stock: Number(p.stock_quantity), reorder_point: p.reorder_point, units_per_ctn: p.units_per_ctn, qty: String(suggested), unit_cost: String(Number(p.cost) || 0) }
   }
 
   useEffect(() => { setCart(lowStock.map(rowFor)) }, [products]) // eslint-disable-line
@@ -52,7 +52,7 @@ export default function Purchasing() {
   }
   const addProduct = (p) => {
     if (cart.some(r => r.product_id === p.id)) return
-    setCart([...cart, { key: p.id + Math.random().toString(36).slice(2, 5), checked: true, product_id: p.id, name: p.name, sku: p.sku, stock: Number(p.stock_quantity), reorder_point: p.reorder_point, units_per_ctn: p.units_per_ctn, qty: '1', unit_cost: String(Number(p.cost) || 0) }])
+    setCart([...cart, { key: p.id + Math.random().toString(36).slice(2, 5), checked: true, product_id: p.id, name: p.name, sku: p.sku, detail: p.description || '', stock: Number(p.stock_quantity), reorder_point: p.reorder_point, units_per_ctn: p.units_per_ctn, qty: '1', unit_cost: String(Number(p.cost) || 0) }])
   }
   const setRow = (key, patch) => setCart(cart.map(r => r.key === key ? { ...r, ...patch } : r))
   const removeRow = (key) => setCart(cart.filter(r => r.key !== key))
@@ -72,7 +72,7 @@ export default function Purchasing() {
     }).select('id').single()
     if (error) { alert(error.message); setBusy(false); return }
     const items = rows.map((r, idx) => ({
-      po_id: po.id, product_id: r.product_id, description: r.name,
+      po_id: po.id, product_id: r.product_id, description: r.name, detail: r.detail || null,
       qty_ordered: Number(r.qty) || 0, qty_received: 0, unit_cost: Number(r.unit_cost) || 0,
       units_per_ctn: r.units_per_ctn || null, sort_order: idx,
     }))
@@ -151,7 +151,10 @@ export default function Purchasing() {
                   return (
                     <tr key={r.key} className={r.checked ? '' : 'opacity-45'}>
                       <td className="px-3 py-2 text-center"><input type="checkbox" checked={!!r.checked} onChange={e => setRow(r.key, { checked: e.target.checked })} /></td>
-                      <td className="px-3 py-2"><div className="font-medium text-ink">{r.name}{low && <span className="badge ml-2 bg-clay/15 text-clay">{t('low') || 'Low'}</span>}</div>{r.sku && <div className="text-xs text-ink/45">{r.sku}</div>}</td>
+                      <td className="px-3 py-2">
+                        <div className="font-medium text-ink">{r.name}{low && <span className="badge ml-2 bg-clay/15 text-clay">{t('low') || 'Low'}</span>}{r.sku && <span className="ml-2 text-xs text-ink/40">{r.sku}</span>}</div>
+                        <input className="input mt-1 py-1 text-xs text-ink/60" placeholder={t('f_description') || 'Description (optional)'} value={r.detail || ''} onChange={e => setRow(r.key, { detail: e.target.value })} />
+                      </td>
                       <td className={`px-3 py-2 text-right tabular-nums ${low ? 'text-clay' : 'text-ink/50'}`}>{r.stock}{Number(r.reorder_point) > 0 ? <span className="text-ink/35"> / {Number(r.reorder_point)}</span> : null}</td>
                       <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="1" min="0" value={r.qty} onChange={e => setRow(r.key, { qty: e.target.value })} /></td>
                       <td className="px-3 py-2"><input className="input py-1.5 text-right" type="number" step="0.01" min="0" value={r.unit_cost} onChange={e => setRow(r.key, { unit_cost: e.target.value })} /></td>

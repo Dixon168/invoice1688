@@ -485,7 +485,7 @@ export async function purchaseOrderPDF({ po, items, vendor, company }, opts = {}
     body: (items || []).map(it => {
       const q = Number(it.qty_ordered) || 0, c = Number(it.unit_cost) || 0
       const qlabel = it.units_per_ctn ? `${q} (${ctnLabel(q, it.units_per_ctn)})` : String(q)
-      return [it.description || '', qlabel, money(c, cur), money(q * c, cur)]
+      return [it.detail ? `${it.description || ''}\n${it.detail}` : (it.description || ''), qlabel, money(c, cur), money(q * c, cur)]
     }),
     theme: 'grid',
     styles: { font, fontSize: 9, lineColor: [220, 222, 218], lineWidth: 0.1 },
