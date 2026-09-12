@@ -154,7 +154,7 @@ export function ItemCombo({ value, onText, products = [], onPick, onCreate, curr
               <span className="shrink-0 tabular-nums text-ink/50">{money(p.unit_price, currency)}</span>
             </button>
           ))}
-          {q && !exact && (
+          {q && !exact && onCreate && (
             <button type="button" disabled={creating}
               className="block w-full border-t border-black/5 px-3 py-2 text-left font-medium text-moss-700 hover:bg-moss-50 disabled:opacity-50"
               onMouseDown={async () => { setCreating(true); await onCreate(value.trim()); setCreating(false); setOpen(false) }}>
